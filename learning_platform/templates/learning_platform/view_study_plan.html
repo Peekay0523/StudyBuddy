@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Plan - StudySmart</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 900px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h5 {
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        .plan-box {
+            background: #fff7ed;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #fed7aa;
+            color: #374151;
+            line-height: 1.6;
+        }
+        .script-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .script-list li {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .script-list a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .script-list .meta {
+            color: #6b7280;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .meta-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <small>AI Learning Assistant</small>
+        </div>
+
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home icon-sm"></i> Home</a>
+            <a href="{% url 'upload_script' %}"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+            <a href="{% url 'study_plan' %}" class="active"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+            <a href="{% url 'upload_report_card' %}"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+            <a href="{% url 'ai_chat' %}"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+        </nav>
+
+        <div class="help-box">
+            <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
+            <p>Ask our AI assistant anything about your studies!</p>
+            <a href="{% url 'ai_chat' %}" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
+        </div>
+    </aside>
+
+    <!-- OVERLAY for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- TOP NAV BAR (Mobile Hamburger) -->
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="top-logo">
+                    <i class="fas fa-graduation-cap"></i> StudySmart
+                </div>
+            </div>
+            <div class="top-nav-right">
+                <span class="user-greeting">Welcome, {{ user.username|default:'Student' }}</span>
+            </div>
+        </nav>
+
+        <div class="content-container">
+            <h2 style="margin-top: 0; color: #1f2937;"><i class="fas fa-calendar-check icon"></i> {{ study_plan.title }}</h2>
+            <p class="meta-info">Created on {{ study_plan.created_at|date:"F d, Y" }}</p>
+
+            <div class="section">
+                <h5>Study Plan Content:</h5>
+                <div class="plan-box">
+                    {{ study_plan.content|linebreaks }}
+                </div>
+            </div>
+
+            {% if user.student.uploadedscript_set.all %}
+            <div class="section">
+                <h5>Related Scripts:</h5>
+                <ul class="script-list">
+                    {% for script in user.student.uploadedscript_set.all %}
+                        <li>
+                            <a href="{% url 'view_memorandum' script.id %}">{{ script.title }}</a>
+                            <span class="meta">(Uploaded: {{ script.uploaded_at|date:"M d" }})</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 30px;">
+                <a href="{% url 'dashboard' %}" class="btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // Sidebar toggle for mobile
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', toggleSidebar);
+        
+        // Close sidebar when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+</script>
+
+</body>
+</html>

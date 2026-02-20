@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySmart - AI Learning Assistant</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .hero-section h1 {
+            font-size: 48px;
+            margin: 0 0 20px;
+        }
+        .hero-section p {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            opacity: 0.9;
+        }
+        .btn-cta {
+            background: white;
+            color: #667eea;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        .btn-cta:hover {
+            transform: scale(1.05);
+        }
+        .features-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .feature-card h3 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .feature-card ul {
+            padding-left: 20px;
+            color: #6b7280;
+        }
+        .feature-card li {
+            margin-bottom: 8px;
+        }
+        .how-it-works {
+            text-align: center;
+        }
+        .how-it-works h2 {
+            margin-bottom: 40px;
+            color: #1f2937;
+        }
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+        .step {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+        }
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+        .step h4 {
+            color: #1f2937;
+            margin: 10px 0;
+        }
+        .step p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 40px 15px;
+            }
+            .hero-section h1 {
+                font-size: 32px;
+            }
+            .hero-section p {
+                font-size: 16px;
+            }
+            .btn-cta {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+            .features-section {
+                grid-template-columns: 1fr;
+            }
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <small>AI Learning Assistant</small>
+        </div>
+
+        <nav class="menu">
+            <a href="{% url 'home' %}" class="active"><i class="fas fa-home icon-sm"></i> Home</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
+                <a href="{% url 'upload_script' %}"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+                <a href="{% url 'study_plan' %}"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+                <a href="{% url 'upload_report_card' %}"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+                <a href="{% url 'ai_chat' %}"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+            {% else %}
+                <a href="{% url 'login' %}"><i class="fas fa-sign-in-alt icon-sm"></i> Login</a>
+                <a href="{% url 'register' %}"><i class="fas fa-user-plus icon-sm"></i> Register</a>
+            {% endif %}
+        </nav>
+
+        <div class="help-box">
+            <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
+            <p>Ask our AI assistant anything about your studies!</p>
+            <a href="{% url 'ai_chat' %}" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
+        </div>
+    </aside>
+
+    <!-- OVERLAY for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- TOP NAV BAR (Mobile Hamburger) -->
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="top-logo">
+                    <i class="fas fa-graduation-cap"></i> StudySmart
+                </div>
+            </div>
+            <div class="top-nav-right">
+                <span class="user-greeting">{% if user.is_authenticated %}{{ user.username }}{% else %}Welcome{% endif %}</span>
+            </div>
+        </nav>
+
+        <div class="hero-section">
+            <h1>Welcome to StudySmart</h1>
+            <p>An AI-powered educational platform designed to help students learn more effectively.</p>
+            {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn-cta">Get Started</a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn-cta">Go to Dashboard</a>
+            {% endif %}
+        </div>
+
+        <div class="features-section">
+            <div class="feature-card">
+                <h3><i class="fas fa-file-alt icon"></i> Script Analysis</h3>
+                <p>Upload your study scripts and get AI-generated memorandums highlighting key topics and concepts.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Automatic topic identification</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Challenging topic detection</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Personalized memorandums</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="fas fa-calendar-check icon"></i> Personalized Study Plans</h3>
+                <p>Receive customized study plans focused on areas where you need the most help.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle icon-sm"></i> AI-generated study schedules</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Topic prioritization</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Resource recommendations</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="fas fa-compass icon"></i> Career Guidance</h3>
+                <p>Upload your report cards to get career recommendations based on your academic strengths.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Career path suggestions</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Strengths analysis</li>
+                    <li><i class="fas fa-check-circle icon-sm"></i> Improvement areas</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="how-it-works">
+            <h2><i class="fas fa-cogs icon"></i> How It Works</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <h4>Upload</h4>
+                    <p>Upload your scripts or report cards</p>
+                </div>
+                <div class="step">
+                    <div class="step-number"><i class="fas fa-brain"></i></div>
+                    <h4>AI Analysis</h4>
+                    <p>Our AI analyzes your content</p>
+                </div>
+                <div class="step">
+                    <div class="step-number"><i class="fas fa-chart-bar"></i></div>
+                    <h4>Personalized Results</h4>
+                    <p>Get tailored recommendations</p>
+                </div>
+                <div class="step">
+                    <div class="step-number"><i class="fas fa-arrow-up"></i></div>
+                    <h4>Improve</h4>
+                    <p>Enhance your learning journey</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // Sidebar toggle for mobile
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', toggleSidebar);
+        
+        // Close sidebar when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Recommendations - StudySmart</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .content-container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 900px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h5 {
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .career-list, .summary-box {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .career-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #16a34a;
+        }
+        .grade-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .grade-item:last-child {
+            border-bottom: none;
+        }
+        .strength-item {
+            background: #ecfdf5;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .improve-item {
+            background: #fff7ed;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .badge-success {
+            background: #16a34a;
+            color: white;
+        }
+        .badge-warning {
+            background: #f97316;
+            color: white;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .meta-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <small>AI Learning Assistant</small>
+        </div>
+
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home icon-sm"></i> Home</a>
+            <a href="{% url 'upload_script' %}"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+            <a href="{% url 'study_plan' %}"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+            <a href="{% url 'upload_report_card' %}" class="active"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+            <a href="{% url 'ai_chat' %}"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+        </nav>
+
+        <div class="help-box">
+            <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
+            <p>Ask our AI assistant anything about your studies!</p>
+            <a href="{% url 'ai_chat' %}" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
+        </div>
+    </aside>
+
+    <!-- OVERLAY for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- TOP NAV BAR (Mobile Hamburger) -->
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="top-logo">
+                    <i class="fas fa-graduation-cap"></i> StudySmart
+                </div>
+            </div>
+            <div class="top-nav-right">
+                <span class="user-greeting">Welcome, {{ user.username|default:'Student' }}</span>
+            </div>
+        </nav>
+
+        <div class="content-container">
+            <h2 style="margin-top: 0; color: #1f2937;"><i class="fas fa-compass icon"></i> Career Recommendations</h2>
+            <p class="meta-info">Based on your academic performance from {{ career_rec.report_card.uploaded_at|date:"F d, Y" }}</p>
+
+            <div class="grid-2" style="margin-top: 25px;">
+                <div class="section" style="margin-bottom: 0;">
+                    <h5>Recommended Careers:</h5>
+                    <div class="career-list">
+                        {% for career in career_rec.recommended_careers %}
+                            <div class="career-item">{{ career }}</div>
+                        {% empty %}
+                            <p style="color: #6b7280;">No career recommendations available yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="section" style="margin-bottom: 0;">
+                    <h5>Academic Summary:</h5>
+                    <div class="summary-box">
+                        {% for subject, grade in career_rec.report_card.grades_data.items %}
+                            <div class="grade-item">
+                                <span>{{ subject }}:</span>
+                                <strong>{{ grade }}</strong>
+                            </div>
+                        {% empty %}
+                            <p style="color: #6b7280;">No grade data available.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 25px;">
+                <div class="section" style="margin-bottom: 0;">
+                    <h5>Your Strengths:</h5>
+                    {% for strength in career_rec.strengths %}
+                        <div class="strength-item">
+                            <span class="badge badge-success">Strength</span>
+                            {{ strength }}
+                        </div>
+                    {% empty %}
+                        <p style="color: #6b7280;">No strengths identified yet.</p>
+                    {% endfor %}
+                </div>
+
+                <div class="section" style="margin-bottom: 0;">
+                    <h5>Areas for Improvement:</h5>
+                    {% for area in career_rec.areas_for_improvement %}
+                        <div class="improve-item">
+                            <span class="badge badge-warning">Improve</span>
+                            {{ area }}
+                        </div>
+                    {% empty %}
+                        <p style="color: #6b7280;">No improvement areas identified yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <a href="{% url 'dashboard' %}" class="btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // Sidebar toggle for mobile
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', toggleSidebar);
+        
+        // Close sidebar when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+</script>
+
+</body>
+</html>

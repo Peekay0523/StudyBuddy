@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Guide - StudySmart</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+        .form-group input[type="file"],
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .info-box {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+        .info-box h5 {
+            margin: 0 0 15px;
+            color: #1f2937;
+        }
+        .info-box ol {
+            margin: 0;
+            padding-left: 20px;
+            color: #6b7280;
+        }
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        .form-text {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .career-header {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .career-header h3 {
+            margin: 0 0 10px;
+        }
+        .career-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .btn-success,
+            .btn-secondary {
+                width: 100%;
+                margin: 10px 0 0 0;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <small>AI Learning Assistant</small>
+        </div>
+
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home icon-sm"></i> Home</a>
+            <a href="{% url 'upload_script' %}"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+            <a href="{% url 'study_plan' %}"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+            <a href="{% url 'upload_report_card' %}" class="active"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+            <a href="{% url 'ai_chat' %}"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+        </nav>
+
+        <div class="help-box">
+            <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
+            <p>Ask our AI assistant anything about your studies!</p>
+            <a href="{% url 'ai_chat' %}" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
+        </div>
+    </aside>
+
+    <!-- OVERLAY for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- TOP NAV BAR (Mobile Hamburger) -->
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="top-logo">
+                    <i class="fas fa-graduation-cap"></i> StudySmart
+                </div>
+            </div>
+            <div class="top-nav-right">
+                <span class="user-greeting">Welcome, {{ user.username|default:'Student' }}</span>
+            </div>
+        </nav>
+
+        <div class="form-container">
+            <div class="career-header">
+                <h3><i class="fas fa-compass icon"></i> Career Guide</h3>
+                <p>Upload your report card to get personalized career recommendations based on your academic performance.</p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="{{ form.report_card_file.id_for_label }}"><i class="fas fa-file-upload icon-sm"></i> Report Card File</label>
+                    {{ form.report_card_file }}
+                    <div class="form-text">Supported formats: PDF, DOCX, JPG, PNG</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.grade.id_for_label }}"><i class="fas fa-graduation-cap icon-sm"></i> Grade Level</label>
+                        {{ form.grade }}
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.term.id_for_label }}"><i class="fas fa-calendar-alt icon-sm"></i> Term</label>
+                        {{ form.term }}
+
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-success"><i class="fas fa-magic icon-sm"></i> Get Career Recommendations</button>
+                <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
+            </form>
+
+            <div class="info-box">
+                <h5>How it works:</h5>
+                <ol>
+                    <li>Upload your report card (transcript, grades, etc.)</li>
+                    <li>Our AI will analyze your academic performance</li>
+                    <li>We'll identify your strengths and areas for improvement</li>
+                    <li>You'll receive personalized career recommendations</li>
+                </ol>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // Sidebar toggle for mobile
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', toggleSidebar);
+        
+        // Close sidebar when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+</script>
+
+</body>
+</html>

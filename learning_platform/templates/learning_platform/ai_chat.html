@@ -1,0 +1,302 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant - StudySmart</title>
+    <link rel="stylesheet" href="{% static 'css/ai_chat.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <small>AI Learning Assistant</small>
+        </div>
+
+        <nav class="menu">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home icon-sm"></i> Home</a>
+            <a href="{% url 'upload_script' %}"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+            <a href="{% url 'study_plan' %}"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+            <a href="{% url 'upload_report_card' %}"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+            <a href="{% url 'ai_chat' %}" class="active"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+        </nav>
+
+        <div class="help-box">
+            <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
+            <p>Ask our AI assistant anything about your studies!</p>
+            <a href="{% url 'ai_chat' %}" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
+        </div>
+    </aside>
+
+    <!-- OVERLAY for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- TOP NAV BAR (Mobile Hamburger) -->
+        <nav class="top-nav">
+            <div class="top-nav-left">
+                <button class="hamburger" id="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="top-logo">
+                    <i class="fas fa-graduation-cap"></i> StudySmart
+                </div>
+            </div>
+            <div class="top-nav-right">
+                <span class="user-greeting">Welcome, {{ user.username|default:'Student' }}</span>
+            </div>
+        </nav>
+
+        <!-- CHAT HEADER -->
+        <div class="chat-header">
+            <div class="chat-title">
+                <div class="chat-icon">
+                    <i class="fas fa-sparkles" style="color: white; font-size: 24px;"></i>
+                </div>
+                <div>
+                    <h1>AI Study Assistant</h1>
+                    <p>Ask me anything about your studies</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAT BODY -->
+        <div class="chat-body" id="chatBody">
+
+            <div class="ai-message">
+                <div class="avatar">
+                    <i class="fas fa-robot" style="color: white; font-size: 24px;"></i>
+                </div>
+                <div class="message">
+                    <p>Hi there! <i class="fas fa-hand-wave" style="color: #f97316;"></i> I'm your <strong>AI Study Assistant</strong>. I can help you with:</p>
+                    <ul>
+                        <li><strong>Explaining concepts</strong> in any subject</li>
+                        <li><strong>Solving problems</strong> step by step</li>
+                        <li><strong>Creating summaries</strong> of topics</li>
+                        <li><strong>Quiz questions</strong> to test your knowledge</li>
+                        <li><strong>Study tips</strong> and techniques</li>
+                    </ul>
+                    <p>What would you like help with today?</p>
+                </div>
+            </div>
+
+            <!-- SUGGESTIONS -->
+            <div class="suggestions" id="suggestions">
+                <span>Try asking:</span>
+                <button onclick="sendSuggestion('Explain photosynthesis simply')"><i class="fas fa-leaf"></i> Explain photosynthesis simply</button>
+                <button onclick="sendSuggestion('Help me with quadratic equations')"><i class="fas fa-square-root-variable"></i> Help me with quadratic equations</button>
+                <button onclick="sendSuggestion('Give me a history quiz')"><i class="fas fa-landmark"></i> Give me a history quiz</button>
+                <button onclick="sendSuggestion('Tips for exam preparation')"><i class="fas fa-book-open"></i> Tips for exam preparation</button>
+            </div>
+
+        </div>
+
+        <!-- INPUT -->
+        <div class="chat-input">
+            <button class="upload-btn" id="uploadBtn"><i class="fas fa-paperclip"></i></button>
+            <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="handleKeyPress(event)" />
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+    // Sidebar toggle for mobile
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', toggleSidebar);
+        
+        // Close sidebar when clicking overlay
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking on a link
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+    }
+
+    // Chat functionality
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatBody = document.getElementById('chatBody');
+    const suggestions = document.getElementById('suggestions');
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendSuggestion(message) {
+        chatInput.value = message;
+        sendMessage();
+    }
+
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Hide suggestions after first message
+        if (suggestions) {
+            suggestions.style.display = 'none';
+        }
+
+        // Add user message to chat
+        addUserMessage(message);
+        chatInput.value = '';
+
+        // Show typing indicator
+        const typingIndicator = showTypingIndicator();
+
+        try {
+            const response = await fetch('/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `message=${encodeURIComponent(message)}`
+            });
+
+            const data = await response.json();
+
+            // Remove typing indicator
+            typingIndicator.remove();
+
+            if (data.error) {
+                addErrorMessage(data.error);
+            } else {
+                addAIMessage(data.reply);
+            }
+        } catch (error) {
+            typingIndicator.remove();
+            addErrorMessage('Failed to connect to AI. Please try again.');
+            console.error('Error:', error);
+        }
+    }
+
+    function addUserMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'ai-message';
+        messageDiv.style.flexDirection = 'row-reverse';
+        messageDiv.innerHTML = `
+            <div class="avatar" style="background: linear-gradient(135deg, #2563eb, #3b82f6);">
+                <i class="fas fa-user" style="color: white; font-size: 24px;"></i>
+            </div>
+            <div class="message" style="background: #eef2ff;">
+                <p>${escapeHtml(message)}</p>
+            </div>
+        `;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function addAIMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'ai-message';
+        messageDiv.innerHTML = `
+            <div class="avatar">
+                <i class="fas fa-robot" style="color: white; font-size: 24px;"></i>
+            </div>
+            <div class="message">
+                <p>${formatMessage(message)}</p>
+            </div>
+        `;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function addErrorMessage(error) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'ai-message';
+        messageDiv.innerHTML = `
+            <div class="avatar" style="background: linear-gradient(135deg, #dc2626, #ef4444);">
+                <i class="fas fa-exclamation-triangle" style="color: white; font-size: 24px;"></i>
+            </div>
+            <div class="message" style="background: #fef2f2;">
+                <p style="color: #dc2626;">${escapeHtml(error)}</p>
+            </div>
+        `;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'ai-message';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `
+            <div class="avatar">
+                <i class="fas fa-robot" style="color: white; font-size: 24px;"></i>
+            </div>
+            <div class="message" style="background: #f3f4f6;">
+                <p><i class="fas fa-ellipsis-h fa-beat"></i> AI is thinking...</p>
+            </div>
+        `;
+        chatBody.appendChild(typingDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        return typingDiv;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatMessage(message) {
+        // Convert markdown-style bold to HTML
+        let formatted = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Convert newlines to <br>
+        formatted = formatted.replace(/\n/g, '<br>');
+        return formatted;
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+</body>
+</html>
