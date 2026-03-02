@@ -1,6 +1,9 @@
 <?php
 /**
  * Application Configuration
+ * 
+ * Copy this file to config.php and fill in your actual values.
+ * NEVER commit config.php with real secrets to version control.
  */
 
 // Application settings
@@ -27,6 +30,7 @@ session_start();
 // OpenAI Configuration (for AI features)
 // Get your API key from: https://platform.openai.com/api-keys
 define('OPENAI_API_KEY', 'YOUR_OPENAI_API_KEY_HERE');
+
 // Error reporting
 if (DEBUG_MODE) {
     error_reporting(E_ALL);
