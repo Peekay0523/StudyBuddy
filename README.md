@@ -1,217 +1,178 @@
-# School Learning Platform
+# StudySmart - School Learning Platform (PHP Version)
 
-An AI-powered educational platform designed to help students learn more effectively by providing personalized learning experiences through script analysis, study planning, and career guidance.
+An AI-powered educational platform designed to help students learn more effectively. This is the PHP conversion of the original Django application.
 
 ## Features
 
-### 1. Script Analysis and Memorandum Generation
-- Students can upload their study scripts (notes, assignments, etc.)
-- AI analyzes the content to identify key topics
-- Automatically generates memorandums highlighting important concepts
-- Identifies challenging topics that need more attention
+- **User Authentication**: Register, login, and logout functionality
+- **Script Upload & Analysis**: Upload study scripts (PDF, DOCX, TXT) for AI-powered topic extraction
+- **AI Memorandum Generation**: Get AI-generated summaries of your study materials
+- **Personalized Study Plans**: Receive customized study plans based on challenging topics
+- **Career Recommendations**: Upload report cards to get career suggestions based on academic performance
+- **AI Chat Assistant**: Chat with an AI study assistant for help with various subjects
 
-### 2. Personalized Study Plans
-- Creates customized study plans based on identified challenging topics
-- Prioritizes areas where the student needs the most help
-- Provides resource recommendations for better understanding
+## Requirements
 
-### 3. Career Guidance System
-- Students can upload their report cards or transcripts
-- AI analyzes academic performance to identify strengths and weaknesses
-- Provides personalized career recommendations based on academic results
-- Highlights areas for improvement
+- PHP 8.0 or higher
+- SQLite3 (built into PHP)
+- cURL extension (for AI features)
+- Zip extension (for DOCX file processing)
 
-### 4. AI Integration
-- Powered by OpenAI GPT for intelligent content analysis
-- Natural language processing for topic identification
-- Personalized recommendations based on individual performance
+## Installation
 
-## Technology Stack
-
-- **Backend**: Django (Python)
-- **Frontend**: HTML, CSS, JavaScript with Bootstrap
-- **Database**: SQLite (default) or PostgreSQL
-- **AI Integration**: OpenAI API
-- **Document Processing**: python-docx, pdfplumber
-- **Authentication**: Django built-in auth system
-
-## Setup Instructions
-
-### Prerequisites
-- Python 3.8+
-- Pip package manager
-
-### Installation Steps
-
-1. Clone or download the project
-2. Navigate to the project directory:
-   ```bash
-   cd SchoolApp
+1. **Clone or copy the application** to your desired location:
+   ```
+   school_app_php/
    ```
 
-3. Create a virtual environment:
+2. **Set up the database**:
+   The database will be automatically created when you first run the application.
+
+3. **Configure environment variables** (optional):
+   Set the `OPENAI_API_KEY` environment variable for AI features:
    ```bash
-   python -m venv venv
+   export OPENAI_API_KEY=your-api-key-here
    ```
 
-4. Activate the virtual environment:
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-
-5. Install dependencies:
+4. **Start the PHP development server**:
    ```bash
-   pip install -r requirements.txt
+   cd school_app_php
+   php -S localhost:8000 -t public public/index.php
    ```
 
-6. Set up the database:
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
+5. **Open your browser** and navigate to:
    ```
-
-7. Create a superuser account (optional):
-   ```bash
-   python manage.py createsuperuser
+   http://localhost:8000
    ```
-
-8. Set your OpenAI API key:
-   - Option 1: Set environment variable:
-     ```bash
-     set OPENAI_API_KEY=your_api_key_here  # Windows
-     export OPENAI_API_KEY=your_api_key_here  # macOS/Linux
-     ```
-   - Option 2: Update the settings.py file directly (not recommended for production)
-
-9. Run the development server:
-   ```bash
-   python manage.py runserver
-   ```
-
-10. Access the application at `http://127.0.0.1:8000/`
-
-## Usage Guide
-
-### For Students
-
-1. **Registration**: Create an account using the registration form
-2. **Upload Scripts**: Go to "Upload Script" to submit study materials
-3. **View Memorandums**: Check generated memorandums for your scripts
-4. **Follow Study Plans**: Access personalized study plans from your dashboard
-5. **Upload Report Cards**: Submit report cards for career recommendations
-6. **Explore Career Options**: View personalized career recommendations
-
-### Supported File Formats
-- Scripts: PDF, DOCX, TXT
-- Report Cards: PDF, DOCX, JPG, PNG
 
 ## Project Structure
 
 ```
-SchoolApp/
-├── manage.py
-├── db.sqlite3
-├── requirements.txt
-├── school_app/
-│   ├── __init__.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-└── learning_platform/
-    ├── __init__.py
-    ├── admin.py
-    ├── apps.py
-    ├── models.py
-    ├── views.py
-    ├── forms.py
-    ├── urls.py
-    ├── migrations/
-    ├── templates/
-    │   └── learning_platform/
-    └── static/
+school_app_php/
+├── config/
+│   ├── config.php          # Application configuration
+│   └── database.php        # Database connection (PDO)
+├── controllers/
+│   ├── AuthController.php  # Authentication (login, register, logout)
+│   ├── HomeController.php  # Home page
+│   ├── DashboardController.php
+│   ├── ScriptController.php
+│   ├── StudyPlanController.php
+│   ├── ReportCardController.php
+│   └── AIChatController.php
+├── models/
+│   ├── User.php
+│   ├── Student.php
+│   ├── UploadedScript.php
+│   ├── Memorandum.php
+│   ├── StudyPlan.php
+│   ├── ReportCard.php
+│   └── CareerRecommendation.php
+├── helpers/
+│   ├── AIHelper.php        # OpenAI API integration
+│   └── FileHelper.php      # File upload and text extraction
+├── templates/
+│   ├── layouts/
+│   │   ├── header.php
+│   │   └── footer.php
+│   ├── pages/
+│   │   ├── home.php
+│   │   ├── dashboard.php
+│   │   ├── upload_script.php
+│   │   ├── study_plan.php
+│   │   ├── ai_chat.php
+│   │   ├── upload_report_card.php
+│   │   ├── view_memorandum.php
+│   │   ├── view_study_plan.php
+│   │   └── view_career_recommendations.php
+│   └── auth/
+│       ├── login.php
+│       └── register.php
+├── public/
+│   ├── index.php           # Main entry point (router)
+│   └── css/
+│       └── style.css       # Application styles
+├── uploads/
+│   ├── scripts/            # Uploaded script files
+│   └── report_cards/       # Uploaded report card files
+├── router.php              # Simple URL router
+├── database_schema.sql     # Database schema
+└── database.sqlite3        # SQLite database (auto-created)
 ```
 
-## Key Components
+## Database Schema
 
-### Models
-- `Student`: Represents a student user
-- `UploadedScript`: Stores uploaded study scripts
-- `Memorandum`: Generated memorandums for scripts
-- `StudyPlan`: Personalized study plans
-- `ReportCard`: Uploaded report cards
-- `CareerRecommendation`: Career recommendations based on academic performance
+The application uses SQLite with the following tables:
 
-### Views
-- Home page with feature overview
-- Registration and login
-- Dashboard with activity summary
-- Script upload and memorandum viewing
-- Report card upload and career recommendations
-- Study plan management
+- **users**: User authentication
+- **students**: Student profiles linked to users
+- **uploaded_scripts**: Uploaded study scripts
+- **memorandums**: AI-generated memorandums
+- **study_plans**: Personalized study plans
+- **report_cards**: Uploaded report cards
+- **career_recommendations**: AI-generated career suggestions
 
-## API Integration
+## API Endpoints
 
-The application integrates with OpenAI API for:
-- Topic identification in documents
-- Challenge detection in learning materials
-- Memorandum generation
-- Study plan creation
-- Career recommendation generation
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Home page |
+| GET/POST | `/login` | User login |
+| GET/POST | `/register` | User registration |
+| GET | `/logout` | User logout |
+| GET | `/dashboard` | User dashboard |
+| GET/POST | `/upload-script` | Upload study script |
+| GET | `/view-memorandum/{id}` | View memorandum |
+| GET | `/study-plan` | View study plans |
+| GET | `/view-study-plan/{id}` | View single study plan |
+| GET/POST | `/upload-report-card` | Upload report card |
+| GET | `/view-career-recommendations/{id}` | View career recommendations |
+| GET | `/ai-chat` | AI chat interface |
+| POST | `/api/chatbot` | Chat API endpoint |
 
-## Security Considerations
+## AI Integration
 
-- Passwords are securely hashed using Django's built-in authentication
-- File uploads are validated for security
-- Environment variables are used for sensitive configuration
-- CSRF protection is enabled by default
+The application uses OpenAI's GPT models for:
+- Topic extraction from documents
+- Identifying challenging topics
+- Generating memorandums
+- Creating personalized study plans
+- Career recommendations
+- Chat assistant
 
-## Future Enhancements
+To enable AI features, set the `OPENAI_API_KEY` environment variable.
 
-- Advanced analytics dashboard
-- Collaboration features for group studies
-- Mobile application development
-- Integration with learning management systems
-- Enhanced AI capabilities for deeper content analysis
-- Gamification elements to increase engagement
+## Security Notes
+
+- Passwords are hashed using `password_hash()` with `PASSWORD_DEFAULT`
+- Sessions use HTTP-only cookies
+- File uploads are validated for type and size
+- SQL injection prevention via PDO prepared statements
+
+## Differences from Django Version
+
+| Django | PHP |
+|--------|-----|
+| ORM (Active Record) | Raw SQL with PDO |
+| Django Templates | PHP templates |
+| Class-based views | Controller classes |
+| URL patterns | Simple router |
+| Built-in auth | Custom session auth |
+| Forms | HTML forms with validation |
 
 ## Troubleshooting
 
-### Common Issues
+**Database not created:**
+- Ensure the application has write permissions in the project directory
 
-1. **OpenAI API Key Error**: Ensure your API key is correctly set in environment variables
-2. **File Upload Issues**: Check that uploaded files are in supported formats
-3. **Database Errors**: Run migrations if you encounter database-related errors
-4. **Static Files Not Loading**: Collect static files using `python manage.py collectstatic`
+**AI features not working:**
+- Check that `OPENAI_API_KEY` is set correctly
+- Verify cURL extension is enabled
 
-### Server Management
-
-If the application continues running after closing VS Code or stopping the debugger:
-
-**Using Management Scripts (Recommended):**
-
-To stop any running server processes:
-```
-python stop_server.py
-```
-
-Or using the batch file:
-```
-manage_server.bat stop
-```
-
-**Traditional Method:**
-1. Check Task Manager for any Python processes and end them if necessary
-2. Or restart your computer to ensure all processes are terminated
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request or open an issue for bugs and feature requests.
+**File upload fails:**
+- Check `upload_max_filesize` and `post_max_size` in php.ini
+- Ensure the `uploads/` directory is writable
 
 ## License
 
-This project is created for educational purposes. See the LICENSE file for details.
+This project is a conversion of the original Django application to PHP.
