@@ -22,22 +22,39 @@
         <nav class="menu">
             <a href="/" class="<?php echo ($currentPage ?? '') === 'home' ? 'active' : ''; ?>"><i class="fas fa-home icon-sm"></i> Home</a>
             <?php if (isLoggedIn()): ?>
-                <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
-                <a href="/upload-script" class="<?php echo ($currentPage ?? '') === 'scripts' ? 'active' : ''; ?>"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
-                <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
-                <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
-                <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+                <?php 
+                $currentUser = getCurrentUser();
+                if (isset($currentUser['role']) && $currentUser['role'] === 'admin'): 
+                ?>
+                    <!-- Admin users only see Admin Panel link -->
+                    <a href="/admin" class="<?php echo strpos($currentPage ?? '', 'admin-') === 0 ? 'active' : ''; ?>" style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24;">
+                        <i class="fas fa-shield-halved icon-sm"></i> Admin Panel
+                    </a>
+                <?php else: ?>
+                    <!-- Regular users see full navigation -->
+                    <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
+                    <a href="/upload-script" class="<?php echo ($currentPage ?? '') === 'scripts' ? 'active' : ''; ?>"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+                    <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
+                    <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+                    <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+                    <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
+                <?php endif; ?>
             <?php else: ?>
                 <a href="/login" class="<?php echo ($currentPage ?? '') === 'login' ? 'active' : ''; ?>"><i class="fas fa-sign-in-alt icon-sm"></i> Login</a>
                 <a href="/register" class="<?php echo ($currentPage ?? '') === 'register' ? 'active' : ''; ?>"><i class="fas fa-user-plus icon-sm"></i> Register</a>
             <?php endif; ?>
         </nav>
 
+        <?php 
+        $currentUser = getCurrentUser();
+        if (!isset($currentUser['role']) || $currentUser['role'] !== 'admin'): 
+        ?>
         <div class="help-box">
             <h4><i class="fas fa-question-circle icon-sm"></i> Need Help?</h4>
             <p>Ask our AI assistant anything about your studies!</p>
             <a href="/ai-chat" style="text-decoration: none;"><button><i class="fas fa-robot icon-sm"></i> Start Chat</button></a>
         </div>
+        <?php endif; ?>
     </aside>
 
     <!-- OVERLAY for mobile -->

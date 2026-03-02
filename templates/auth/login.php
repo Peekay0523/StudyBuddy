@@ -59,11 +59,26 @@ $extraHead = '<style>
             <button type="submit" class="btn-primary">Login</button>
         </form>
 
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <button type="button" onclick="fillAdminCredentials()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-shield-halved"></i> Login as Admin
+            </button>
+        </div>
+
         <div class="auth-link">
             <p>Don't have an account? <a href="/register">Register here</a></p>
         </div>
     </div>
 </div>
+
+<script>
+function fillAdminCredentials() {
+    document.getElementById('username').value = 'Peekay';
+    document.getElementById('password').value = 'admin123';
+    // Optional: auto-submit
+    // document.querySelector('form').submit();
+}
+</script>
 
 </body>
 </html>

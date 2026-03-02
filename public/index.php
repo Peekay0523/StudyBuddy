@@ -67,6 +67,11 @@ $router->get('/view-study-plan/{id}', function($planId) {
     $controller = new StudyPlanController();
     $controller->view($planId);
 });
+$router->get('/recite-study-plan/{id}', function($planId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->recite($planId);
+});
 
 // Report Cards
 $router->get('/upload-report-card', 'ReportCardController@upload');
@@ -81,6 +86,23 @@ $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCa
 // AI Chat
 $router->get('/ai-chat', 'AIChatController@index');
 $router->post('/api/chatbot', 'AIChatController@chat');
+
+// Subscription
+$router->get('/subscription', 'SubscriptionController@index');
+$router->post('/subscription/subscribe', 'SubscriptionController@subscribe');
+$router->post('/subscription/cancel', 'SubscriptionController@cancel');
+
+// Admin Routes
+$router->get('/admin', 'AdminController@index');
+$router->get('/admin/users', 'AdminController@users');
+$router->get('/admin/users/{id}', 'AdminController@viewUser');
+$router->post('/admin/users/toggle-role', 'AdminController@toggleRole');
+$router->get('/admin/subscriptions', 'AdminController@subscriptions');
+$router->post('/admin/subscriptions/cancel', 'AdminController@cancelSubscription');
+$router->get('/admin/scripts', 'AdminController@scripts');
+$router->post('/admin/scripts/delete', 'AdminController@deleteScript');
+$router->get('/admin/report-cards', 'AdminController@reportCards');
+$router->get('/admin/topics', 'AdminController@topicsMastered');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');

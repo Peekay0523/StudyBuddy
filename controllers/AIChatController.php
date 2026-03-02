@@ -15,12 +15,12 @@ class AIChatController {
     }
     
     public function index() {
-        requireLogin();
+        requireStudent();
         include __DIR__ . '/../templates/pages/ai_chat.php';
     }
-    
+
     public function chat() {
-        requireLogin();
+        requireStudent();
 
         header('Content-Type: application/json');
 

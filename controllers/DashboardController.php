@@ -21,8 +21,8 @@ class DashboardController {
     }
     
     public function index() {
-        requireLogin();
-        
+        requireStudent();
+
         $student = getCurrentStudent();
         $studentId = $student['id'];
         

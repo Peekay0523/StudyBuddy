@@ -422,4 +422,39 @@ Return as JSON with keys: careers, courses (array with name, requirements, durat
         // Return general courses if no match
         return $courses['Commerce'];
     }
+
+    /**
+     * Generate an AI recitation of a study plan - converts text to spoken-word friendly format
+     */
+    public function reciteStudyPlan($title, $content) {
+        if (!$this->isValidApiKey()) {
+            // Fallback: simple text-to-speech friendly version
+            return [
+                'recitation' => "Study Plan: {$title}. " . strip_tags($content),
+                'summary' => "This study plan covers: {$title}",
+                'key_points' => []
+            ];
+        }
+
+        $messages = [
+            ['role' => 'system', 'content' => 'You are a helpful AI study assistant that recites study plans in a clear, spoken-word friendly format. Convert the study plan into a natural, conversational recitation that can be read aloud. Include a brief summary and key bullet points.'],
+            ['role' => 'user', 'content' => "Recite this study plan in a clear, spoken format:\n\nTitle: {$title}\n\nContent: " . substr($content, 0, 3000)]
+        ];
+
+        $response = $this->makeRequest($messages, 600, 0.7);
+
+        if ($response) {
+            return [
+                'recitation' => $response,
+                'summary' => substr($response, 0, 200) . '...',
+                'key_points' => []
+            ];
+        }
+
+        return [
+            'recitation' => "Study Plan: {$title}. " . strip_tags($content),
+            'summary' => "This study plan covers: {$title}",
+            'key_points' => []
+        ];
+    }
 }

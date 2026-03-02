@@ -27,7 +27,7 @@ class ScriptController {
     }
     
     public function upload() {
-        requireLogin();
+        requireStudent();
         
         $error = '';
         $success = '';

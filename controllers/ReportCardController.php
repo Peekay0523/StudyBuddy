@@ -24,8 +24,8 @@ class ReportCardController {
     }
     
     public function upload() {
-        requireLogin();
-        
+        requireStudent();
+
         $error = '';
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['report_card_file'])) {

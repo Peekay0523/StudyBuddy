@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     email TEXT,
+    role TEXT DEFAULT 'student',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -20,7 +21,20 @@ CREATE TABLE IF NOT EXISTS students (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Uploaded Scripts table
+-- Uploaded Scripts table (using user_id directly)
+CREATE TABLE IF NOT EXISTS scripts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    subject TEXT DEFAULT '',
+    memorandum_generated INTEGER DEFAULT 0,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Old scripts table (for backwards compatibility)
 CREATE TABLE IF NOT EXISTS uploaded_scripts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     student_id INTEGER NOT NULL,
@@ -54,8 +68,23 @@ CREATE TABLE IF NOT EXISTS study_plans (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
 
--- Report Cards table
+-- Report Cards table (using user_id directly)
 CREATE TABLE IF NOT EXISTS report_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    grade TEXT DEFAULT '',
+    term TEXT DEFAULT '',
+    average REAL DEFAULT 0,
+    career_recommendations_generated INTEGER DEFAULT 0,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    grades_data TEXT DEFAULT '{}',
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Old report cards table (for backwards compatibility)
+CREATE TABLE IF NOT EXISTS old_report_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     student_id INTEGER NOT NULL,
     file_path TEXT NOT NULL,
@@ -81,9 +110,25 @@ CREATE TABLE IF NOT EXISTS career_recommendations (
     FOREIGN KEY (report_card_id) REFERENCES report_cards(id) ON DELETE CASCADE
 );
 
+-- Subscriptions table
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    plan TEXT NOT NULL,
+    price REAL NOT NULL,
+    status TEXT DEFAULT 'active',
+    current_period_start DATETIME,
+    current_period_end DATETIME,
+    cancelled_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
 CREATE INDEX IF NOT EXISTS idx_scripts_student_id ON uploaded_scripts(student_id);
 CREATE INDEX IF NOT EXISTS idx_study_plans_student_id ON study_plans(student_id);
 CREATE INDEX IF NOT EXISTS idx_report_cards_student_id ON report_cards(student_id);
 CREATE INDEX IF NOT EXISTS idx_career_rec_student_id ON career_recommendations(student_id);
+UPDATE users SET role = 'admin' WHERE username = 'Pontsho09';

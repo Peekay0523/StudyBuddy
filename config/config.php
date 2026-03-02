@@ -26,6 +26,7 @@ session_start();
 
 // OpenAI Configuration (for AI features)
 // Get your API key from: https://platform.openai.com/api-keys
+// IMPORTANT: Add your actual key below, but NEVER commit it to git!
 define('OPENAI_API_KEY', 'YOUR_OPENAI_API_KEY_HERE');
 // Error reporting
 if (DEBUG_MODE) {
@@ -69,6 +70,18 @@ function getCurrentUser() {
     if (!isLoggedIn()) {
         return null;
     }
+    
+    // Refresh user data from database to ensure role is current
+    if (!isset($_SESSION['user']) || !isset($_SESSION['user']['role'])) {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch();
+        if ($user) {
+            $_SESSION['user'] = $user;
+        }
+    }
+    
     return $_SESSION['user'] ?? null;
 }
 

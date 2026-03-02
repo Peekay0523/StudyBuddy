@@ -39,8 +39,13 @@ class AuthController {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['user'] = $user;
-                    
-                    header('Location: /dashboard');
+
+                    // Redirect admin users to admin panel
+                    if ($user['role'] === 'admin') {
+                        header('Location: /admin');
+                    } else {
+                        header('Location: /dashboard');
+                    }
                     exit;
                 } else {
                     $error = 'Invalid username or password';
