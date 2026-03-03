@@ -130,10 +130,69 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Study Groups table
+CREATE TABLE IF NOT EXISTS study_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    grade_level TEXT,
+    creator_user_id INTEGER NOT NULL,
+    max_members INTEGER DEFAULT 10,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (creator_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Study Group Members table
+CREATE TABLE IF NOT EXISTS study_group_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    study_group_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT DEFAULT 'member',
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (study_group_id) REFERENCES study_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(study_group_id, user_id)
+);
+
+-- Study Group Scripts table (shared resources)
+CREATE TABLE IF NOT EXISTS study_group_scripts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    study_group_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    description TEXT,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (study_group_id) REFERENCES study_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Study Group Messages table (chat)
+CREATE TABLE IF NOT EXISTS study_group_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    study_group_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    message_type TEXT DEFAULT 'text',
+    file_path TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (study_group_id) REFERENCES study_groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
 CREATE INDEX IF NOT EXISTS idx_scripts_student_id ON uploaded_scripts(student_id);
 CREATE INDEX IF NOT EXISTS idx_study_plans_student_id ON study_plans(student_id);
 CREATE INDEX IF NOT EXISTS idx_report_cards_student_id ON report_cards(student_id);
 CREATE INDEX IF NOT EXISTS idx_career_rec_student_id ON career_recommendations(student_id);
+CREATE INDEX IF NOT EXISTS idx_study_groups_creator ON study_groups(creator_user_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_members_group ON study_group_members(study_group_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_members_user ON study_group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_scripts_group ON study_group_scripts(study_group_id);
+CREATE INDEX IF NOT EXISTS idx_study_group_messages_group ON study_group_messages(study_group_id);
+
 UPDATE users SET role = 'admin' WHERE username = 'Pontsho09';

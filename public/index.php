@@ -87,6 +87,33 @@ $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCa
 $router->get('/ai-chat', 'AIChatController@index');
 $router->post('/api/chatbot', 'AIChatController@chat');
 
+// Study Groups
+$router->get('/study-group', 'StudyGroupController@index');
+$router->post('/study-group/create', 'StudyGroupController@create');
+$router->post('/study-group/join/{id}', 'StudyGroupController@join');
+$router->post('/study-group/leave/{id}', 'StudyGroupController@leave');
+$router->post('/study-group/delete/{id}', 'StudyGroupController@delete');
+$router->post('/study-group/update/{id}', 'StudyGroupController@update');
+$router->get('/study-group/view/{id}', 'StudyGroupController@view');
+$router->post('/study-group/{id}/upload-script', 'StudyGroupController@uploadScript');
+$router->get('/study-group/{groupId}/download-script/{scriptId}', 'StudyGroupController@downloadScript');
+$router->post('/study-group/{groupId}/delete-script/{scriptId}', 'StudyGroupController@deleteScript');
+$router->post('/study-group/{id}/send-message', 'StudyGroupController@sendMessage');
+$router->get('/study-group/{id}/get-messages', 'StudyGroupController@getMessages');
+$router->post('/study-group/{groupId}/delete-message/{messageId}', 'StudyGroupController@deleteMessage');
+$router->get('/uploads/study_groups/{groupId}/voice/{filename}', function($groupId, $filename) {
+    requireLogin();
+    $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . $filename;
+    if (!file_exists($filePath)) {
+        http_response_code(404);
+        echo 'File not found';
+        exit;
+    }
+    header('Content-Type: audio/webm');
+    header('Content-Length: ' . filesize($filePath));
+    readfile($filePath);
+});
+
 // Subscription
 $router->get('/subscription', 'SubscriptionController@index');
 $router->get('/subscription/checkout', 'SubscriptionController@checkout');
