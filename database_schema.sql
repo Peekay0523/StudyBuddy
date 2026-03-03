@@ -7,8 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     email TEXT,
+    phone TEXT UNIQUE NOT NULL,
     role TEXT DEFAULT 'student',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    joined_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Students table
@@ -120,6 +122,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     current_period_start DATETIME,
     current_period_end DATETIME,
     cancelled_at DATETIME,
+    payment_reference TEXT,
+    payment_date DATETIME,
+    proof_path TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

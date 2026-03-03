@@ -154,17 +154,42 @@ class AdminController {
      */
     public function subscriptions() {
         $db = Database::getInstance()->getConnection();
-        
-        $subscriptions = $db->query("
-            SELECT s.*, u.username, u.email
-            FROM subscriptions s
-            JOIN users u ON s.user_id = u.id
-            ORDER BY s.created_at DESC
-        ")->fetchAll();
-        
+
+        // Get filter from query string
+        $filter = $_GET['filter'] ?? 'all'; // all, pending_eft, active, trial, expired, cancelled
+
+        // Build query based on filter
+        if ($filter === 'all') {
+            $subscriptions = $db->query("
+                SELECT s.*, u.username, u.email, u.phone
+                FROM subscriptions s
+                JOIN users u ON s.user_id = u.id
+                ORDER BY 
+                    CASE s.status 
+                        WHEN 'pending_eft' THEN 1 
+                        WHEN 'trial' THEN 2 
+                        WHEN 'active' THEN 3 
+                        WHEN 'expired' THEN 4 
+                        WHEN 'cancelled' THEN 5 
+                        ELSE 6 
+                    END,
+                    s.created_at DESC
+            ")->fetchAll();
+        } else {
+            $stmt = $db->prepare("
+                SELECT s.*, u.username, u.email, u.phone
+                FROM subscriptions s
+                JOIN users u ON s.user_id = u.id
+                WHERE s.status = ?
+                ORDER BY s.created_at DESC
+            ");
+            $stmt->execute([$filter]);
+            $subscriptions = $stmt->fetchAll();
+        }
+
         $pageTitle = 'Manage Subscriptions - Admin - StudySmart';
         $currentPage = 'admin-subscriptions';
-        
+
         include __DIR__ . '/../templates/pages/admin/subscriptions.php';
     }
     
@@ -248,9 +273,10 @@ class AdminController {
      */
     public function viewUser($userId) {
         $db = Database::getInstance()->getConnection();
-        
-        $user = $db->prepare("SELECT * FROM users WHERE id = ?")->execute([$userId]);
-        $user = $user->fetch();
+
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
         
         if (!$user) {
             header('Location: /admin/users');
@@ -328,22 +354,239 @@ class AdminController {
             header('Location: /admin/subscriptions');
             exit;
         }
-        
+
         $subscriptionId = $_POST['subscription_id'] ?? null;
         if (!$subscriptionId) {
             setFlashMessage('error', 'Invalid subscription');
             header('Location: /admin/subscriptions');
             exit;
         }
-        
+
         $db = Database::getInstance()->getConnection();
         $update = $db->prepare("UPDATE subscriptions SET status = 'cancelled', cancelled_at = datetime('now') WHERE id = ?");
         $update->execute([$subscriptionId]);
-        
+
         setFlashMessage('success', 'Subscription cancelled successfully');
         header('Location: /admin/subscriptions');
     }
+
+    /**
+     * Change subscription status
+     */
+    public function changeSubscriptionStatus() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $subscriptionId = $_POST['subscription_id'] ?? null;
+        $newStatus = $_POST['new_status'] ?? null;
+
+        if (!$subscriptionId || !$newStatus) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $validStatuses = ['active', 'expired', 'cancelled', 'trial'];
+        if (!in_array($newStatus, $validStatuses)) {
+            setFlashMessage('error', 'Invalid status');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Build update query based on status
+        if ($newStatus === 'cancelled') {
+            $update = $db->prepare("UPDATE subscriptions SET status = ?, cancelled_at = datetime('now') WHERE id = ?");
+            $update->execute([$newStatus, $subscriptionId]);
+        } elseif ($newStatus === 'active' || $newStatus === 'trial') {
+            // Reactivate - clear cancelled_at and extend period
+            $update = $db->prepare("
+                UPDATE subscriptions 
+                SET status = ?, 
+                    cancelled_at = NULL,
+                    current_period_end = datetime('now', '+1 month')
+                WHERE id = ?
+            ");
+            $update->execute([$newStatus, $subscriptionId]);
+        } else {
+            $update = $db->prepare("UPDATE subscriptions SET status = ? WHERE id = ?");
+            $update->execute([$newStatus, $subscriptionId]);
+        }
+
+        $statusMessages = [
+            'active' => 'Subscription activated successfully',
+            'expired' => 'Subscription marked as expired',
+            'cancelled' => 'Subscription cancelled successfully',
+            'trial' => 'Subscription set to trial mode'
+        ];
+
+        setFlashMessage('success', $statusMessages[$newStatus] ?? 'Subscription status updated');
+        header('Location: /admin/subscriptions');
+    }
+
+    /**
+     * Approve EFT payment
+     */
+    public function approveEFTPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $subscriptionId = $_POST['subscription_id'] ?? null;
+
+        if (!$subscriptionId) {
+            setFlashMessage('error', 'Invalid subscription');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Update subscription to active
+        $update = $db->prepare("
+            UPDATE subscriptions 
+            SET status = 'active',
+                current_period_start = datetime('now'),
+                current_period_end = datetime('now', '+1 month'),
+                cancelled_at = NULL
+            WHERE id = ?
+        ");
+        $update->execute([$subscriptionId]);
+
+        setFlashMessage('success', 'EFT payment approved. Subscription activated for 1 month.');
+        header('Location: /admin/subscriptions');
+    }
+
+    /**
+     * Reject EFT payment
+     */
+    public function rejectEFTPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $subscriptionId = $_POST['subscription_id'] ?? null;
+        $reason = $_POST['rejection_reason'] ?? 'Payment verification failed';
+
+        if (!$subscriptionId) {
+            setFlashMessage('error', 'Invalid subscription');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Update subscription to rejected
+        $update = $db->prepare("
+            UPDATE subscriptions 
+            SET status = 'rejected',
+                cancelled_at = datetime('now')
+            WHERE id = ?
+        ");
+        $update->execute([$subscriptionId]);
+
+        setFlashMessage('info', "EFT payment rejected: {$reason}. User has been notified.");
+        header('Location: /admin/subscriptions');
+    }
+
+    /**
+     * Download EFT proof of payment
+     */
+    public function downloadProof($subscriptionId) {
+        $db = Database::getInstance()->getConnection();
+
+        // Get subscription and proof path
+        $stmt = $db->prepare("SELECT * FROM subscriptions WHERE id = ?");
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+
+        if (!$subscription || empty($subscription['proof_path'])) {
+            setFlashMessage('error', 'Proof of payment not found');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $filePath = __DIR__ . '/../../../public/' . $subscription['proof_path'];
+
+        if (!file_exists($filePath)) {
+            setFlashMessage('error', 'File not found');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        // Get file info
+        $pathInfo = pathinfo($filePath);
+        $extension = strtolower($pathInfo['extension'] ?? '');
+
+        // Set appropriate headers based on file type
+        switch ($extension) {
+            case 'pdf':
+                header('Content-Type: application/pdf');
+                break;
+            case 'jpg':
+            case 'jpeg':
+                header('Content-Type: image/jpeg');
+                break;
+            case 'png':
+                header('Content-Type: image/png');
+                break;
+            default:
+                header('Content-Type: application/octet-stream');
+        }
+
+        header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+        header('Content-Length: ' . filesize($filePath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+
+        readfile($filePath);
+        exit;
+    }
     
+    /**
+     * Delete a subscription
+     */
+    public function deleteSubscription() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $subscriptionId = $_POST['subscription_id'] ?? null;
+        if (!$subscriptionId) {
+            setFlashMessage('error', 'Invalid subscription');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        
+        // Get proof_path before deleting to remove file
+        $stmt = $db->prepare("SELECT proof_path FROM subscriptions WHERE id = ?");
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+        
+        // Delete the proof file if it exists
+        if ($subscription && !empty($subscription['proof_path'])) {
+            $filePath = __DIR__ . '/../../../public/' . $subscription['proof_path'];
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+        }
+        
+        // Delete the subscription
+        $delete = $db->prepare("DELETE FROM subscriptions WHERE id = ?");
+        $delete->execute([$subscriptionId]);
+
+        setFlashMessage('success', 'Subscription deleted successfully');
+        header('Location: /admin/subscriptions');
+    }
+
     /**
      * Delete a script
      */

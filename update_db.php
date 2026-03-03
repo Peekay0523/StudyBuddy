@@ -16,6 +16,31 @@ if (!in_array('role', $usersColumnNames)) {
     echo "role column already exists in users table\n";
 }
 
+// Add phone column to users table
+if (!in_array('phone', $usersColumnNames)) {
+    $db->exec("ALTER TABLE users ADD COLUMN phone TEXT");
+    echo "Added phone column to users table\n";
+} else {
+    echo "phone column already exists in users table\n";
+}
+
+// Add joined_date column to users table
+if (!in_array('joined_date', $usersColumnNames)) {
+    $db->exec("ALTER TABLE users ADD COLUMN joined_date DATETIME");
+    $db->exec("UPDATE users SET joined_date = created_at WHERE joined_date IS NULL");
+    echo "Added joined_date column to users table\n";
+} else {
+    echo "joined_date column already exists in users table\n";
+}
+
+// Make phone UNIQUE (requires recreating the index)
+try {
+    $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone ON users(phone)");
+    echo "Created unique index on phone column\n";
+} catch (PDOException $e) {
+    echo "Unique index on phone already exists\n";
+}
+
 // Create scripts table if not exists
 try {
     $db->exec("
@@ -128,4 +153,31 @@ if (!in_array('bursaries_data', $careerColumnNames)) {
 }
 
 echo "\nDatabase update complete!\n";
+
+// Add EFT payment columns to subscriptions table
+$subscriptionsColumns = $db->query("PRAGMA table_info(subscriptions)")->fetchAll(PDO::FETCH_ASSOC);
+$subscriptionsColumnNames = array_column($subscriptionsColumns, 'name');
+
+if (!in_array('payment_reference', $subscriptionsColumnNames)) {
+    $db->exec("ALTER TABLE subscriptions ADD COLUMN payment_reference TEXT");
+    echo "Added payment_reference column to subscriptions table\n";
+} else {
+    echo "payment_reference column already exists in subscriptions table\n";
+}
+
+if (!in_array('payment_date', $subscriptionsColumnNames)) {
+    $db->exec("ALTER TABLE subscriptions ADD COLUMN payment_date DATETIME");
+    echo "Added payment_date column to subscriptions table\n";
+} else {
+    echo "payment_date column already exists in subscriptions table\n";
+}
+
+if (!in_array('proof_path', $subscriptionsColumnNames)) {
+    $db->exec("ALTER TABLE subscriptions ADD COLUMN proof_path TEXT");
+    echo "Added proof_path column to subscriptions table\n";
+} else {
+    echo "proof_path column already exists in subscriptions table\n";
+}
+
+echo "\nAll updates complete!\n";
 ?>

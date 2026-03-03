@@ -15,8 +15,9 @@ class Router {
     }
     
     public function dispatch() {
-        $method = $_SERVER['REQUEST_METHOD'];
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $uri = parse_url($uri, PHP_URL_PATH);
         
         // Remove trailing slash except for root
         if ($uri !== '/' && substr($uri, -1) === '/') {
