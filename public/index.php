@@ -41,6 +41,19 @@ $router = new Router();
 $router->get('/', 'HomeController@index');
 $router->get('/home', 'HomeController@index');
 
+// Test GD library
+$router->get('/test-gd', function() {
+    echo "<h1>GD Library Test</h1>";
+    if (function_exists('imagecreatefromstring')) {
+        echo "<p style='color: green;'>✓ GD is available</p>";
+        echo "<pre>";
+        print_r(gd_info());
+        echo "</pre>";
+    } else {
+        echo "<p style='color: red;'>✗ GD is NOT available</p>";
+    }
+});
+
 // Authentication
 $router->get('/login', 'AuthController@login');
 $router->post('/login', 'AuthController@login');
@@ -127,6 +140,11 @@ $router->post('/subscription/downgrade', 'SubscriptionController@downgrade');
 // Scan to PDF
 $router->get('/scan', 'ScanController@index');
 $router->post('/api/scan-to-pdf', 'ScanController@convertToPdf');
+$router->post('/api/scan-save', 'ScanController@saveScan');
+$router->get('/api/scan-saved-list', 'ScanController@getSavedPdfs');
+$router->post('/api/scan-delete-saved', 'ScanController@deleteSavedPdf');
+$router->get('/view-scan-saved/{filename}', 'ScanController@viewSavedPdf');
+$router->get('/download-scan-saved/{filename}', 'ScanController@downloadSavedPdf');
 $router->get('/download-scan/{filename}', 'ScanController@downloadScan');
 
 // Admin Routes

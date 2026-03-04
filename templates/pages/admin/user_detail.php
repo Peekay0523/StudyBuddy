@@ -115,7 +115,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
     <?php if (empty($userScripts)): ?>
         <p style="color: #6b7280;">No scripts uploaded</p>
     <?php else: ?>
-        <table class="data-table">
+        <div class="table-responsive">
+            <table class="data-table">
             <thead>
                 <tr>
                     <th>File Name</th>
@@ -145,6 +146,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
         <?php if (count($userScripts) > 10): ?>
             <p style="margin-top: 15px; color: #6b7280;">+ <?php echo count($userScripts) - 10; ?> more scripts</p>
         <?php endif; ?>
@@ -157,7 +159,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
     <?php if (empty($userReportCards)): ?>
         <p style="color: #6b7280;">No report cards uploaded</p>
     <?php else: ?>
-        <table class="data-table">
+        <div class="table-responsive">
+            <table class="data-table">
             <thead>
                 <tr>
                     <th>File Name</th>
@@ -195,6 +198,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -204,7 +208,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
     <?php if (empty($userStudyPlans)): ?>
         <p style="color: #6b7280;">No study plans created</p>
     <?php else: ?>
-        <table class="data-table">
+        <div class="table-responsive">
+            <table class="data-table">
             <thead>
                 <tr>
                     <th>Title</th>
@@ -226,6 +231,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     <?php endif; ?>
 </div>
 
@@ -235,7 +241,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
     <?php if (empty($userSubscriptions)): ?>
         <p style="color: #6b7280;">No subscription history</p>
     <?php else: ?>
-        <table class="data-table">
+        <div class="table-responsive">
+            <table class="data-table">
             <thead>
                 <tr>
                     <th>Plan</th>
@@ -260,7 +267,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                             </span>
                         </td>
                         <td>
-                            <?php echo date('M d, Y', strtotime($sub['current_period_start'])); ?> - 
+                            <?php echo date('M d, Y', strtotime($sub['current_period_start'])); ?> -
                             <?php echo $sub['current_period_end'] ? date('M d, Y', strtotime($sub['current_period_end'])) : 'Ongoing'; ?>
                         </td>
                         <td><?php echo date('M d, Y', strtotime($sub['created_at'])); ?></td>
@@ -268,6 +275,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     <?php endif; ?>
 </div>
 

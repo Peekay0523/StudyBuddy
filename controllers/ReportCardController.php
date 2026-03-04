@@ -27,43 +27,84 @@ class ReportCardController {
         requireStudent();
 
         $error = '';
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['report_card_file'])) {
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $student = getCurrentStudent();
             
-            $validation = FileHelper::validateUpload(
-                $_FILES['report_card_file'], 
-                ALLOWED_REPORT_CARD_EXTENSIONS
-            );
-            
-            if (!$validation['valid']) {
-                $error = $validation['error'];
-            } else {
-                $fileName = FileHelper::saveUploadedFile($_FILES['report_card_file'], UPLOAD_DIR_REPORT_CARDS);
+            // Handle selected scan file
+            if (isset($_POST['selected_scan_file']) && !empty($_POST['selected_scan_file'])) {
+                $selectedScan = basename($_POST['selected_scan_file']);
+                $scanPath = __DIR__ . '/../uploads/scans/' . $student['id'] . '/saved/' . $selectedScan;
                 
-                if ($fileName) {
-                    $grade = $_POST['grade'] ?? '';
-                    $term = $_POST['term'] ?? '';
+                if (file_exists($scanPath)) {
+                    // Copy scan to report cards folder
+                    $newFileName = 'reportcard_' . time() . '_' . $selectedScan;
+                    $destPath = __DIR__ . '/../uploads/report_cards/' . $student['id'] . '/' . $newFileName;
+                    
+                    if (!is_dir(dirname($destPath))) {
+                        mkdir(dirname($destPath), 0755, true);
+                    }
+                    
+                    if (copy($scanPath, $destPath)) {
+                        $grade = $_POST['grade'] ?? '';
+                        $term = $_POST['term'] ?? '';
 
-                    $reportCardId = $this->reportCardModel->create(
-                        $student['id'],
-                        $fileName,
-                        $grade,
-                        $term
-                    );
+                        $reportCardId = $this->reportCardModel->create(
+                            $student['id'],
+                            $newFileName,
+                            $grade,
+                            $term
+                        );
 
-                    // Process the report card
-                    $this->processReportCard($reportCardId);
+                        // Process the report card
+                        $this->processReportCard($reportCardId);
 
-                    setFlashMessage('success', 'Report card uploaded and processed successfully! Click "View Career Recommendations" to see your results.');
-                    header('Location: /upload-report-card');
-                    exit;
+                        setFlashMessage('success', 'Scan uploaded and processed successfully! Click "View Career Recommendations" to see your results.');
+                        header('Location: /upload-report-card');
+                        exit;
+                    } else {
+                        $error = 'Failed to copy scan file';
+                    }
                 } else {
-                    $error = 'Failed to save file';
+                    $error = 'Selected scan not found';
+                }
+            }
+            // Handle regular file upload
+            elseif (isset($_FILES['report_card_file'])) {
+                $validation = FileHelper::validateUpload(
+                    $_FILES['report_card_file'],
+                    ALLOWED_REPORT_CARD_EXTENSIONS
+                );
+
+                if (!$validation['valid']) {
+                    $error = $validation['error'];
+                } else {
+                    $fileName = FileHelper::saveUploadedFile($_FILES['report_card_file'], UPLOAD_DIR_REPORT_CARDS);
+
+                    if ($fileName) {
+                        $grade = $_POST['grade'] ?? '';
+                        $term = $_POST['term'] ?? '';
+
+                        $reportCardId = $this->reportCardModel->create(
+                            $student['id'],
+                            $fileName,
+                            $grade,
+                            $term
+                        );
+
+                        // Process the report card
+                        $this->processReportCard($reportCardId);
+
+                        setFlashMessage('success', 'Report card uploaded and processed successfully! Click "View Career Recommendations" to see your results.');
+                        header('Location: /upload-report-card');
+                        exit;
+                    } else {
+                        $error = 'Failed to save file';
+                    }
                 }
             }
         }
-        
+
         include __DIR__ . '/../templates/pages/upload_report_card.php';
     }
     

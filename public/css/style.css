@@ -796,6 +796,45 @@ body {
     min-height: 40px;
 }
 
+.btn-sm-primary {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.btn-sm-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-sm-danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.btn-sm-danger:hover {
+    opacity: 0.9;
+}
+
+.btn-sm-warning {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: white;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.btn-sm-warning:hover {
+    opacity: 0.9;
+}
+
 .memo-result {
     margin-top: 20px;
 }

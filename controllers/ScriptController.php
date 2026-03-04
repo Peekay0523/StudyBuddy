@@ -28,48 +28,105 @@ class ScriptController {
     
     public function upload() {
         requireStudent();
-        
+
         $error = '';
         $success = '';
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['script_file'])) {
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $student = getCurrentStudent();
             
-            $validation = FileHelper::validateUpload(
-                $_FILES['script_file'], 
-                ALLOWED_SCRIPT_EXTENSIONS
-            );
-            
-            if (!$validation['valid']) {
-                $error = $validation['error'];
-            } else {
-                $fileName = FileHelper::saveUploadedFile($_FILES['script_file'], UPLOAD_DIR_SCRIPTS);
+            // Handle selected scan file
+            if (isset($_POST['selected_scan_file']) && !empty($_POST['selected_scan_file'])) {
+                $selectedScan = basename($_POST['selected_scan_file']);
+                $scanPath = __DIR__ . '/../uploads/scans/' . $student['id'] . '/saved/' . $selectedScan;
                 
-                if ($fileName) {
-                    $title = $_POST['title'] ?? $_FILES['script_file']['name'];
-                    $subject = $_POST['subject'] ?? '';
-                    $gradeLevel = $_POST['grade_level'] ?? '';
+                if (file_exists($scanPath)) {
+                    // Copy scan to scripts folder
+                    $newFileName = 'script_' . time() . '_' . $selectedScan;
+                    $destPath = __DIR__ . '/../uploads/scripts/' . $student['id'] . '/' . $newFileName;
                     
-                    $scriptId = $this->scriptModel->create(
-                        $student['id'],
-                        $title,
-                        $fileName,
-                        $subject,
-                        $gradeLevel
-                    );
+                    if (!is_dir(dirname($destPath))) {
+                        mkdir(dirname($destPath), 0755, true);
+                    }
                     
-                    // Process the script
-                    $this->processScript($scriptId);
-                    
-                    setFlashMessage('success', 'Script uploaded and processed successfully!');
-                    header('Location: /dashboard');
-                    exit;
+                    if (copy($scanPath, $destPath)) {
+                        $title = $_POST['title'] ?? $selectedScan;
+                        $subject = $_POST['subject'] ?? '';
+                        $gradeLevel = $_POST['grade_level'] ?? '';
+
+                        $scriptId = $this->scriptModel->create(
+                            $student['id'],
+                            $title,
+                            $newFileName,
+                            $subject,
+                            $gradeLevel
+                        );
+
+                        // Process the script
+                        $this->processScript($scriptId);
+
+                        // Check if redirecting to study plan page
+                        if (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1') {
+                            setFlashMessage('success', 'Scan uploaded successfully! Study plan will be generated shortly.');
+                            header('Location: /study-plan?generated=1');
+                            exit;
+                        }
+
+                        setFlashMessage('success', 'Scan uploaded and processed successfully!');
+                        header('Location: /dashboard');
+                        exit;
+                    } else {
+                        $error = 'Failed to copy scan file';
+                    }
                 } else {
-                    $error = 'Failed to save file';
+                    $error = 'Selected scan not found';
+                }
+            }
+            // Handle regular file upload
+            elseif (isset($_FILES['script_file'])) {
+                $validation = FileHelper::validateUpload(
+                    $_FILES['script_file'],
+                    ALLOWED_SCRIPT_EXTENSIONS
+                );
+
+                if (!$validation['valid']) {
+                    $error = $validation['error'];
+                } else {
+                    $fileName = FileHelper::saveUploadedFile($_FILES['script_file'], UPLOAD_DIR_SCRIPTS);
+
+                    if ($fileName) {
+                        $title = $_POST['title'] ?? $_FILES['script_file']['name'];
+                        $subject = $_POST['subject'] ?? '';
+                        $gradeLevel = $_POST['grade_level'] ?? '';
+
+                        $scriptId = $this->scriptModel->create(
+                            $student['id'],
+                            $title,
+                            $fileName,
+                            $subject,
+                            $gradeLevel
+                        );
+
+                        // Process the script
+                        $this->processScript($scriptId);
+
+                        // Check if redirecting to study plan page
+                        if (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1') {
+                            setFlashMessage('success', 'Script uploaded successfully! Study plan will be generated shortly.');
+                            header('Location: /study-plan?generated=1');
+                            exit;
+                        }
+
+                        setFlashMessage('success', 'Script uploaded and processed successfully!');
+                        header('Location: /dashboard');
+                        exit;
+                    } else {
+                        $error = 'Failed to save file';
+                    }
                 }
             }
         }
-        
+
         include __DIR__ . '/../templates/pages/upload_script.php';
     }
     

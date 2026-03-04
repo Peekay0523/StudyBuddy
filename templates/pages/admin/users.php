@@ -50,66 +50,68 @@ include __DIR__ . '/../../layouts/admin_header.php';
 
 <!-- Users Table -->
 <div class="admin-section">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>User</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Subscription</th>
-                <th>Scripts</th>
-                <th>Report Cards</th>
-                <th>Study Plans</th>
-                <th>Joined</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($users)): ?>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td colspan="10" style="text-align: center; padding: 40px; color: #6b7280;">
-                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
-                        No users found
-                    </td>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Subscription</th>
+                    <th>Scripts</th>
+                    <th>Report Cards</th>
+                    <th>Study Plans</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
                 </tr>
-            <?php else: ?>
-                <?php foreach ($users as $user): ?>
+            </thead>
+            <tbody>
+                <?php if (empty($users)): ?>
                     <tr>
-                        <td style="color: #6b7280;">#<?php echo $user['id']; ?></td>
-                        <td>
-                            <strong><?php echo htmlspecialchars($user['username'] ?? ''); ?></strong>
-                        </td>
-                        <td><?php echo htmlspecialchars($user['email'] ?? ''); ?></td>
-                        <td>
-                            <span class="badge <?php echo $user['role'] === 'admin' ? 'premium' : 'free'; ?>">
-                                <?php echo htmlspecialchars($user['role'] ?? 'student'); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge <?php echo htmlspecialchars($user['subscription_plan'] ?? 'free'); ?>">
-                                <?php echo htmlspecialchars($user['subscription_plan'] ?? 'free'); ?>
-                            </span>
-                            <?php if ($user['subscription_status'] === 'active'): ?>
-                                <span style="font-size: 11px; color: #6b7280;">
-                                    until <?php echo date('M d', strtotime($user['subscription_end'] ?? 'now')); ?>
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?php echo $user['scripts_count']; ?></td>
-                        <td><?php echo $user['report_cards_count']; ?></td>
-                        <td><?php echo $user['study_plans_count']; ?></td>
-                        <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
-                        <td>
-                            <a href="/admin/users/<?php echo $user['id']; ?>" class="btn-sm btn-sm-primary" style="text-decoration: none;">
-                                <i class="fas fa-eye"></i> View
-                            </a>
+                        <td colspan="10" style="text-align: center; padding: 40px; color: #6b7280;">
+                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                            No users found
                         </td>
                     </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
+                <?php else: ?>
+                    <?php foreach ($users as $user): ?>
+                        <tr>
+                            <td style="color: #6b7280;">#<?php echo $user['id']; ?></td>
+                            <td>
+                                <strong><?php echo htmlspecialchars($user['username'] ?? ''); ?></strong>
+                            </td>
+                            <td><?php echo htmlspecialchars($user['email'] ?? ''); ?></td>
+                            <td>
+                                <span class="badge <?php echo $user['role'] === 'admin' ? 'premium' : 'free'; ?>">
+                                    <?php echo htmlspecialchars($user['role'] ?? 'student'); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge <?php echo htmlspecialchars($user['subscription_plan'] ?? 'free'); ?>">
+                                    <?php echo htmlspecialchars($user['subscription_plan'] ?? 'free'); ?>
+                                </span>
+                                <?php if ($user['subscription_status'] === 'active'): ?>
+                                    <span style="font-size: 11px; color: #6b7280;">
+                                        until <?php echo date('M d', strtotime($user['subscription_end'] ?? 'now')); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo $user['scripts_count']; ?></td>
+                            <td><?php echo $user['report_cards_count']; ?></td>
+                            <td><?php echo $user['study_plans_count']; ?></td>
+                            <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
+                            <td>
+                                <a href="/admin/users/<?php echo $user['id']; ?>" class="btn-sm btn-sm-primary" style="text-decoration: none;">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div style="text-align: center; margin-top: 20px; color: #6b7280;">

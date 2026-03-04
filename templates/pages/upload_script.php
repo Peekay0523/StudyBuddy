@@ -190,6 +190,11 @@ include __DIR__ . '/../layouts/header.php';
                     <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
                     <p style="margin: 0; color: #64748b; font-size: 13px;">PDF, DOCX, TXT (Max 10MB)</p>
                 </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button type="button" id="select-from-scans-btn" class="btn-secondary" style="padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                        <i class="fas fa-folder-open"></i> Select from My Scans
+                    </button>
+                </div>
                 <div id="preview-section" style="display: none; margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <i class="fas fa-file-alt" style="font-size: 28px; color: #667eea;"></i>
@@ -237,5 +242,124 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 </div>
+
+<!-- Select from Scans Modal -->
+<div id="scans-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;">
+            <h3 style="margin: 0; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-folder-open" style="color: #667eea;"></i> Select from My Scans
+            </h3>
+            <button id="close-scans-modal" style="background: none; border: none; font-size: 24px; color: #6b7280; cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="scans-list" style="display: grid; gap: 15px;">
+            <p style="text-align: center; color: #6b7280; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><br>Loading scans...
+            </p>
+        </div>
+        <div id="no-scans" style="display: none; text-align: center; padding: 40px; color: #6b7280;">
+            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+            <p>No saved scans yet. <a href="/scan" style="color: #667eea;">Create one first</a></p>
+        </div>
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <button id="close-scans-modal-bottom" class="btn-secondary" style="padding: 10px 30px;">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Select from scans functionality
+const selectFromScansBtn = document.getElementById('select-from-scans-btn');
+const scansModalOverlay = document.getElementById('scans-modal-overlay');
+const closeScansModal = document.getElementById('close-scans-modal');
+const closeScansModalBottom = document.getElementById('close-scans-modal-bottom');
+const scansList = document.getElementById('scans-list');
+const noScans = document.getElementById('no-scans');
+
+if (selectFromScansBtn) {
+    selectFromScansBtn.addEventListener('click', async () => {
+        scansModalOverlay.style.display = 'flex';
+        await loadScans();
+    });
+}
+
+if (closeScansModal) {
+    closeScansModal.addEventListener('click', () => {
+        scansModalOverlay.style.display = 'none';
+    });
+}
+
+if (closeScansModalBottom) {
+    closeScansModalBottom.addEventListener('click', () => {
+        scansModalOverlay.style.display = 'none';
+    });
+}
+
+scansModalOverlay.addEventListener('click', (e) => {
+    if (e.target === scansModalOverlay) {
+        scansModalOverlay.style.display = 'none';
+    }
+});
+
+async function loadScans() {
+    try {
+        const response = await fetch('/api/scan-saved-list');
+        const data = await response.json();
+        
+        if (data.success && data.files.length > 0) {
+            noScans.style.display = 'none';
+            scansList.innerHTML = data.files.map(file => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'" onclick="selectScan('${file.name}', '${file.url}')">
+                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                        <i class="fas fa-file-pdf" style="font-size: 32px; color: #dc2626;"></i>
+                        <div>
+                            <h4 style="margin: 0; color: #1f2937; font-size: 15px;">${escapeHtml(file.name)}</h4>
+                            <small style="color: #6b7280;">${file.size} • ${file.date}</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
+                </div>
+            `).join('');
+        } else {
+            noScans.style.display = 'block';
+            scansList.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('Error loading scans:', error);
+        scansList.innerHTML = '<p style="text-align: center; color: #dc2626;">Error loading scans</p>';
+    }
+}
+
+function selectScan(filename, url) {
+    // Create a hidden input to store the selected scan
+    let hiddenInput = document.getElementById('selected_scan_file');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'selected_scan_file';
+        hiddenInput.name = 'selected_scan_file';
+        document.querySelector('form').appendChild(hiddenInput);
+    }
+    hiddenInput.value = filename;
+    
+    // Update preview
+    document.getElementById('file-name').textContent = filename;
+    document.getElementById('file-size').textContent = 'From saved scans';
+    document.getElementById('preview-section').style.display = 'block';
+    document.getElementById('upload-area').style.display = 'none';
+    
+    scansModalOverlay.style.display = 'none';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

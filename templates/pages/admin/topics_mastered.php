@@ -49,7 +49,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
 <!-- User Activity by Topics -->
 <div class="admin-section">
     <h3><i class="fas fa-users"></i> User Learning Activity</h3>
-    <table class="data-table">
+    <div class="table-responsive">
+        <table class="data-table">
         <thead>
             <tr>
                 <th>User</th>
@@ -105,6 +106,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 <!-- Learning Insights -->

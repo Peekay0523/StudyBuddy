@@ -15,7 +15,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
 </div>
 
 <div class="admin-section">
-    <table class="data-table">
+    <div class="table-responsive">
+        <table class="data-table">
         <thead>
             <tr>
                 <th>ID</th>
@@ -85,6 +86,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 <?php include __DIR__ . '/../../layouts/admin_footer.php'; ?>

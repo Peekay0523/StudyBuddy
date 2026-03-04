@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Hide ALL regular app layout elements - aggressive reset */
-        .app-container, 
-        .app-container > .sidebar, 
-        .app-container > .content, 
+        .app-container,
+        .app-container > .sidebar,
+        .app-container > .content,
         .app-container > .top-nav,
-        .sidebar, 
-        .sidebar-overlay, 
+        .sidebar,
+        .sidebar-overlay,
         .top-nav,
         body > nav,
         body > aside,
@@ -24,7 +24,7 @@
             position: absolute !important;
             left: -9999px !important;
         }
-        
+
         /* Reset body margin/padding for admin layout */
         body {
             margin: 0;
@@ -37,6 +37,7 @@
             min-height: 100vh;
             width: 100%;
             position: relative;
+            overflow-x: hidden;
         }
         .admin-sidebar {
             width: 260px;
@@ -49,11 +50,43 @@
             z-index: 9999;
             left: 0;
             top: 0;
+            transition: transform 0.3s ease;
+        }
+        .hamburger-menu {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 10000;
+            background: #1e293b;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background 0.2s;
+        }
+        .hamburger-menu:hover {
+            background: #2d3f54;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+        .sidebar-overlay.active {
+            display: block;
         }
         .admin-sidebar .logo {
             font-size: 24px;
             font-weight: bold;
-            margin-bottom: 30px;
+            margin-bottom: 0;
             padding-bottom: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
@@ -86,6 +119,8 @@
             padding: 30px;
             background: #f1f5f9;
             min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
         }
         .stats-grid {
             display: grid;
@@ -137,6 +172,7 @@
             padding: 24px;
             margin-bottom: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
         }
         .admin-section h3 {
             margin-bottom: 20px;
@@ -144,6 +180,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            white-space: nowrap;
         }
         .data-table {
             width: 100%;
@@ -194,11 +231,29 @@
         .chart-container {
             display: flex;
             gap: 20px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+            position: relative;
+        }
+        .chart-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .chart-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .chart-container::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        .chart-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
         .chart-box {
-            flex: 1;
-            min-width: 250px;
+            flex: 0 0 250px;
             background: #f9fafb;
             padding: 20px;
             border-radius: 8px;
@@ -215,15 +270,145 @@
             border-radius: 4px;
             transition: width 0.3s;
         }
+
+        /* Table wrapper for responsive scrolling */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        .table-responsive::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .table-responsive .data-table {
+            min-width: 700px;
+        }
+
+        /* Hide mobile close button on desktop by default */
+        .mobile-close-btn {
+            display: none;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                display: block;
+            }
+            .mobile-close-btn {
+                display: block !important;
+            }
+            .admin-sidebar {
+                transform: translateX(-100%);
+            }
+            .admin-sidebar.active {
+                transform: translateX(0);
+            }
+            .admin-content {
+                margin-left: 0;
+                padding: 70px 15px 15px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .stat-card {
+                padding: 20px;
+            }
+            .stat-card .value {
+                font-size: 28px;
+            }
+            .admin-section {
+                padding: 20px;
+            }
+            .admin-section h3 {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+            .chart-container {
+                flex-direction: column;
+                gap: 15px;
+                overflow-x: visible;
+                padding-bottom: 0;
+            }
+            .chart-box {
+                width: 100%;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+            .progress-bar {
+                height: 10px;
+            }
+            .table-responsive {
+                margin: 0 -10px;
+                padding: 0 10px;
+                overflow-x: scroll;
+            }
+            .table-responsive .data-table {
+                font-size: 13px;
+            }
+            .table-responsive .data-table th,
+            .table-responsive .data-table td {
+                padding: 10px 6px;
+            }
+            .btn-sm {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-card .value {
+                font-size: 24px;
+            }
+            .stat-card .icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            .admin-content {
+                padding: 60px 10px 10px;
+            }
+            .hamburger-menu {
+                top: 10px;
+                left: 10px;
+                padding: 8px 12px;
+            }
+        }
     </style>
 </head>
 <body>
 
+<!-- Hamburger Menu Button (Mobile) -->
+<button class="hamburger-menu" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar Overlay (Mobile) -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <div class="admin-layout">
     <!-- Admin Sidebar -->
-    <aside class="admin-sidebar">
-        <div class="logo">
-            <i class="fas fa-shield-halved"></i> Admin Panel
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="logo" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+                <i class="fas fa-shield-halved"></i> Admin Panel
+            </div>
+            <button onclick="toggleSidebar()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px;" class="mobile-close-btn">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <nav>
             <a href="/admin" class="<?php echo ($currentPage ?? '') === 'admin-dashboard' ? 'active' : ''; ?>">
