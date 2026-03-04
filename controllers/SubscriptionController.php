@@ -111,6 +111,13 @@ class SubscriptionController {
             exit;
         }
 
+        // Check if user already has an active or pending subscription
+        if ($this->userHasActiveSubscription($user['id'])) {
+            setFlashMessage('error', 'You already have an active subscription. Please cancel your current subscription before subscribing to a new plan.');
+            header('Location: /subscription');
+            exit;
+        }
+
         // Handle different payment methods
         if ($paymentMethod === 'eft') {
             // EFT Payment - requires manual verification
@@ -264,27 +271,46 @@ class SubscriptionController {
 
     public function cancel() {
         requireStudent();
-        
+
         $user = getCurrentUser();
         $this->cancelSubscription($user['id']);
-        
+
         setFlashMessage('success', 'Your subscription has been cancelled. You will retain access until the end of your billing period.');
         header('Location: /subscription');
         exit;
     }
 
-    private function getUserSubscription($userId) {
+    /**
+     * Downgrade to free plan
+     */
+    public function downgrade() {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /subscription');
+            exit;
+        }
+
+        $user = getCurrentUser();
+        $this->downgradeToFree($user['id']);
+
+        setFlashMessage('success', 'You have been downgraded to the Free plan. You will lose access to premium features immediately.');
+        header('Location: /subscription');
+        exit;
+    }
+
+    public function getUserSubscription($userId) {
         $db = Database::getInstance()->getConnection();
 
         // Check if subscriptions table exists
         try {
             // Get active or trial subscriptions (trial users have access to basic features)
             $stmt = $db->prepare("
-                SELECT * FROM subscriptions 
-                WHERE user_id = ? 
-                AND status IN ('active', 'trial') 
+                SELECT * FROM subscriptions
+                WHERE user_id = ?
+                AND status IN ('active', 'trial')
                 AND datetime(current_period_end) > datetime('now')
-                ORDER BY created_at DESC 
+                ORDER BY created_at DESC
                 LIMIT 1
             ");
             $stmt->execute([$userId]);
@@ -299,6 +325,26 @@ class SubscriptionController {
             return $subscription;
         } catch (Exception $e) {
             return null;
+        }
+    }
+
+    /**
+     * Check if user has any active or pending subscription
+     */
+    private function userHasActiveSubscription($userId) {
+        $db = Database::getInstance()->getConnection();
+
+        try {
+            $stmt = $db->prepare("
+                SELECT COUNT(*) FROM subscriptions
+                WHERE user_id = ?
+                AND status IN ('active', 'trial', 'pending_eft')
+            ");
+            $stmt->execute([$userId]);
+            $count = $stmt->fetchColumn();
+            return $count > 0;
+        } catch (Exception $e) {
+            return false;
         }
     }
 
@@ -325,9 +371,28 @@ class SubscriptionController {
 
     private function cancelSubscription($userId) {
         $db = Database::getInstance()->getConnection();
-        
+
         try {
             $stmt = $db->prepare("UPDATE subscriptions SET status = 'cancelled' WHERE user_id = ? AND status = 'active'");
+            $stmt->execute([$userId]);
+        } catch (Exception $e) {
+            // Ignore if table doesn't exist
+        }
+    }
+
+    private function downgradeToFree($userId) {
+        $db = Database::getInstance()->getConnection();
+
+        try {
+            // Cancel any active or trial subscription
+            $stmt = $db->prepare("
+                UPDATE subscriptions 
+                SET status = 'cancelled', 
+                    current_period_end = datetime('now'),
+                    updated_at = datetime('now')
+                WHERE user_id = ? 
+                AND status IN ('active', 'trial')
+            ");
             $stmt->execute([$userId]);
         } catch (Exception $e) {
             // Ignore if table doesn't exist

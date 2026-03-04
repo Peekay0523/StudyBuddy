@@ -6,16 +6,25 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/AIHelper.php';
+require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class AIChatController {
     private $aiHelper;
-    
+
     public function __construct() {
         $this->aiHelper = new AIHelper();
     }
-    
+
     public function index() {
         requireStudent();
+        
+        // Check user's subscription plan
+        $subscriptionController = new SubscriptionController();
+        $user = getCurrentUser();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        $canUseVoiceMode = ($currentPlan !== 'free');
+        
         include __DIR__ . '/../templates/pages/ai_chat.php';
     }
 

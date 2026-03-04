@@ -101,6 +101,7 @@ $router->post('/study-group/{groupId}/delete-script/{scriptId}', 'StudyGroupCont
 $router->post('/study-group/{id}/send-message', 'StudyGroupController@sendMessage');
 $router->get('/study-group/{id}/get-messages', 'StudyGroupController@getMessages');
 $router->post('/study-group/{groupId}/delete-message/{messageId}', 'StudyGroupController@deleteMessage');
+$router->post('/study-group/{groupId}/remove-member/{userId}', 'StudyGroupController@removeMember');
 $router->get('/uploads/study_groups/{groupId}/voice/{filename}', function($groupId, $filename) {
     requireLogin();
     $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . $filename;
@@ -121,6 +122,12 @@ $router->get('/subscription/success', 'SubscriptionController@success');
 $router->post('/subscription/process-payment', 'SubscriptionController@processPayment');
 $router->post('/subscription/subscribe', 'SubscriptionController@subscribe');
 $router->post('/subscription/cancel', 'SubscriptionController@cancel');
+$router->post('/subscription/downgrade', 'SubscriptionController@downgrade');
+
+// Scan to PDF
+$router->get('/scan', 'ScanController@index');
+$router->post('/api/scan-to-pdf', 'ScanController@convertToPdf');
+$router->get('/download-scan/{filename}', 'ScanController@downloadScan');
 
 // Admin Routes
 $router->get('/admin', 'AdminController@index');

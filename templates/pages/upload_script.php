@@ -2,27 +2,95 @@
 $pageTitle = 'Upload Script - StudySmart';
 $currentPage = 'scripts';
 $extraScripts = '<script>
+const uploadArea = document.getElementById("upload-area");
+const fileInput = document.getElementById("script_file");
+const previewSection = document.getElementById("preview-section");
+const fileName = document.getElementById("file-name");
+const fileSize = document.getElementById("file-size");
+const clearBtn = document.getElementById("clear-btn");
+
+// Click to upload
+uploadArea.addEventListener("click", () => {
+    fileInput.click();
+});
+
+// Drag and drop
+uploadArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = "#667eea";
+    uploadArea.style.background = "#e0e7ff";
+});
+
+uploadArea.addEventListener("dragleave", () => {
+    uploadArea.style.borderColor = "#cbd5e1";
+    uploadArea.style.background = "#f8fafc";
+});
+
+uploadArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = "#cbd5e1";
+    uploadArea.style.background = "#f8fafc";
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+        handleFile(files[0]);
+    }
+});
+
+// File input change
+fileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
+    
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx") && !file.name.endsWith(".txt")) {
+        alert("Invalid file type. Please upload PDF, DOCX, or TXT files.");
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        alert("File size must be less than 10MB.");
+        return;
+    }
+    
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
+    previewSection.style.display = "block";
+    uploadArea.style.display = "none";
+}
+
+// Clear selection
+clearBtn.addEventListener("click", () => {
+    fileInput.value = "";
+    previewSection.style.display = "none";
+    uploadArea.style.display = "block";
+});
+
 async function generateMemorandum(scriptId) {
     const btn = document.getElementById("gen-memo-btn-" + scriptId);
     const resultDiv = document.getElementById("memo-result-" + scriptId);
-    
+
     if (!btn || !resultDiv) return;
-    
+
     btn.disabled = true;
     btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Generating...";
     resultDiv.innerHTML = "";
-    
+
     try {
         const formData = new FormData();
         formData.append("script_id", scriptId);
-        
+
         const response = await fetch("/api/generate-memorandum", {
             method: "POST",
             body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             resultDiv.innerHTML = `
                 <div class="memorandum-card">
@@ -71,7 +139,7 @@ async function loadUploadedScripts() {
     try {
         const response = await fetch("/api/get-user-scripts");
         const data = await response.json();
-        
+
         if (data.scripts && data.scripts.length > 0) {
             const scriptsList = document.getElementById("scripts-list");
             if (scriptsList) {
@@ -113,9 +181,27 @@ include __DIR__ . '/../layouts/header.php';
 <div class="upload-container">
     <div class="auth-box" style="max-width: 600px;">
         <form method="post" action="/upload-script" enctype="multipart/form-data">
+            <!-- Drag & Drop File Input -->
             <div class="form-group">
-                <label for="script_file">Script File (PDF, DOCX, or TXT)</label>
-                <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" required>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Script File (PDF, DOCX, or TXT)</label>
+                <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
+                    <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;" required>
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
+                    <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
+                    <p style="margin: 0; color: #64748b; font-size: 13px;">PDF, DOCX, TXT (Max 10MB)</p>
+                </div>
+                <div id="preview-section" style="display: none; margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="fas fa-file-alt" style="font-size: 28px; color: #667eea;"></i>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1e293b; font-size: 14px;" id="file-name"></div>
+                            <div style="font-size: 12px; color: #64748b;" id="file-size"></div>
+                        </div>
+                        <button type="button" id="clear-btn" style="background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">

@@ -82,7 +82,11 @@ $isTrial = $userSubscription['is_trial'] ?? false;
         <?php if ($currentPlan === 'free'): ?>
             <button class="btn-primary" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed;">Current Plan</button>
         <?php else: ?>
-            <a href="/subscription/checkout?plan=free" class="btn-secondary" style="display: block; text-align: center; text-decoration: none;">Downgrade to Free</a>
+            <form method="POST" action="/subscription/downgrade" onsubmit="return confirm('Are you sure you want to downgrade to Free? You will immediately lose access to all premium features.');">
+                <button type="submit" class="btn-downgrade" style="display: block; width: 100%; padding: 12px 20px; background: #f1f5f9; color: #64748b; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s ease;">
+                    <i class="fas fa-arrow-down"></i> Downgrade to Free
+                </button>
+            </form>
         <?php endif; ?>
     </div>
 
@@ -204,6 +208,12 @@ $isTrial = $userSubscription['is_trial'] ?? false;
 .features-list li:last-child,
 .limitations-list li:last-child {
     border-bottom: none;
+}
+
+.btn-downgrade:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #475569;
 }
 
 @media (max-width: 768px) {

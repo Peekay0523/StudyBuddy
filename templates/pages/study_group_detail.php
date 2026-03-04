@@ -309,8 +309,8 @@ include __DIR__ . '/../layouts/header.php';
             <?php foreach ($messages as $msg): ?>
                 <?php 
                     $isOwn = $msg['user_id'] == $user['id'];
-                    // Debug: remove this after testing
-                    error_log("Message ID: {$msg['id']}, user_id: {$msg['user_id']}, current user: {$user['id']}, isOwn: " . ($isOwn ? 'true' : 'false'));
+                    $isAdmin = $group['creator_user_id'] == $user['id'];
+                    $canDelete = $isOwn || $isAdmin;
                 ?>
                 <div class="chat-message <?php echo $isOwn ? 'own' : 'other'; ?>" data-message-id="<?php echo $msg['id']; ?>">
                     <div class="message-sender"><?php echo htmlspecialchars($msg['sender_name']); ?></div>
@@ -335,14 +335,11 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div class="message-time">
                         <?php echo date('M d, H:i', strtotime($msg['created_at'])); ?>
-                        <?php if ($isOwn): ?>
-                            <!-- DELETE BUTTON DEBUG -->
-                            <button type="button" class="message-delete-btn" onclick="if(confirm('Delete this message?')) document.getElementById('delete-form-<?php echo $msg['id']; ?>').submit();" title="Delete message" style="color: #ef4444;">
-                                <i class="fas fa-trash"></i> DELETE
+                        <?php if ($canDelete): ?>
+                            <button type="button" class="message-delete-btn" onclick="if(confirm('Delete this message?')) document.getElementById('delete-form-<?php echo $msg['id']; ?>').submit();" title="Delete message">
+                                <i class="fas fa-trash"></i>
                             </button>
                             <form id="delete-form-<?php echo $msg['id']; ?>" method="POST" action="/study-group/<?php echo $group['id']; ?>/delete-message/<?php echo $msg['id']; ?>" style="display: none;"></form>
-                        <?php else: ?>
-                            <!-- NOT OWN MESSAGE: user_id=<?php echo $msg['user_id']; ?>, current=<?php echo $user['id']; ?> -->
                         <?php endif; ?>
                     </div>
                 </div>
@@ -439,18 +436,28 @@ include __DIR__ . '/../layouts/header.php';
         <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
                 <?php foreach ($members as $member): ?>
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; position: relative;">
                         <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
                             <?php echo strtoupper(substr($member['username'], 0, 1)); ?>
                         </div>
                         <div style="flex: 1; overflow: hidden;">
                             <div style="font-weight: 500; color: #1e293b; font-size: 14px;">
                                 <?php echo htmlspecialchars($member['username']); ?>
+                                <?php if ($member['role'] === 'admin'): ?>
+                                    <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; margin-left: 6px; font-weight: 600;">ADMIN</span>
+                                <?php endif; ?>
                             </div>
                             <div style="font-size: 11px; color: #94a3b8;">
                                 <?php echo strtoupper($member['role']); ?>
                             </div>
                         </div>
+                        <?php if ($isCreator && $member['user_id'] != $user['id']): ?>
+                            <form method="POST" action="/study-group/<?php echo $group['id']; ?>/remove-member/<?php echo $member['user_id']; ?>" style="position: absolute; top: 10px; right: 10px;">
+                                <button type="submit" class="btn-sm btn-danger-sm" onclick="return confirm('Remove <?php echo htmlspecialchars($member['username']); ?> from the group?')" title="Remove member" style="padding: 4px 8px; font-size: 11px;">
+                                    <i class="fas fa-user-minus"></i> Remove
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -637,6 +644,8 @@ include __DIR__ . '/../layouts/header.php';
     function addMessage(msg) {
         const chatMessages = document.getElementById('chatMessages');
         const isOwn = true;
+        const isAdmin = <?php echo $isCreator ? 'true' : 'false'; ?>;
+        const canDelete = isOwn || isAdmin;
 
         const messageDiv = document.createElement('div');
         messageDiv.className = 'chat-message own';
@@ -664,15 +673,19 @@ include __DIR__ . '/../layouts/header.php';
 
         const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+        const deleteButton = canDelete ? `
+            <button type="button" class="message-delete-btn" onclick="if(confirm('Delete this message?')) document.getElementById('delete-form-${msg.id}').submit();" title="Delete message">
+                <i class="fas fa-trash"></i>
+            </button>
+            <form id="delete-form-${msg.id}" method="POST" action="/study-group/<?php echo $group['id']; ?>/delete-message/${msg.id}" style="display: none;"></form>
+        ` : '';
+
         messageDiv.innerHTML = `
             <div class="message-sender">${msg.sender_name}</div>
             <div class="message-bubble">${messageContent}</div>
             <div class="message-time">
                 ${time}
-                <button type="button" class="message-delete-btn" onclick="if(confirm('Delete this message?')) document.getElementById('delete-form-${msg.id}').submit();" title="Delete message">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <form id="delete-form-${msg.id}" method="POST" action="/study-group/<?php echo $group['id']; ?>/delete-message/${msg.id}" style="display: none;"></form>
+                ${deleteButton}
             </div>
         `;
         
@@ -709,13 +722,9 @@ include __DIR__ . '/../layouts/header.php';
     function addMessageFromOther(msg) {
         const chatMessages = document.getElementById('chatMessages');
         const currentUsername = '<?php echo addslashes($user['username']); ?>';
+        const isAdmin = <?php echo $isCreator ? 'true' : 'false'; ?>;
         const isOwn = msg.sender_name === currentUsername;
-        
-        console.log('Checking if message is own:', {
-            sender: msg.sender_name,
-            current: currentUsername,
-            isOwn: isOwn
-        });
+        const canDelete = isOwn || isAdmin;
 
         const messageDiv = document.createElement('div');
         messageDiv.className = 'chat-message ' + (isOwn ? 'own' : 'other');

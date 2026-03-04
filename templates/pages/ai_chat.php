@@ -17,8 +17,10 @@ let synthesis = window.speechSynthesis;
 let currentUtterance = null;
 let shouldContinueListening = false;
 
-// Initialize Speech Recognition
-if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+// Only initialize voice features for paid users
+const canUseVoiceMode = ' . ($canUseVoiceMode ? 'true' : 'false') . ';
+
+if (canUseVoiceMode) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
     recognition.continuous = false;
@@ -89,9 +91,21 @@ if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
         }
     };
 } else {
-    micButton.style.display = "none";
-    voiceModeToggle.style.display = "none";
-    console.log("Speech recognition not supported");
+    console.log("Voice mode not available for free users");
+}
+
+// Browser support check (only for paid users)
+if (canUseVoiceMode) {
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+        micButton.style.display = "none";
+        voiceModeToggle.style.display = "none";
+        console.log("Speech recognition not supported");
+    }
+} else {
+    // Free user - hide voice controls
+    if (micButton) micButton.style.display = "none";
+    if (voiceModeToggle) voiceModeToggle.style.display = "none";
+    if (document.getElementById("stop-speech-btn")) document.getElementById("stop-speech-btn").style.display = "none";
 }
 
 chatForm.addEventListener("submit", async (e) => {
@@ -166,33 +180,37 @@ fileInput.addEventListener("change", (e) => {
 });
 
 // Voice Mode Toggle
-voiceModeToggle.addEventListener("change", (e) => {
-    isVoiceMode = e.target.checked;
-    if (isVoiceMode) {
-        addMessage("🎤 Voice mode enabled. Click the microphone to start the conversation!", "ai");
-        micButton.style.display = "flex";
-        shouldContinueListening = true;
-    } else {
-        addMessage("Voice mode disabled.", "ai");
-        micButton.style.display = "none";
-        shouldContinueListening = false;
-        stopListening();
-        if (synthesis) {
-            synthesis.cancel();
+if (canUseVoiceMode && voiceModeToggle) {
+    voiceModeToggle.addEventListener("change", (e) => {
+        isVoiceMode = e.target.checked;
+        if (isVoiceMode) {
+            addMessage("🎤 Voice mode enabled. Click the microphone to start the conversation!", "ai");
+            micButton.style.display = "flex";
+            shouldContinueListening = true;
+        } else {
+            addMessage("Voice mode disabled.", "ai");
+            micButton.style.display = "none";
+            shouldContinueListening = false;
+            stopListening();
+            if (synthesis) {
+                synthesis.cancel();
+            }
         }
-    }
-});
+    });
+}
 
 // Microphone Button
-micButton.addEventListener("click", () => {
-    if (isListening) {
-        stopListening();
-        shouldContinueListening = false;
-    } else {
-        shouldContinueListening = true;
-        startListening();
-    }
-});
+if (canUseVoiceMode && micButton) {
+    micButton.addEventListener("click", () => {
+        if (isListening) {
+            stopListening();
+            shouldContinueListening = false;
+        } else {
+            shouldContinueListening = true;
+            startListening();
+        }
+    });
+}
 
 function startListening() {
     if (!recognition) {
@@ -231,38 +249,39 @@ function speakMessage(text) {
             resolve();
             return;
         }
-        
+
         // Cancel any ongoing speech
         synthesis.cancel();
-        
+
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "en-US";
         utterance.rate = 1;
         utterance.pitch = 1;
         utterance.volume = 1;
-        
+
         // Select a natural voice if available
         const voices = synthesis.getVoices();
-        const preferredVoice = voices.find(voice => 
+        const preferredVoice = voices.find(voice =>
             voice.lang.includes("en-US") && voice.name.includes("Natural")
         ) || voices.find(voice => voice.lang.includes("en")) || voices[0];
-        
+
         if (preferredVoice) {
             utterance.voice = preferredVoice;
         }
-        
+
         currentUtterance = utterance;
-        
+
         utterance.onend = () => {
             resolve();
         };
-        
+
         utterance.onerror = () => {
             resolve();
         };
-        
+
         synthesis.speak(utterance);
     });
+}
 }
 
 // Stop speech when leaving page
@@ -273,11 +292,14 @@ window.addEventListener("beforeunload", () => {
 });
 
 // Stop speech when clicking stop button
-document.getElementById("stop-speech-btn")?.addEventListener("click", () => {
-    if (synthesis) {
-        synthesis.cancel();
-    }
-});
+if (canUseVoiceMode) {
+    document.getElementById("stop-speech-btn")?.addEventListener("click", () => {
+        if (synthesis) {
+            synthesis.cancel();
+        }
+    });
+}
+}
 </script>';
 include __DIR__ . '/../layouts/header.php';
 ?>
@@ -293,6 +315,7 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 
     <div class="chat-controls">
+        <?php if ($canUseVoiceMode): ?>
         <div class="voice-mode-control">
             <label for="voice-mode-toggle" class="voice-mode-label">
                 <i class="fas fa-robot"></i> Voice Mode
@@ -305,6 +328,11 @@ include __DIR__ . '/../layouts/header.php';
         <button type="button" id="stop-speech-btn" class="btn-icon btn-icon-small" title="Stop speech">
             <i class="fas fa-stop"></i>
         </button>
+        <?php else: ?>
+        <div class="voice-mode-control" style="flex: 1; text-align: center; color: #f59e0b; font-size: 13px;">
+            <i class="fas fa-lock"></i> Voice Mode available in Basic and Premium plans
+        </div>
+        <?php endif; ?>
     </div>
 
     <form class="chat-input-form" id="chat-form">
@@ -313,9 +341,11 @@ include __DIR__ . '/../layouts/header.php';
         <button type="button" id="upload-btn" class="btn-icon" title="Upload file">
             <i class="fas fa-paperclip"></i>
         </button>
+        <?php if ($canUseVoiceMode): ?>
         <button type="button" id="mic-btn" class="btn-icon" title="Voice input" style="display: none;">
             <i class="fas fa-microphone" id="mic-icon"></i>
         </button>
+        <?php endif; ?>
         <button type="submit" class="btn-icon" title="Send message">
             <i class="fas fa-paper-plane"></i>
         </button>

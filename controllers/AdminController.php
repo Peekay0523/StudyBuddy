@@ -397,6 +397,35 @@ class AdminController {
 
         $db = Database::getInstance()->getConnection();
 
+        // Get the subscription to check user_id
+        $stmt = $db->prepare("SELECT user_id, status FROM subscriptions WHERE id = ?");
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+
+        if (!$subscription) {
+            setFlashMessage('error', 'Subscription not found');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        // If changing to active or trial, check if user already has an active subscription
+        if (in_array($newStatus, ['active', 'trial'])) {
+            $checkStmt = $db->prepare("
+                SELECT COUNT(*) FROM subscriptions
+                WHERE user_id = ?
+                AND id != ?
+                AND status IN ('active', 'trial')
+            ");
+            $checkStmt->execute([$subscription['user_id'], $subscriptionId]);
+            $count = $checkStmt->fetchColumn();
+
+            if ($count > 0) {
+                setFlashMessage('error', 'This user already has an active subscription. Please cancel the existing subscription first.');
+                header('Location: /admin/subscriptions');
+                exit;
+            }
+        }
+
         // Build update query based on status
         if ($newStatus === 'cancelled') {
             $update = $db->prepare("UPDATE subscriptions SET status = ?, cancelled_at = datetime('now') WHERE id = ?");
@@ -404,8 +433,8 @@ class AdminController {
         } elseif ($newStatus === 'active' || $newStatus === 'trial') {
             // Reactivate - clear cancelled_at and extend period
             $update = $db->prepare("
-                UPDATE subscriptions 
-                SET status = ?, 
+                UPDATE subscriptions
+                SET status = ?,
                     cancelled_at = NULL,
                     current_period_end = datetime('now', '+1 month')
                 WHERE id = ?
@@ -446,9 +475,36 @@ class AdminController {
 
         $db = Database::getInstance()->getConnection();
 
+        // Get the subscription to check user_id
+        $stmt = $db->prepare("SELECT user_id, status FROM subscriptions WHERE id = ?");
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+
+        if (!$subscription) {
+            setFlashMessage('error', 'Subscription not found');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
+        // Check if user already has an active subscription (excluding this one)
+        $checkStmt = $db->prepare("
+            SELECT COUNT(*) FROM subscriptions
+            WHERE user_id = ?
+            AND id != ?
+            AND status IN ('active', 'trial')
+        ");
+        $checkStmt->execute([$subscription['user_id'], $subscriptionId]);
+        $count = $checkStmt->fetchColumn();
+
+        if ($count > 0) {
+            setFlashMessage('error', 'This user already has an active subscription. Please cancel the existing subscription first.');
+            header('Location: /admin/subscriptions');
+            exit;
+        }
+
         // Update subscription to active
         $update = $db->prepare("
-            UPDATE subscriptions 
+            UPDATE subscriptions
             SET status = 'active',
                 current_period_start = datetime('now'),
                 current_period_end = datetime('now', '+1 month'),

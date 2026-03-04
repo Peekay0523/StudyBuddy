@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/StudyGroup.php';
 require_once __DIR__ . '/../models/StudyGroupScript.php';
 require_once __DIR__ . '/../models/StudyGroupMessage.php';
+require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class StudyGroupController {
     private $studyGroupModel;
@@ -23,6 +24,14 @@ class StudyGroupController {
         requireLogin();
 
         $user = getCurrentUser();
+        
+        // Check if user is on free plan
+        $subscriptionController = new SubscriptionController();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        $isFreeUser = ($currentPlan === 'free');
+
+        // Free users can view the page but with limited functionality
         $allGroups = $this->studyGroupModel->getAllActive();
         $myGroups = $this->studyGroupModel->findByMember($user['id']);
 
@@ -49,6 +58,18 @@ class StudyGroupController {
         }
 
         $user = getCurrentUser();
+        
+        // Check if user is on free plan
+        $subscriptionController = new SubscriptionController();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        
+        if ($currentPlan === 'free') {
+            setFlashMessage('error', 'You need to upgrade to Basic or Premium to create study groups.');
+            header('Location: /subscription');
+            exit;
+        }
+        
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $gradeLevel = trim($_POST['grade_level'] ?? '');
@@ -91,6 +112,18 @@ class StudyGroupController {
         requireLogin();
 
         $user = getCurrentUser();
+        
+        // Check if user is on free plan
+        $subscriptionController = new SubscriptionController();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        
+        if ($currentPlan === 'free') {
+            setFlashMessage('error', 'You need to upgrade to Basic or Premium to join study groups.');
+            header('Location: /subscription');
+            exit;
+        }
+        
         $group = $this->studyGroupModel->findById($groupId);
 
         if (!$group || !$group['is_active']) {
@@ -549,6 +582,7 @@ class StudyGroupController {
         requireLogin();
 
         $user = getCurrentUser();
+        $group = $this->studyGroupModel->findById($groupId);
         $messageModel = new StudyGroupMessage();
         $message = $messageModel->findById($messageId);
 
@@ -558,7 +592,11 @@ class StudyGroupController {
             exit;
         }
 
-        if ($message['user_id'] != $user['id']) {
+        // Check if user is group creator (admin) or message owner
+        $isGroupAdmin = $group['creator_user_id'] == $user['id'];
+        $isMessageOwner = $message['user_id'] == $user['id'];
+        
+        if (!$isGroupAdmin && !$isMessageOwner) {
             setFlashMessage('error', 'You can only delete your own messages.');
             header('Location: /study-group/view/' . $groupId);
             exit;
@@ -571,6 +609,41 @@ class StudyGroupController {
 
         $messageModel->delete($messageId, $user['id']);
         setFlashMessage('success', 'Message deleted.');
+        header('Location: /study-group/view/' . $groupId);
+        exit;
+    }
+
+    /**
+     * Remove a member from the study group (admin only)
+     */
+    public function removeMember($groupId, $userId) {
+        requireLogin();
+
+        $currentUser = getCurrentUser();
+        $group = $this->studyGroupModel->findById($groupId);
+
+        if (!$group) {
+            setFlashMessage('error', 'Study group not found.');
+            header('Location: /study-group/view/' . $groupId);
+            exit;
+        }
+
+        // Only group creator can remove members
+        if ($group['creator_user_id'] != $currentUser['id']) {
+            setFlashMessage('error', 'Only the group creator can remove members.');
+            header('Location: /study-group/view/' . $groupId);
+            exit;
+        }
+
+        // Cannot remove yourself
+        if ($userId == $currentUser['id']) {
+            setFlashMessage('error', 'You cannot remove yourself from the group.');
+            header('Location: /study-group/view/' . $groupId);
+            exit;
+        }
+
+        $this->studyGroupModel->removeMember($groupId, $userId);
+        setFlashMessage('success', 'Member removed from group.');
         header('Location: /study-group/view/' . $groupId);
         exit;
     }
