@@ -180,4 +180,28 @@ if (!in_array('proof_path', $subscriptionsColumnNames)) {
 }
 
 echo "\nAll updates complete!\n";
+
+// Create scan_usage table for tracking free tier scan limits
+try {
+    $db->exec("
+        CREATE TABLE IF NOT EXISTS scan_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            scan_count INTEGER DEFAULT 1,
+            period_start DATETIME DEFAULT CURRENT_TIMESTAMP,
+            period_end DATETIME,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, period_start)
+        )
+    ");
+    echo "Created scan_usage table for scan limit tracking\n";
+    
+    // Create index for better performance
+    $db->exec("CREATE INDEX IF NOT EXISTS idx_scan_usage_user_id ON scan_usage(user_id)");
+    echo "Created index on scan_usage.user_id\n";
+} catch (PDOException $e) {
+    echo "scan_usage table already exists\n";
+}
+
+echo "\nScan limit tracking setup complete!\n";
 ?>

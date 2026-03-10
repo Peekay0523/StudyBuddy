@@ -222,6 +222,106 @@ include __DIR__ . '/../layouts/header.php';
     }
 </style>
 
+<style>
+    .study-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .study-group-title-section {
+        flex: 1;
+        min-width: 0;
+    }
+    .study-group-title {
+        margin-bottom: 10px;
+        font-size: 28px;
+        word-wrap: break-word;
+    }
+    .study-group-meta {
+        color: #64748b;
+        font-size: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+        line-height: 1.8;
+    }
+    .study-group-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+    }
+    .study-group-meta-separator {
+        color: #cbd5e1;
+        font-weight: 300;
+    }
+    .study-group-actions {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+        .study-group-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .study-group-title {
+            font-size: 22px;
+        }
+        .study-group-meta {
+            font-size: 13px;
+            gap: 6px 10px;
+        }
+        .study-group-meta-item {
+            font-size: 13px;
+        }
+        .study-group-actions {
+            width: 100%;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+        .study-group-actions .btn-primary {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .study-group-title {
+            font-size: 20px;
+        }
+        .study-group-meta {
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-start;
+        }
+        .study-group-meta-item {
+            width: 100%;
+            padding: 4px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .study-group-meta-item:last-child {
+            border-bottom: none;
+        }
+        .study-group-meta-separator {
+            display: none;
+        }
+        .study-group-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .study-group-actions .btn-primary {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+</style>
+
 <div style="margin-bottom: 20px;">
     <a href="/study-group" style="color: #667eea; text-decoration: none; font-size: 14px;">
         <i class="fas fa-arrow-left"></i> Back to Study Groups
@@ -229,55 +329,67 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
-        <div>
-            <h1 class="title" style="margin-bottom: 10px; font-size: 28px;">
+    <div class="study-group-header">
+        <div class="study-group-title-section">
+            <h1 class="title study-group-title" style="margin-bottom: 10px; font-size: 28px;">
                 <?php echo htmlspecialchars($group['title']); ?>
             </h1>
-            <p style="color: #64748b; font-size: 14px;">
-                <i class="fas fa-user"></i> Created by <?php echo htmlspecialchars($group['creator_name']); ?>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <i class="fas fa-users"></i> <?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members
+            <p class="study-group-meta">
+                <span class="study-group-meta-item">
+                    <i class="fas fa-user"></i>
+                    <span>Created by <?php echo htmlspecialchars($group['creator_name']); ?></span>
+                </span>
+                <span class="study-group-meta-separator">|</span>
+                <span class="study-group-meta-item">
+                    <i class="fas fa-users"></i>
+                    <span><?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members</span>
+                </span>
                 <?php if (!empty($group['grade_level'])): ?>
-                    &nbsp;&nbsp;|&nbsp;&nbsp;
-                    <i class="fas fa-graduation-cap"></i> Grade <?php echo htmlspecialchars($group['grade_level']); ?>
+                    <span class="study-group-meta-separator">|</span>
+                    <span class="study-group-meta-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Grade <?php echo htmlspecialchars($group['grade_level']); ?></span>
+                    </span>
                 <?php endif; ?>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($group['created_at'])); ?>
+                <span class="study-group-meta-separator">|</span>
+                <span class="study-group-meta-item">
+                    <i class="fas fa-calendar"></i>
+                    <span><?php echo date('M d, Y', strtotime($group['created_at'])); ?></span>
+                </span>
             </p>
         </div>
-        
-        <?php if ($isCreator): ?>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="document.getElementById('editGroupModal').style.display='block'" 
+
+        <div class="study-group-actions">
+            <?php if ($isCreator): ?>
+                <button onclick="document.getElementById('editGroupModal').style.display='block'"
                         class="btn-primary" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <form method="POST" action="/study-group/delete/<?php echo $group['id']; ?>" 
+                <form method="POST" action="/study-group/delete/<?php echo $group['id']; ?>"
                       onsubmit="return confirm('Are you sure you want to delete this study group? This action cannot be undone.');">
                     <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </form>
-            </div>
-        <?php elseif ($isMember): ?>
-            <form method="POST" action="/study-group/leave/<?php echo $group['id']; ?>" 
-                  onsubmit="return confirm('Are you sure you want to leave this study group?');">
-                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                    <i class="fas fa-sign-out-alt"></i> Leave Group
+            <?php elseif ($isMember): ?>
+                <form method="POST" action="/study-group/leave/<?php echo $group['id']; ?>"
+                      onsubmit="return confirm('Are you sure you want to leave this study group?');">
+                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-sign-out-alt"></i> Leave Group
+                    </button>
+                </form>
+            <?php elseif (!$isFull): ?>
+                <form method="POST" action="/study-group/join/<?php echo $group['id']; ?>">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Join Group
+                    </button>
+                </form>
+            <?php else: ?>
+                <button disabled class="btn-primary" style="background: #cbd5e1; cursor: not-allowed;">
+                    <i class="fas fa-lock"></i> Group Full
                 </button>
-            </form>
-        <?php elseif (!$isFull): ?>
-            <form method="POST" action="/study-group/join/<?php echo $group['id']; ?>">
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-sign-in-alt"></i> Join Group
-                </button>
-            </form>
-        <?php else: ?>
-            <button disabled class="btn-primary" style="background: #cbd5e1; cursor: not-allowed;">
-                <i class="fas fa-lock"></i> Group Full
-            </button>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
     
     <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
@@ -318,16 +430,7 @@ include __DIR__ . '/../layouts/header.php';
                         <?php if ($msg['message_type'] === 'voice'): ?>
                             <div class="voice-note">
                                 <i class="fas fa-microphone"></i>
-                                <?php 
-                                    // Handle both full path and relative path
-                                    $voiceSrc = $msg['file_path'];
-                                    if (strpos($voiceSrc, '/') === 0 || strpos($voiceSrc, 'uploads/') === 0) {
-                                        $voiceSrc = '/' . ltrim($voiceSrc, '/');
-                                    } else {
-                                        $voiceSrc = '/uploads/study_groups/' . $group['id'] . '/voice/' . basename($msg['file_path']);
-                                    }
-                                ?>
-                                <audio controls src="<?php echo $voiceSrc; ?>"></audio>
+                                <audio controls src="/study-group/<?php echo $group['id']; ?>/voice/<?php echo $msg['id']; ?>"></audio>
                             </div>
                         <?php else: ?>
                             <?php echo nl2br(htmlspecialchars($msg['message'])); ?>
@@ -653,14 +756,9 @@ include __DIR__ . '/../layouts/header.php';
 
         let messageContent = msg.message;
         if (msg.message_type === 'voice') {
-            // Handle both full path and relative path
-            let voiceSrc = msg.file_path;
-            if (voiceSrc.startsWith('/') || voiceSrc.startsWith('uploads/')) {
-                voiceSrc = '/' + voiceSrc.replace(/^\/+/, '');
-            } else {
-                voiceSrc = '/uploads/study_groups/<?php echo $group['id']; ?>/voice/' + voiceSrc.split('/').pop();
-            }
-            
+            // Voice recordings are now stored in database - use message ID as URL
+            const voiceSrc = '/study-group/<?php echo $group['id']; ?>/voice/' + msg.id;
+
             messageContent = `
                 <div class="voice-note">
                     <i class="fas fa-microphone"></i>
@@ -732,14 +830,9 @@ include __DIR__ . '/../layouts/header.php';
 
         let messageContent = msg.message;
         if (msg.message_type === 'voice') {
-            // Handle both full path and relative path
-            let voiceSrc = msg.file_path;
-            if (voiceSrc.startsWith('/') || voiceSrc.startsWith('uploads/')) {
-                voiceSrc = '/' + voiceSrc.replace(/^\/+/, '');
-            } else {
-                voiceSrc = '/uploads/study_groups/<?php echo $group['id']; ?>/voice/' + voiceSrc.split('/').pop();
-            }
-            
+            // Voice recordings are now stored in database - use message ID as URL
+            const voiceSrc = '/study-group/<?php echo $group['id']; ?>/voice/' + msg.id;
+
             messageContent = `
                 <div class="voice-note">
                     <i class="fas fa-microphone"></i>

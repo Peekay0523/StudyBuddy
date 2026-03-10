@@ -77,20 +77,24 @@ clearBtn.addEventListener("click", () => {
 // Form submission
 generateForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
-    if (!fileInput.files || !fileInput.files[0]) {
-        alert("Please select a file to upload");
+
+    const selectedScanInput = document.getElementById("selected_scan_file");
+    const hasFile = fileInput.files && fileInput.files[0];
+    const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== "";
+
+    if (!hasFile && !hasScan) {
+        alert("Please select a file to upload. Click or drag a file into the upload area, or use Select from My Scans button.");
         return;
     }
-    
+
     const formData = new FormData(generateForm);
     formData.append("for_study_plan", "1");
-    
+
     const submitBtn = document.getElementById("submit-btn");
     const originalBtnText = submitBtn.innerHTML;
-    
+
     submitBtn.disabled = true;
-    submitBtn.innerHTML = "<i class=\'fas fa-spinner fa-spin\'></i> Generating Study Plan...";
+    submitBtn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Generating Study Plan...";
     
     try {
         const response = await fetch("/upload-script", {
@@ -194,27 +198,7 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 <?php endif; ?>
 
-<?php if (empty($studyPlans)): ?>
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> You don't have any active study plans yet.
-        <strong>Upload a script above</strong> to generate a personalized study plan based on your learning needs!
-    </div>
-
-    <div class="features-section" style="margin-top: 40px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-        <div class="feature-card">
-            <h3><i class="fas fa-upload" style="color: #667eea;"></i> Step 1: Upload Script</h3>
-            <p style="color: #6b7280;">Upload your study notes, textbooks, or any learning material in PDF, DOCX, or TXT format.</p>
-        </div>
-        <div class="feature-card">
-            <h3><i class="fas fa-robot" style="color: #667eea;"></i> Step 2: AI Analysis</h3>
-            <p style="color: #6b7280;">Our AI analyzes your content to identify key topics, challenging areas, and learning objectives.</p>
-        </div>
-        <div class="feature-card">
-            <h3><i class="fas fa-clipboard-check" style="color: #667eea;"></i> Step 3: Get Study Plan</h3>
-            <p style="color: #6b7280;">Receive a personalized study plan with strategies to master the challenging topics.</p>
-        </div>
-    </div>
-<?php else: ?>
+<?php if (!empty($studyPlans)): ?>
     <h2 style="margin-bottom: 20px; color: #1e293b;">
         <i class="fas fa-book" style="color: #667eea;"></i> Your Study Plans
     </h2>

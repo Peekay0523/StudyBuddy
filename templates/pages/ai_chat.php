@@ -16,6 +16,24 @@ let recognition = null;
 let synthesis = window.speechSynthesis;
 let currentUtterance = null;
 let shouldContinueListening = false;
+let isSpeaking = false;
+
+// Initialize voices on mobile browsers
+function initVoices() {
+    if (synthesis) {
+        // Load voices (needed on mobile browsers)
+        synthesis.getVoices();
+        // Some browsers need this event to load voices
+        if (synthesis.onvoiceschanged !== undefined) {
+            synthesis.onvoiceschanged = () => {
+                console.log("Voices loaded:", synthesis.getVoices().length);
+            };
+        }
+    }
+}
+
+// Initialize voices immediately
+initVoices();
 
 // Only initialize voice features for paid users
 const canUseVoiceMode = ' . ($canUseVoiceMode ? 'true' : 'false') . ';
@@ -59,32 +77,40 @@ if (canUseVoiceMode) {
 
     recognition.onend = () => {
         isListening = false;
-        micButton.classList.remove("listening");
-        micIcon.classList.remove("fa-microphone-slash");
-        micIcon.classList.add("fa-microphone");
-        
-        console.log("Recognition ended, shouldContinueListening:", shouldContinueListening, "isVoiceMode:", isVoiceMode);
-        
+        if (micButton) {
+            micButton.classList.remove("listening");
+            micIcon.classList.remove("fa-microphone-slash");
+            micIcon.classList.add("fa-microphone");
+        }
+
+        console.log("Recognition ended, shouldContinueListening:", shouldContinueListening, "isVoiceMode:", isVoiceMode, "isSpeaking:", isSpeaking);
+
         // Auto-restart listening in voice mode after AI finishes speaking
         if (shouldContinueListening && isVoiceMode) {
-            // Wait for speech to finish, then restart
+            // Wait for speech to finish completely, then restart
             const checkAndRestart = () => {
-                if (!synthesis.speaking) {
-                    console.log("Restarting recognition...");
+                // Keep checking until speech is done
+                if (isSpeaking || (synthesis && synthesis.speaking)) {
+                    console.log("Waiting for speech to finish... isSpeaking:", isSpeaking, "synthesis.speaking:", synthesis?.speaking);
+                    setTimeout(checkAndRestart, 300);
+                } else {
+                    // Add extra delay to ensure audio is fully done
                     setTimeout(() => {
+                        console.log("Restarting recognition...");
                         try {
-                            recognition.start();
-                            isListening = true;
-                            micButton.classList.add("listening");
-                            micIcon.classList.remove("fa-microphone");
-                            micIcon.classList.add("fa-microphone-slash");
+                            if (recognition) {
+                                recognition.start();
+                                isListening = true;
+                                if (micButton) {
+                                    micButton.classList.add("listening");
+                                    micIcon.classList.remove("fa-microphone");
+                                    micIcon.classList.add("fa-microphone-slash");
+                                }
+                            }
                         } catch (e) {
                             console.error("Failed to restart recognition:", e);
                         }
-                    }, 500);
-                } else {
-                    // Speech still ongoing, check again in 200ms
-                    setTimeout(checkAndRestart, 200);
+                    }, 800);
                 }
             };
             checkAndRestart();
@@ -246,6 +272,7 @@ function stopListening() {
 function speakMessage(text) {
     return new Promise((resolve) => {
         if (!synthesis) {
+            console.log("Speech synthesis not available");
             resolve();
             return;
         }
@@ -253,35 +280,88 @@ function speakMessage(text) {
         // Cancel any ongoing speech
         synthesis.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 1;
+        // Small delay after cancel (needed on some mobile browsers)
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = "en-US";
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
 
-        // Select a natural voice if available
-        const voices = synthesis.getVoices();
-        const preferredVoice = voices.find(voice =>
-            voice.lang.includes("en-US") && voice.name.includes("Natural")
-        ) || voices.find(voice => voice.lang.includes("en")) || voices[0];
+            const voices = synthesis.getVoices();
+            console.log("Available voices:", voices.length);
 
-        if (preferredVoice) {
-            utterance.voice = preferredVoice;
-        }
+            // Select a natural voice if available
+            let preferredVoice = null;
 
-        currentUtterance = utterance;
+            if (voices.length > 0) {
+                // First try: English Natural voice
+                preferredVoice = voices.find(voice =>
+                    voice.lang.includes("en-US") && voice.name.includes("Natural")
+                );
 
-        utterance.onend = () => {
-            resolve();
-        };
+                // Second try: Any English US voice
+                if (!preferredVoice) {
+                    preferredVoice = voices.find(voice =>
+                        voice.lang === "en-US" || voice.lang.includes("en-US")
+                    );
+                }
 
-        utterance.onerror = () => {
-            resolve();
-        };
+                // Third try: Any English voice
+                if (!preferredVoice) {
+                    preferredVoice = voices.find(voice =>
+                        voice.lang.includes("en")
+                    );
+                }
 
-        synthesis.speak(utterance);
+                // Fallback: First available voice
+                if (!preferredVoice) {
+                    preferredVoice = voices[0];
+                }
+
+                console.log("Selected voice:", preferredVoice.name, preferredVoice.lang);
+            }
+
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            // Set speaking flag
+            isSpeaking = true;
+
+            utterance.onend = () => {
+                console.log("Speech ended");
+                isSpeaking = false;
+                resolve();
+            };
+
+            utterance.onerror = (event) => {
+                console.error("Speech synthesis error:", event.error);
+                isSpeaking = false;
+                resolve();
+            };
+
+            utterance.onstart = () => {
+                console.log("Speech started");
+            };
+
+            // Speak the message
+            console.log("Speaking message...");
+            synthesis.speak(utterance);
+
+            // Mobile fix: Resume if paused (some browsers pause automatically)
+            setTimeout(() => {
+                if (synthesis.paused) {
+                    console.log("Resuming paused speech");
+                    synthesis.resume();
+                }
+                if (!synthesis.speaking) {
+                    console.log("Speech not started, retrying...");
+                    synthesis.speak(utterance);
+                }
+            }, 200);
+        }, 50);
     });
-}
 }
 
 // Stop speech when leaving page
@@ -298,7 +378,6 @@ if (canUseVoiceMode) {
             synthesis.cancel();
         }
     });
-}
 }
 </script>';
 include __DIR__ . '/../layouts/header.php';

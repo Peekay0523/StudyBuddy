@@ -134,32 +134,39 @@ $isTrial = $userSubscription['is_trial'] ?? false;
     </div>
 
     <!-- Premium Plan -->
-    <div class="pricing-card <?php echo $currentPlan === 'premium' ? 'current-plan' : ''; ?>" style="background: white; border: 2px solid #fbbf24; border-radius: 16px; padding: 30px; position: relative;">
+    <div class="pricing-card <?php echo $currentPlan === 'premium' ? 'current-plan' : ''; ?>" style="background: white; border: 2px solid #fbbf24; border-radius: 16px; padding: 30px; position: relative; opacity: 0.75;">
         <?php if ($currentPlan === 'premium'): ?>
             <span class="current-plan-badge" style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;">CURRENT PLAN</span>
         <?php else: ?>
-            <span class="premium-badge" style="position: absolute; top: 15px; right: 15px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">PREMIUM</span>
+            <span class="coming-soon-badge" style="position: absolute; top: 15px; right: 15px; background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">COMING SOON</span>
         <?php endif; ?>
-        
-        <h3 style="font-size: 24px; margin-bottom: 10px;"><?php echo $plans['premium']['name']; ?></h3>
+
+        <h3 style="font-size: 24px; margin-bottom: 10px;">
+            <?php echo $plans['premium']['name']; ?>
+            <span style="font-size: 14px; color: #f59e0b; display: block; margin-top: 5px;">
+                <i class="fas fa-clock"></i> Coming Soon
+            </span>
+        </h3>
         <div class="price" style="font-size: 42px; font-weight: 700; color: #1f2937; margin-bottom: 5px;">
             R<?php echo $plans['premium']['price']; ?>
         </div>
         <p style="color: #6b7280; margin-bottom: 25px;"><?php echo $plans['premium']['period']; ?></p>
-        
+
         <ul class="features-list" style="list-style: none; padding: 0; margin-bottom: 30px;">
             <?php foreach ($plans['premium']['features'] as $feature): ?>
-                <li style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start;">
-                    <i class="fas fa-check" style="color: #16a34a; margin-right: 12px; margin-top: 3px;"></i>
+                <li style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; color: #9ca3af;">
+                    <i class="fas fa-lock" style="color: #f59e0b; margin-right: 12px; margin-top: 3px;"></i>
                     <span><?php echo $feature; ?></span>
                 </li>
             <?php endforeach; ?>
         </ul>
-        
+
         <?php if ($currentPlan === 'premium'): ?>
-            <button class="btn-primary" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed;">Current Plan</button>
+            <button class="btn-primary" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed; background: #9ca3af;">Current Plan</button>
         <?php else: ?>
-            <a href="/subscription/checkout?plan=premium" class="btn-primary" style="display: block; text-align: center; text-decoration: none; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none;">Subscribe to Premium</a>
+            <button class="btn-primary" disabled style="width: 100%; text-align: center; text-decoration: none; background: #9ca3af; cursor: not-allowed; opacity: 0.6;">
+                <i class="fas fa-hourglass-half"></i> Coming Soon
+            </button>
         <?php endif; ?>
     </div>
 

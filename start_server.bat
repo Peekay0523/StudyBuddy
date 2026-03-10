@@ -18,5 +18,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Start the server
-php -S localhost:8000 -t public public/index.php
+REM Start the server with router support
+php -S localhost:8000 serve_router.php

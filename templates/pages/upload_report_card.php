@@ -1,6 +1,12 @@
 <?php
 $pageTitle = 'Upload Report Card - StudySmart';
 $currentPage = 'careers';
+
+// Get subscription info
+$user = getCurrentUser();
+$isFreeTier = isFreeTierUser($user['id']);
+$subscription = getUserSubscription($user['id']);
+
 $extraScripts = '<script>
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("report_card_file");
@@ -30,7 +36,7 @@ uploadArea.addEventListener("drop", (e) => {
     e.preventDefault();
     uploadArea.style.borderColor = "#cbd5e1";
     uploadArea.style.background = "#f8fafc";
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
         handleFile(files[0]);
@@ -46,17 +52,17 @@ fileInput.addEventListener("change", (e) => {
 
 function handleFile(file) {
     const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/jpg", "image/png"];
-    
+
     if (!allowedTypes.includes(file.type)) {
         alert("Invalid file type. Please upload PDF, DOCX, JPG, or PNG.");
         return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
         alert("File size must be less than 10MB.");
         return;
     }
-    
+
     fileName.textContent = file.name;
     fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
     previewSection.style.display = "block";
@@ -78,6 +84,7 @@ async function loadUploadedReportCards() {
         const reportCardsList = document.getElementById("report-cards-list");
         if (reportCardsList) {
             if (data.report_cards && data.report_cards.length > 0) {
+                const isFreeTier = ' . ($isFreeTier ? 'true' : 'false') . ';
                 reportCardsList.innerHTML = data.report_cards.map(rc => `
                     <div class="report-card-item">
                         <div class="report-card-info">
@@ -88,9 +95,19 @@ async function loadUploadedReportCards() {
                             </p>
                         </div>
                         <div class="report-card-actions">
-                            <a href="/view-career-recommendations/${rc.id}" class="btn-primary btn-sm">
-                                <i class="fas fa-compass"></i> View Career Recommendations
-                            </a>
+                            ${isFreeTier
+                                ? `<a href="/subscription" class="btn-primary btn-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                    <i class="fas fa-lock"></i> Upgrade to View Recommendations
+                                </a>`
+                                : `<a href="/view-career-recommendations/${rc.id}" class="btn-primary btn-sm">
+                                    <i class="fas fa-compass"></i> View Career Recommendations
+                                </a>`
+                            }
+                            <form method="POST" action="/delete-report-card/${rc.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report card?');">
+                                <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
                 `).join("");
@@ -286,12 +303,12 @@ function selectScan(filename, url) {
         document.querySelector('form').appendChild(hiddenInput);
     }
     hiddenInput.value = filename;
-    
+
     document.getElementById('file-name').textContent = filename;
     document.getElementById('file-size').textContent = 'From saved scans';
     document.getElementById('preview-section').style.display = 'block';
     document.getElementById('upload-area').style.display = 'none';
-    
+
     scansModalOverlay.style.display = 'none';
 }
 
@@ -300,6 +317,31 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Form validation - check if file or scan is selected before submit
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('report_card_file');
+    const selectedScanInput = document.getElementById('selected_scan_file');
+
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== '';
+
+    if (!hasFile && !hasScan) {
+        e.preventDefault();
+        alert('Please select a file to upload. Click or drag a file into the upload area, or use "Select from My Scans" button.');
+        const uploadArea = document.getElementById('upload-area');
+        if (uploadArea) {
+            uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadArea.style.borderColor = '#ef4444';
+            uploadArea.style.background = '#fef2f2';
+            setTimeout(() => {
+                uploadArea.style.borderColor = '#cbd5e1';
+                uploadArea.style.background = '#f8fafc';
+            }, 2000);
+        }
+        return false;
+    }
+});
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

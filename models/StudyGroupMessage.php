@@ -13,12 +13,24 @@ class StudyGroupMessage {
     /**
      * Send a message to a study group
      */
-    public function send($studyGroupId, $userId, $message, $messageType = 'text', $filePath = null) {
+    public function send($studyGroupId, $userId, $message, $messageType = 'text', $filePath = null, $voiceData = null) {
         $stmt = $this->db->prepare("
-            INSERT INTO study_group_messages (study_group_id, user_id, message, message_type, file_path) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO study_group_messages (study_group_id, user_id, message, message_type, file_path, voice_data)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$studyGroupId, $userId, $message, $messageType, $filePath]);
+        $stmt->execute([$studyGroupId, $userId, $message, $messageType, $filePath, $voiceData]);
+        return $this->db->lastInsertId();
+    }
+
+    /**
+     * Send a voice message to a study group (with BLOB data)
+     */
+    public function sendVoiceMessage($studyGroupId, $userId, $voiceData) {
+        $stmt = $this->db->prepare("
+            INSERT INTO study_group_messages (study_group_id, user_id, message, message_type, voice_data)
+            VALUES (?, ?, 'Voice note', 'voice', ?)
+        ");
+        $stmt->execute([$studyGroupId, $userId, $voiceData]);
         return $this->db->lastInsertId();
     }
 
@@ -96,5 +108,14 @@ class StudyGroupMessage {
         $stmt->execute([$studyGroupId]);
         $result = $stmt->fetch();
         return $result['latest'] ?? null;
+    }
+
+    /**
+     * Get voice message data by ID
+     */
+    public function getVoiceData($messageId) {
+        $stmt = $this->db->prepare("SELECT voice_data, created_at FROM study_group_messages WHERE id = ? AND message_type = 'voice'");
+        $stmt->execute([$messageId]);
+        return $stmt->fetch();
     }
 }

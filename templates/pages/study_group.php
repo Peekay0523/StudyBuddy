@@ -108,10 +108,7 @@ include __DIR__ . '/../layouts/header.php';
     </h2>
     
     <?php if (empty($availableGroups)): ?>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No available study groups at the moment. 
-            <strong>Be the first to create one!</strong>
-        </div>
+
     <?php else: ?>
         <div class="features-section" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
             <?php foreach ($availableGroups as $group): ?>

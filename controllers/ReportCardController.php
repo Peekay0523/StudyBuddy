@@ -30,27 +30,37 @@ class ReportCardController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $student = getCurrentStudent();
-            
-            // Handle selected scan file
+
+            // Handle selected scan file (from database)
             if (isset($_POST['selected_scan_file']) && !empty($_POST['selected_scan_file'])) {
                 $selectedScan = basename($_POST['selected_scan_file']);
-                $scanPath = __DIR__ . '/../uploads/scans/' . $student['id'] . '/saved/' . $selectedScan;
-                
-                if (file_exists($scanPath)) {
-                    // Copy scan to report cards folder
+
+                error_log("Selected scan filename: " . $selectedScan);
+                error_log("Student user_id: " . $student['user_id']);
+
+                // Get scan from database
+                $db = Database::getInstance()->getConnection();
+                $stmt = $db->prepare("SELECT * FROM scans WHERE filename = ? AND user_id = ? AND is_saved = 1");
+                $stmt->execute([$selectedScan, $student['user_id']]);
+                $scan = $stmt->fetch();
+
+                error_log("Scan query result: " . print_r($scan, true));
+
+                if ($scan && !empty($scan['file_data'])) {
+                    // Copy scan to report cards folder (matching existing file structure)
                     $newFileName = 'reportcard_' . time() . '_' . $selectedScan;
-                    $destPath = __DIR__ . '/../uploads/report_cards/' . $student['id'] . '/' . $newFileName;
-                    
-                    if (!is_dir(dirname($destPath))) {
-                        mkdir(dirname($destPath), 0755, true);
+                    $destPath = UPLOAD_DIR_REPORT_CARDS . $newFileName;
+
+                    if (!is_dir(UPLOAD_DIR_REPORT_CARDS)) {
+                        mkdir(UPLOAD_DIR_REPORT_CARDS, 0755, true);
                     }
-                    
-                    if (copy($scanPath, $destPath)) {
+
+                    if (file_put_contents($destPath, $scan['file_data'])) {
                         $grade = $_POST['grade'] ?? '';
                         $term = $_POST['term'] ?? '';
 
                         $reportCardId = $this->reportCardModel->create(
-                            $student['id'],
+                            $student['user_id'],
                             $newFileName,
                             $grade,
                             $term
@@ -63,10 +73,10 @@ class ReportCardController {
                         header('Location: /upload-report-card');
                         exit;
                     } else {
-                        $error = 'Failed to copy scan file';
+                        $error = 'Failed to save scan file';
                     }
                 } else {
-                    $error = 'Selected scan not found';
+                    $error = 'Selected scan not found in database';
                 }
             }
             // Handle regular file upload
@@ -86,7 +96,7 @@ class ReportCardController {
                         $term = $_POST['term'] ?? '';
 
                         $reportCardId = $this->reportCardModel->create(
-                            $student['id'],
+                            $student['user_id'],
                             $fileName,
                             $grade,
                             $term
@@ -113,12 +123,29 @@ class ReportCardController {
             $reportCard = $this->reportCardModel->findById($reportCardId);
             $filePath = UPLOAD_DIR_REPORT_CARDS . $reportCard['file_path'];
 
-            // Extract text
+            // Extract text using FileHelper
             $textContent = FileHelper::extractTextFromFile($filePath);
 
-            // Extract grades
+            // Check if extracted text is valid or PDF garbage
+            $isGarbage = false;
+            if (!empty($textContent)) {
+                if (strpos($textContent, '%PDF-') !== false ||
+                    strpos($textContent, 'TreeRoot') !== false ||
+                    strpos($textContent, 'FontDescriptor') !== false ||
+                    preg_match('/[^\x20-\x7E\x0A\x0D]{50,}/', $textContent)) {
+                    $isGarbage = true;
+                }
+            }
+
+            // If garbage or empty, use OpenAI Vision OCR
+            if (empty($textContent) || $isGarbage) {
+                error_log("Report card: Text extraction failed or garbage, using OpenAI Vision OCR");
+                $textContent = $this->extractTextWithOpenAIVision($filePath);
+            }
+
+            // Extract grades from text
             $gradesData = FileHelper::extractGradesFromText($textContent);
-            
+
             // If no grades extracted, use fallback data
             if (empty($gradesData)) {
                 // Create sample grades based on common subjects
@@ -189,7 +216,10 @@ class ReportCardController {
             }
 
             $studentModel = new Student();
-            $student = $studentModel->findByUserId($reportCard['student_id']);
+            $student = $studentModel->findByUserId($reportCard['user_id']);
+
+            // Extract APS from recommendations
+            $aps = $recommendations['aps'] ?? 0;
 
             $this->careerRecModel->create(
                 $student['id'],
@@ -198,7 +228,8 @@ class ReportCardController {
                 $recommendations['strengths'],
                 $recommendations['areas_for_improvement'],
                 json_encode($courses),
-                json_encode($bursaries)
+                json_encode($bursaries),
+                $aps
             );
 
             error_log("Career recommendations created successfully for report card: " . $reportCardId);
@@ -213,11 +244,19 @@ class ReportCardController {
         requireLogin();
 
         $student = getCurrentStudent();
-        
+        $user = getCurrentUser();
+
         // Verify ownership first
         $reportCard = $this->reportCardModel->findById($reportCardId);
         if (!$reportCard || $reportCard['student_id'] != $student['id']) {
             header('Location: /dashboard');
+            exit;
+        }
+
+        // Check subscription status - only Basic and Premium can view recommendations
+        if (isFreeTierUser($user['id'])) {
+            setFlashMessage('error', 'Career recommendations are only available for Basic and Premium subscribers. Please upgrade your plan to view this feature.');
+            header('Location: /subscription');
             exit;
         }
 
@@ -228,10 +267,10 @@ class ReportCardController {
             // Try to generate recommendations now
             error_log("Career rec not found for report card {$reportCardId}, generating now...");
             $this->processReportCard($reportCardId);
-            
+
             // Try again
             $careerRec = $this->careerRecModel->findByReportCardId($reportCardId);
-            
+
             if (!$careerRec) {
                 setFlashMessage('error', 'Unable to generate career recommendations. Please try uploading your report card again.');
                 header('Location: /upload-report-card');
@@ -248,8 +287,109 @@ class ReportCardController {
         header('Content-Type: application/json');
 
         $student = getCurrentStudent();
-        $reportCards = $this->reportCardModel->findByStudentId($student['id']);
+        $reportCards = $this->reportCardModel->findByUserId($student['user_id']);
 
         echo json_encode(['report_cards' => $reportCards ?: []]);
+    }
+
+    public function deleteReportCard($reportCardId) {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $student = getCurrentStudent();
+        $reportCard = $this->reportCardModel->findById($reportCardId);
+
+        // Verify ownership
+        if (!$reportCard || $reportCard['user_id'] != $student['user_id']) {
+            setFlashMessage('error', 'Report card not found or you do not have permission to delete it.');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Delete career recommendations
+        $db->prepare("DELETE FROM career_recommendations WHERE report_card_id = ?")->execute([$reportCardId]);
+
+        // Delete report card file
+        if (!empty($reportCard['file_path']) && file_exists(UPLOAD_DIR_REPORT_CARDS . $reportCard['file_path'])) {
+            unlink(UPLOAD_DIR_REPORT_CARDS . $reportCard['file_path']);
+        }
+
+        // Delete report card record
+        $db->prepare("DELETE FROM report_cards WHERE id = ?")->execute([$reportCardId]);
+
+        setFlashMessage('success', 'Report card deleted successfully.');
+        header('Location: /dashboard');
+        exit;
+    }
+
+    /**
+     * Extract text from PDF using OpenAI Vision API
+     */
+    private function extractTextWithOpenAIVision($filePath) {
+        try {
+            // Use ImageMagick CLI to convert PDF to image
+            $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ocr_' . uniqid();
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $magickPath = 'C:\Program Files\ImageMagick-7.1.2-Q16\magick.exe';
+
+            if (!file_exists($magickPath)) {
+                error_log("ImageMagick not found at: $magickPath");
+                return null;
+            }
+
+            // Convert first page to image
+            $imagePath = $tempDir . DIRECTORY_SEPARATOR . 'page_0.jpg';
+            $escapedFilePath = str_replace('[', '\\[', $filePath);
+            $convertCmd = "\"$magickPath\" -density 150 -quality 85 \"{$escapedFilePath}[0]\" \"$imagePath\" 2>&1";
+
+            error_log("Converting report card to image: $convertCmd");
+            $convertOutput = shell_exec($convertCmd);
+
+            if (!file_exists($imagePath)) {
+                error_log("ImageMagick conversion failed: $convertOutput");
+                @rmdir($tempDir);
+                return null;
+            }
+
+            // Verify it's a valid image
+            $imageInfo = @getimagesize($imagePath);
+            if (!$imageInfo) {
+                error_log("Created file is not a valid image");
+                @unlink($imagePath);
+                @rmdir($tempDir);
+                return null;
+            }
+
+            error_log("Image created: {$imageInfo[0]}x{$imageInfo[1]} pixels");
+
+            // Read image and send to OpenAI Vision
+            $imageData = file_get_contents($imagePath);
+            @unlink($imagePath);
+            @rmdir($tempDir);
+
+            // Use AIHelper to extract text
+            $aiHelper = new AIHelper();
+            $extractedText = $aiHelper->extractTextFromImage($imageData, 'image/jpeg');
+
+            if ($extractedText) {
+                error_log("OpenAI Vision extracted: " . strlen($extractedText) . " characters");
+                return $extractedText;
+            }
+
+            return null;
+
+        } catch (Exception $e) {
+            error_log("OpenAI Vision OCR error: " . $e->getMessage());
+            return null;
+        }
     }
 }

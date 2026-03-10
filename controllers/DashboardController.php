@@ -24,16 +24,16 @@ class DashboardController {
         requireStudent();
 
         $student = getCurrentStudent();
-        $studentId = $student['id'];
+        $userId = $student['user_id'];
 
-        $scripts = $this->scriptModel->findByStudentId($studentId);
-        $studyPlans = $this->studyPlanModel->findByStudentId($studentId, true);
-        $reportCards = $this->reportCardModel->findByStudentId($studentId);
+        $scripts = $this->scriptModel->findByStudentId($student['id']);
+        $studyPlans = $this->studyPlanModel->findByStudentId($student['id'], true);
+        $reportCards = $this->reportCardModel->findByUserId($userId);
 
-        $scriptsCount = $this->scriptModel->countByStudent($studentId);
-        $plansCount = $this->studyPlanModel->countByStudent($studentId);
-        $reportsCount = $this->reportCardModel->countByStudent($studentId);
-        $topicsCount = $this->scriptModel->getTotalTopicsCount($studentId);
+        $scriptsCount = $this->scriptModel->countByStudent($student['id']);
+        $plansCount = $this->studyPlanModel->countByStudent($student['id']);
+        $reportsCount = $this->reportCardModel->countByUserId($userId);
+        $topicsCount = $this->scriptModel->getTotalTopicsCount($student['id']);
 
         $user = getCurrentUser();
         

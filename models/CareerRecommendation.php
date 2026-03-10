@@ -10,10 +10,10 @@ class CareerRecommendation {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function create($studentId, $reportCardId, $careers = [], $strengths = [], $areasForImprovement = [], $courses = [], $bursaries = []) {
+    public function create($studentId, $reportCardId, $careers = [], $strengths = [], $areasForImprovement = [], $courses = [], $bursaries = [], $aps = 0) {
         $stmt = $this->db->prepare("
-            INSERT INTO career_recommendations (student_id, report_card_id, recommended_careers, strengths, areas_for_improvement, courses_data, bursaries_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO career_recommendations (student_id, report_card_id, recommended_careers, strengths, areas_for_improvement, courses_data, bursaries_data, aps_score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $studentId,
@@ -22,7 +22,8 @@ class CareerRecommendation {
             json_encode($strengths),
             json_encode($areasForImprovement),
             $courses,
-            $bursaries
+            $bursaries,
+            $aps
         ]);
 
         return $this->db->lastInsertId();
@@ -39,6 +40,7 @@ class CareerRecommendation {
             $result['areas_for_improvement'] = json_decode($result['areas_for_improvement'], true) ?? [];
             $result['courses'] = json_decode($result['courses_data'] ?? '[]', true) ?? [];
             $result['bursaries'] = json_decode($result['bursaries_data'] ?? '[]', true) ?? [];
+            $result['aps'] = $result['aps_score'] ?? 0;
         }
 
         return $result;
@@ -55,6 +57,7 @@ class CareerRecommendation {
             $result['areas_for_improvement'] = json_decode($result['areas_for_improvement'], true) ?? [];
             $result['courses'] = json_decode($result['courses_data'] ?? '[]', true) ?? [];
             $result['bursaries'] = json_decode($result['bursaries_data'] ?? '[]', true) ?? [];
+            $result['aps'] = $result['aps_score'] ?? 0;
         }
 
         return $results;
@@ -71,6 +74,7 @@ class CareerRecommendation {
             $result['areas_for_improvement'] = json_decode($result['areas_for_improvement'], true) ?? [];
             $result['courses'] = json_decode($result['courses_data'] ?? '[]', true) ?? [];
             $result['bursaries'] = json_decode($result['bursaries_data'] ?? '[]', true) ?? [];
+            $result['aps'] = $result['aps_score'] ?? 0;
         }
 
         return $result;

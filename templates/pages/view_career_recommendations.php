@@ -164,6 +164,33 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 <?php else: ?>
 
 <div class="career-recommendations-container">
+    <!-- APS Score -->
+    <div class="recommendation-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-header">
+            <h3><i class="fas fa-graduation-cap"></i> Your APS Score</h3>
+        </div>
+        <div class="card-content" style="text-align: center; padding: 20px;">
+            <?php
+            $aps = $careerRec['aps'] ?? 0;
+            $apsClass = $aps >= 35 ? 'excellent' : ($aps >= 25 ? 'good' : 'average');
+            ?>
+            <div style="font-size: 2.5rem; font-weight: bold; margin: 15px 0;">
+                <?php echo $aps > 0 ? $aps : 'N/A'; ?>
+            </div>
+            <p style="font-size: 0.95rem; opacity: 0.9; margin: 0;">
+                <?php if ($aps >= 35): ?>
+                    Excellent! You qualify for most Bachelor's degree programs
+                <?php elseif ($aps >= 25): ?>
+                    Good! You qualify for many Bachelor's degree programs
+                <?php elseif ($aps > 0): ?>
+                    Consider Diploma or Higher Certificate programs
+                <?php else: ?>
+                    Upload your results to calculate your APS score
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+
     <!-- Recommended Careers -->
     <div class="recommendation-card">
         <div class="card-header">
@@ -176,7 +203,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
             <?php if (!empty($careerRec['recommended_careers'])): ?>
                 <div class="career-tags">
                     <?php foreach ($careerRec['recommended_careers'] as $career): ?>
-                        <span class="career-tag"><?php echo htmlspecialchars($career); ?></span>
+                        <span class="career-tag"><?php echo htmlspecialchars(is_array($career) ? implode(', ', $career) : $career); ?></span>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
@@ -192,11 +219,14 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         </div>
         <div class="card-content">
             <?php if (!empty($careerRec['strengths'])): ?>
-                <ul class="strengths-list">
+                <div class="strengths-grid">
                     <?php foreach ($careerRec['strengths'] as $strength): ?>
-                        <li><i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($strength); ?></li>
+                        <div class="strength-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span><?php echo htmlspecialchars(is_array($strength) ? implode(', ', $strength) : $strength); ?></span>
+                        </div>
                     <?php endforeach; ?>
-                </ul>
+                </div>
             <?php else: ?>
                 <p class="no-data">No strengths identified yet.</p>
             <?php endif; ?>
@@ -214,18 +244,33 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         <div id="courses" class="card-content">
             <?php if (!empty($careerRec['courses'])): ?>
                 <div class="courses-grid">
-                    <?php foreach ($careerRec['courses'] as $course): ?>
+                    <?php foreach (array_slice($careerRec['courses'], 0, 5) as $course): ?>
                         <div class="course-card">
                             <h4><?php echo htmlspecialchars($course['name']); ?></h4>
-                            <p class="course-duration"><i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration']); ?></p>
+                            <p class="course-duration"><i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? '3-4 years'); ?></p>
                             <div class="course-requirements">
                                 <strong><i class="fas fa-list-check"></i> Entry Requirements:</strong>
-                                <p><?php echo htmlspecialchars($course['requirements']); ?></p>
+                                <p><?php echo htmlspecialchars($course['requirements'] ?? 'Varies by institution'); ?></p>
                             </div>
-                            <?php if (!empty($course['institutions'])): ?>
+                            <?php if (!empty($course['institutions']) && is_array($course['institutions'])): ?>
                                 <div class="course-institutions">
-                                    <strong><i class="fas fa-university"></i> Institutions:</strong>
-                                    <p><?php echo htmlspecialchars(implode(', ', $course['institutions'])); ?></p>
+                                    <strong><i class="fas fa-university"></i> Institutions Offering This Course:</strong>
+                                    <ul class="institution-list">
+                                        <?php foreach ($course['institutions'] as $inst): ?>
+                                            <?php 
+                                            $instName = is_array($inst) ? ($inst['name'] ?? null) : $inst;
+                                            $instReq = is_array($inst) ? ($inst['entry_requirements'] ?? null) : null;
+                                            ?>
+                                            <?php if ($instName): ?>
+                                                <li>
+                                                    <strong><?php echo htmlspecialchars($instName); ?></strong>
+                                                    <?php if ($instReq): ?>
+                                                        <br><small style="color: #666;"><i class="fas fa-info-circle"></i> Requires: <?php echo htmlspecialchars($instReq); ?></small>
+                                                    <?php endif; ?>
+                                                </li>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </ul>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -331,8 +376,8 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 .recommendation-card {
     background: white;
     border-radius: 16px;
-    padding: 25px;
-    margin-bottom: 25px;
+    padding: 20px;
+    margin-bottom: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -340,8 +385,8 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
     border-bottom: 2px solid #f3f4f6;
 }
 
@@ -351,6 +396,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     display: flex;
     align-items: center;
     gap: 10px;
+    font-size: 1.1rem;
 }
 
 .card-header h3 i {
@@ -364,16 +410,37 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 .career-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 }
 
 .career-tag {
     background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
-    padding: 10px 20px;
-    border-radius: 25px;
+    padding: 8px 16px;
+    border-radius: 20px;
     font-weight: 600;
+    font-size: 13px;
+}
+
+.strengths-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.strength-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
     font-size: 14px;
+}
+
+.strength-item i {
+    color: #22c55e;
+    font-size: 16px;
 }
 
 .strengths-list {

@@ -32,6 +32,22 @@ class UploadedScript {
         return $stmt->fetchAll();
     }
     
+    public function update($id, $data) {
+        $setParts = [];
+        $values = [];
+        
+        foreach ($data as $key => $value) {
+            $setParts[] = "$key = ?";
+            $values[] = $value;
+        }
+        
+        $setClause = implode(', ', $setParts);
+        $values[] = $id;
+        
+        $stmt = $this->db->prepare("UPDATE uploaded_scripts SET $setClause WHERE id = ?");
+        return $stmt->execute($values);
+    }
+
     public function updateProcessedTopics($id, $topics) {
         $stmt = $this->db->prepare("UPDATE uploaded_scripts SET processed_topics = ? WHERE id = ?");
         $stmt->execute([json_encode($topics), $id]);

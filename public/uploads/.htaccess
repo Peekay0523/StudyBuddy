@@ -1,0 +1,12 @@
+# Protect voice recordings - only allow access through PHP router
+# This file should be placed in public/uploads/study_groups/
+
+# Deny direct access to voice files
+<FilesMatch "\.(webm|mp3|wav|m4a)$">
+    Require all denied
+</FilesMatch>
+
+# Allow access to index files only
+<Files "index.php">
+    Require all granted
+</Files>

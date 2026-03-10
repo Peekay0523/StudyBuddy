@@ -584,7 +584,7 @@ body {
 
 .chat-messages {
     padding: 20px;
-    height: 400px;
+    flex: 1;
     overflow-y: auto;
     background: #f9fafb;
 }
@@ -609,38 +609,45 @@ body {
 
 .chat-input-form {
     display: flex;
-    padding: 20px;
+    padding: 15px 20px;
     border-top: 1px solid #e5e7eb;
     gap: 10px;
+    align-items: center;
+    background: white;
 }
 
 .chat-input-form input {
     flex: 1;
-    padding: 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 16px;
-    min-height: 48px;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 44px;
+}
+
+.chat-input-form input:focus {
+    border-color: #667eea;
 }
 
 .chat-input-form .btn-icon {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     border: none;
-    padding: 14px 18px;
-    border-radius: 8px;
     cursor: pointer;
-    font-size: 18px;
-    min-width: 48px;
-    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s;
+    transition: transform 0.2s;
+    padding: 0;
+    min-width: 44px;
+    min-height: 44px;
 }
 
 .chat-input-form .btn-icon:hover {
-    opacity: 0.9;
+    transform: scale(1.05);
 }
 
 .chat-input-form .btn-icon.listening {
@@ -665,7 +672,18 @@ body {
 }
 
 .chat-input-form button[type="submit"] {
-    min-width: 100px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.chat-input-form #upload-btn {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.chat-input-form #mic-btn {
+    background: #f1f5f9;
+    color: #64748b;
 }
 
 /* Chat Controls */
@@ -695,6 +713,20 @@ body {
 
 .voice-mode-label i {
     color: #667eea;
+}
+
+/* Chat Container */
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    min-height: 500px;
 }
 
 /* Toggle Switch */
@@ -968,7 +1000,7 @@ body {
     }
 
     .hero-section h1 {
-        font-size: 32px;
+        font-size: 28px;
     }
 
     .hero-section p {
@@ -998,6 +1030,87 @@ body {
         justify-content: flex-end;
     }
 
+    /* Features Section Mobile */
+    .features-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* How It Works Mobile */
+    .steps-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* Study Groups Mobile */
+    .study-groups-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Subscription Plans Mobile */
+    .subscription-plans {
+        grid-template-columns: 1fr;
+    }
+
+    /* Admin Tables Mobile */
+    .admin-table-container {
+        overflow-x: auto;
+    }
+
+    .admin-table {
+        min-width: 600px;
+    }
+
+    /* AI Chat Mobile */
+    .chat-container {
+        border-radius: 0;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+    }
+
+    .chat-messages {
+        padding: 15px;
+    }
+
+    .chat-message {
+        max-width: 85%;
+        word-wrap: break-word;
+    }
+
+    .chat-input-form {
+        padding: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .chat-input-form input[type="text"] {
+        min-width: auto;
+        flex: 1;
+    }
+
+    .chat-input-form .btn-icon {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 12px;
+        flex-shrink: 0;
+    }
+
+    .chat-controls {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .voice-mode-control {
+        flex: 1;
+        min-width: 100%;
+        justify-content: center;
+    }
+
+    #stop-speech-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+
     .report-card-item {
         flex-direction: column;
         align-items: flex-start;
@@ -1013,5 +1126,22 @@ body {
 @media (max-width: 480px) {
     .stats {
         grid-template-columns: 1fr;
+    }
+
+    .chat-container {
+        height: calc(100vh - 160px);
+    }
+
+    .chat-message {
+        max-width: 90%;
+    }
+
+    .chat-input-form {
+        gap: 8px;
+    }
+
+    .chat-input-form input[type="text"] {
+        font-size: 14px;
+        padding: 12px;
     }
 }

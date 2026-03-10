@@ -10,65 +10,75 @@ const fileSize = document.getElementById("file-size");
 const clearBtn = document.getElementById("clear-btn");
 
 // Click to upload
-uploadArea.addEventListener("click", () => {
-    fileInput.click();
-});
+if (uploadArea && fileInput) {
+    uploadArea.addEventListener("click", () => {
+        fileInput.click();
+    });
+}
 
 // Drag and drop
-uploadArea.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = "#667eea";
-    uploadArea.style.background = "#e0e7ff";
-});
+if (uploadArea) {
+    uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = "#667eea";
+        uploadArea.style.background = "#e0e7ff";
+    });
 
-uploadArea.addEventListener("dragleave", () => {
-    uploadArea.style.borderColor = "#cbd5e1";
-    uploadArea.style.background = "#f8fafc";
-});
+    uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "#cbd5e1";
+        uploadArea.style.background = "#f8fafc";
+    });
 
-uploadArea.addEventListener("drop", (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = "#cbd5e1";
-    uploadArea.style.background = "#f8fafc";
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-        handleFile(files[0]);
-    }
-});
+    uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = "#cbd5e1";
+        uploadArea.style.background = "#f8fafc";
+
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+}
 
 // File input change
-fileInput.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files[0]) {
-        handleFile(e.target.files[0]);
-    }
-});
+if (fileInput) {
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+            handleFile(e.target.files[0]);
+        }
+    });
+}
 
 function handleFile(file) {
     const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
-    
+
     if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx") && !file.name.endsWith(".txt")) {
         alert("Invalid file type. Please upload PDF, DOCX, or TXT files.");
         return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) {
         alert("File size must be less than 10MB.");
         return;
     }
-    
-    fileName.textContent = file.name;
-    fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
-    previewSection.style.display = "block";
-    uploadArea.style.display = "none";
+
+    if (fileName && fileSize && previewSection && uploadArea) {
+        fileName.textContent = file.name;
+        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
+        previewSection.style.display = "block";
+        uploadArea.style.display = "none";
+    }
 }
 
 // Clear selection
-clearBtn.addEventListener("click", () => {
-    fileInput.value = "";
-    previewSection.style.display = "none";
-    uploadArea.style.display = "block";
-});
+if (clearBtn && fileInput && previewSection && uploadArea) {
+    clearBtn.addEventListener("click", () => {
+        fileInput.value = "";
+        previewSection.style.display = "none";
+        uploadArea.style.display = "block";
+    });
+}
 
 async function generateMemorandum(scriptId) {
     const btn = document.getElementById("gen-memo-btn-" + scriptId);
@@ -131,9 +141,7 @@ function downloadMemorandum(scriptId) {
 }
 
 // Load existing scripts on page load
-document.addEventListener("DOMContentLoaded", function() {
-    loadUploadedScripts();
-});
+loadUploadedScripts();
 
 async function loadUploadedScripts() {
     try {
@@ -148,8 +156,8 @@ async function loadUploadedScripts() {
                         <div class="script-info">
                             <h4>${script.title}</h4>
                             <p class="script-meta">
-                                <span class="badge blue">${script.subject}</span>
-                                <span class="badge orange">Grade ${script.grade_level}</span>
+                                <span class="badge blue">${script.subject || 'No subject'}</span>
+                                <span class="badge orange">Grade ${script.grade_level || '-'}</span>
                                 <span class="badge green">${new Date(script.uploaded_at).toLocaleDateString()}</span>
                             </p>
                         </div>
@@ -157,6 +165,11 @@ async function loadUploadedScripts() {
                             <button id="gen-memo-btn-${script.id}" onclick="generateMemorandum(${script.id})" class="btn-primary btn-sm">
                                 <i class="fas fa-magic"></i> Generate Memorandum
                             </button>
+                            <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
+                                <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
                         </div>
                         <div id="memo-result-${script.id}" class="memo-result"></div>
                     </div>
@@ -185,7 +198,7 @@ include __DIR__ . '/../layouts/header.php';
             <div class="form-group">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Script File (PDF, DOCX, or TXT)</label>
                 <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
-                    <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;" required>
+                    <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
                     <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
                     <p style="margin: 0; color: #64748b; font-size: 13px;">PDF, DOCX, TXT (Max 10MB)</p>
@@ -242,6 +255,34 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// Form validation - check if file is selected before submit
+document.querySelector('form')?.addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('script_file');
+    const selectedScanInput = document.getElementById('selected_scan_file');
+
+    // Check if either a file is selected OR a scan is selected
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== '';
+
+    if (!hasFile && !hasScan) {
+        e.preventDefault();
+        alert('Please select a file to upload. Click or drag a file into the upload area, or use "Select from My Scans" button.');
+        const uploadArea = document.getElementById('upload-area');
+        if (uploadArea) {
+            uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadArea.style.borderColor = '#ef4444';
+            uploadArea.style.background = '#fef2f2';
+            setTimeout(() => {
+                uploadArea.style.borderColor = '#cbd5e1';
+                uploadArea.style.background = '#f8fafc';
+            }, 2000);
+        }
+        return false;
+    }
+});
+</script>
 
 <!-- Select from Scans Modal -->
 <div id="scans-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
@@ -309,7 +350,7 @@ async function loadScans() {
     try {
         const response = await fetch('/api/scan-saved-list');
         const data = await response.json();
-        
+
         if (data.success && data.files.length > 0) {
             noScans.style.display = 'none';
             scansList.innerHTML = data.files.map(file => `
@@ -345,13 +386,13 @@ function selectScan(filename, url) {
         document.querySelector('form').appendChild(hiddenInput);
     }
     hiddenInput.value = filename;
-    
+
     // Update preview
     document.getElementById('file-name').textContent = filename;
     document.getElementById('file-size').textContent = 'From saved scans';
     document.getElementById('preview-section').style.display = 'block';
     document.getElementById('upload-area').style.display = 'none';
-    
+
     scansModalOverlay.style.display = 'none';
 }
 

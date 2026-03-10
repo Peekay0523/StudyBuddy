@@ -1,8 +1,9 @@
 <?php
 /**
  * Main Entry Point - School Learning Platform (PHP Version)
- * 
- * Usage: php -S localhost:8000 public/index.php
+ *
+ * Usage: php -S localhost:8000 public/router.php
+ * The router.php script will route all requests through this file.
  */
 
 // Change to the project root directory
@@ -54,11 +55,49 @@ $router->get('/test-gd', function() {
     }
 });
 
+// Test scan conversion directly
+$router->get('/test-scan-direct', function() {
+    require __DIR__ . '/../test-scan-direct.php';
+});
+$router->post('/test-scan-direct', function() {
+    require __DIR__ . '/../test-scan-direct.php';
+});
+
+// Test scan API with JavaScript
+$router->get('/test-scan-api', function() {
+    require __DIR__ . '/../test-scan-api.php';
+});
+
+// Test SMS OTP
+$router->get('/test-sms-otp', function() {
+    require __DIR__ . '/../test-sms-otp.php';
+});
+$router->post('/test-sms-otp', function() {
+    require __DIR__ . '/../test-sms-otp.php';
+});
+
+// Test OpenAI
+$router->get('/test-openai', function() {
+    require __DIR__ . '/../test-openai.php';
+});
+$router->post('/test-openai', function() {
+    require __DIR__ . '/../test-openai.php';
+});
+
+// Simple JSON test endpoint
+$router->get('/test-json', function() {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'scan_id' => 123, 'test' => 'hello']);
+    exit;
+});
+
 // Authentication
 $router->get('/login', 'AuthController@login');
 $router->post('/login', 'AuthController@login');
 $router->get('/register', 'AuthController@register');
 $router->post('/register', 'AuthController@register');
+$router->post('/register/resend-otp', 'AuthController@resendOtp');
+$router->post('/register/check-phone', 'AuthController@checkPhone');
 $router->get('/logout', 'AuthController@logout');
 
 // Dashboard
@@ -111,20 +150,89 @@ $router->get('/study-group/view/{id}', 'StudyGroupController@view');
 $router->post('/study-group/{id}/upload-script', 'StudyGroupController@uploadScript');
 $router->get('/study-group/{groupId}/download-script/{scriptId}', 'StudyGroupController@downloadScript');
 $router->post('/study-group/{groupId}/delete-script/{scriptId}', 'StudyGroupController@deleteScript');
+
+// Serve voice recordings from database (MUST be before /send-message and /get-messages)
+$router->get('/study-group/{groupId}/voice/{messageId}', function($groupId, $messageId) {
+    requireLogin();
+
+    require_once __DIR__ . '/../models/StudyGroupMessage.php';
+    require_once __DIR__ . '/../models/StudyGroup.php';
+
+    $messageModel = new StudyGroupMessage();
+    $studyGroupModel = new StudyGroup();
+
+    // Verify user is a member of the group
+    $user = getCurrentUser();
+    if (!$studyGroupModel->isMember($groupId, $user['id'])) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Access denied']);
+        exit;
+    }
+
+    // Get message from database
+    $message = $messageModel->findById($messageId);
+    
+    if (!$message || $message['message_type'] !== 'voice') {
+        http_response_code(404);
+        echo json_encode(['error' => 'Voice message not found']);
+        exit;
+    }
+
+    // Try to serve from database (voice_data BLOB)
+    if (!empty($message['voice_data'])) {
+        header('Content-Type: audio/webm');
+        header('Content-Length: ' . strlen($message['voice_data']));
+        header('Cache-Control: no-cache');
+        echo $message['voice_data'];
+        exit;
+    }
+    
+    // Fallback to filesystem for old recordings (backward compatibility)
+    if (!empty($message['file_path'])) {
+        $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . basename($message['file_path']);
+        if (file_exists($filePath)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $filePath);
+            finfo_close($finfo);
+            
+            header('Content-Type: ' . $mimeType);
+            header('Content-Length: ' . filesize($filePath));
+            header('Cache-Control: no-cache');
+            readfile($filePath);
+            exit;
+        }
+    }
+
+    http_response_code(404);
+    echo json_encode(['error' => 'Voice file not found']);
+    exit;
+});
+
 $router->post('/study-group/{id}/send-message', 'StudyGroupController@sendMessage');
 $router->get('/study-group/{id}/get-messages', 'StudyGroupController@getMessages');
 $router->post('/study-group/{groupId}/delete-message/{messageId}', 'StudyGroupController@deleteMessage');
 $router->post('/study-group/{groupId}/remove-member/{userId}', 'StudyGroupController@removeMember');
+
+// Old route for filesystem-based voice recordings (deprecated - for backward compatibility)
 $router->get('/uploads/study_groups/{groupId}/voice/{filename}', function($groupId, $filename) {
-    requireLogin();
-    $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . $filename;
+    requireStudent();
+    // Decode filename in case it's URL encoded
+    $filename = urldecode($filename);
+    $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . basename($filename);
     if (!file_exists($filePath)) {
         http_response_code(404);
-        echo 'File not found';
+        echo 'File not found: ' . $filePath;
         exit;
     }
-    header('Content-Type: audio/webm');
+    // Detect MIME type properly
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $filePath);
+    finfo_close($finfo);
+
+    header('Content-Type: ' . $mimeType);
     header('Content-Length: ' . filesize($filePath));
+    header('Accept-Ranges: bytes');
+    header('Cache-Control: no-cache');
     readfile($filePath);
 });
 
@@ -143,15 +251,50 @@ $router->post('/api/scan-to-pdf', 'ScanController@convertToPdf');
 $router->post('/api/scan-save', 'ScanController@saveScan');
 $router->get('/api/scan-saved-list', 'ScanController@getSavedPdfs');
 $router->post('/api/scan-delete-saved', 'ScanController@deleteSavedPdf');
-$router->get('/view-scan-saved/{filename}', 'ScanController@viewSavedPdf');
-$router->get('/download-scan-saved/{filename}', 'ScanController@downloadSavedPdf');
-$router->get('/download-scan/{filename}', 'ScanController@downloadScan');
+
+// Scan routes - serve PDFs from database
+$router->get('/view-scan-saved/{id}', function($id) {
+    require_once __DIR__ . '/../controllers/ScanController.php';
+    $controller = new ScanController();
+    $controller->viewSavedPdf($id);
+});
+
+$router->get('/download-scan-saved/{id}', function($id) {
+    require_once __DIR__ . '/../controllers/ScanController.php';
+    $controller = new ScanController();
+    $controller->downloadSavedPdf($id);
+});
+
+$router->get('/download-scan/{id}', function($id) {
+    require_once __DIR__ . '/../controllers/ScanController.php';
+    $controller = new ScanController();
+    $controller->downloadScan($id);
+});
+
+// Debug scan
+$router->get('/debug-scan/{id}', function($id) {
+    require __DIR__ . '/../debug-scan.php';
+});
+
+// Test PDF generation
+$router->get('/test-pdf-generation', function() {
+    require __DIR__ . '/../test-pdf-generation.php';
+});
+$router->post('/test-pdf-generation', function() {
+    require __DIR__ . '/../test-pdf-generation.php';
+});
+
+// Check GD status
+$router->get('/check-gd-status', function() {
+    require __DIR__ . '/../check-gd-status.php';
+});
 
 // Admin Routes
 $router->get('/admin', 'AdminController@index');
 $router->get('/admin/users', 'AdminController@users');
 $router->get('/admin/users/{id}', 'AdminController@viewUser');
 $router->post('/admin/users/toggle-role', 'AdminController@toggleRole');
+$router->post('/admin/users/delete', 'AdminController@deleteUser');
 $router->get('/admin/subscriptions', 'AdminController@subscriptions');
 $router->post('/admin/subscriptions/cancel', 'AdminController@cancelSubscription');
 $router->post('/admin/subscriptions/change-status', 'AdminController@changeSubscriptionStatus');
@@ -162,12 +305,18 @@ $router->get('/admin/subscriptions/download-proof/{id}', 'AdminController@downlo
 $router->get('/admin/scripts', 'AdminController@scripts');
 $router->post('/admin/scripts/delete', 'AdminController@deleteScript');
 $router->get('/admin/report-cards', 'AdminController@reportCards');
+$router->post('/admin/report-cards/delete', 'AdminController@deleteReportCard');
 $router->get('/admin/topics', 'AdminController@topicsMastered');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');
 $router->post('/api/generate-memorandum', 'ScriptController@generateMemorandum');
 $router->get('/download-memorandum/{id}', 'ScriptController@downloadMemorandum');
+$router->post('/delete-script/{id}', 'ScriptController@deleteScript');
+
+// Report Cards API endpoints
+$router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCards');
+$router->post('/delete-report-card/{id}', 'ReportCardController@deleteReportCard');
 
 // Static files (for development) - serve from public folder
 if (isset($_SERVER['REQUEST_URI'])) {

@@ -496,45 +496,45 @@ class StudyGroupController {
 
         $message = trim($_POST['message'] ?? '');
         $messageType = $_POST['message_type'] ?? 'text';
-        $filePath = null;
+        $voiceData = null;
 
-        // Handle voice note upload
+        // Handle voice note upload - store in database as BLOB
         if ($messageType === 'voice' && isset($_FILES['voice_file']) && $_FILES['voice_file']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['voice_file'];
-            $uploadDir = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-
-            $fileName = time() . '_' . uniqid() . '.webm';
-            $filePath = $uploadDir . $fileName;
-
-            if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            
+            // Read file content into memory
+            $voiceData = file_get_contents($file['tmp_name']);
+            
+            if ($voiceData === false) {
                 http_response_code(500);
-                echo json_encode(['error' => 'Failed to save voice note']);
+                echo json_encode(['error' => 'Failed to read voice note']);
                 exit;
             }
-
-            // Store relative path for web access
-            $relativePath = 'uploads/study_groups/' . $groupId . '/voice/' . $fileName;
+            
             $message = 'Voice note';
         }
 
-        if (empty($message) && !$filePath) {
+        if (empty($message) && $voiceData === null) {
             http_response_code(400);
             echo json_encode(['error' => 'Message cannot be empty']);
             exit;
         }
 
         $messageModel = new StudyGroupMessage();
-        $messageId = $messageModel->send($groupId, $user['id'], $message, $messageType, $relativePath ?? null);
+        
+        // Use sendVoiceMessage for voice, regular send for text
+        if ($messageType === 'voice' && $voiceData !== null) {
+            $messageId = $messageModel->sendVoiceMessage($groupId, $user['id'], $voiceData);
+        } else {
+            $messageId = $messageModel->send($groupId, $user['id'], $message, $messageType);
+        }
 
         if ($messageId) {
             $newMessage = [
                 'id' => $messageId,
                 'message' => $message,
                 'message_type' => $messageType,
-                'file_path' => $relativePath ?? null,
+                'file_path' => null,  // No longer using file_path for voice
                 'sender_name' => $user['username'],
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -551,6 +551,12 @@ class StudyGroupController {
      */
     public function getMessages($groupId) {
         requireLogin();
+
+        // Prevent caching
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('Content-Type: application/json');
 
         $user = getCurrentUser();
         $group = $group = $this->studyGroupModel->findById($groupId);

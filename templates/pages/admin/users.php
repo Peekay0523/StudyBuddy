@@ -102,9 +102,16 @@ include __DIR__ . '/../../layouts/admin_header.php';
                             <td><?php echo $user['study_plans_count']; ?></td>
                             <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
                             <td>
-                                <a href="/admin/users/<?php echo $user['id']; ?>" class="btn-sm btn-sm-primary" style="text-decoration: none;">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <a href="/admin/users/<?php echo $user['id']; ?>" class="btn-sm btn-sm-primary" style="text-decoration: none;">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <?php if ($user['id'] != getCurrentUser()['id']): ?>
+                                        <button type="button" class="btn-sm btn-sm-danger" onclick="openDeleteModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username']); ?>')" style="padding: 6px 12px; font-size: 13px; border-radius: 6px; border: none; background: #ef4444; color: white; cursor: pointer;">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -117,5 +124,73 @@ include __DIR__ . '/../../layouts/admin_header.php';
 <div style="text-align: center; margin-top: 20px; color: #6b7280;">
     Showing <?php echo count($users); ?> user(s)
 </div>
+
+<!-- Delete User Modal -->
+<div id="deleteUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #dc2626); display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0; color: #1f2937; font-size: 18px;">Delete User</h3>
+                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">This action cannot be undone</p>
+            </div>
+        </div>
+
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #991b1b; font-size: 14px;">
+                <strong>Warning:</strong> This will permanently delete the user <strong id="delete-username" style="color: #7f1d1d;"></strong> and ALL associated data including:
+            </p>
+            <ul style="margin: 10px 0 0 20px; color: #991b1b; font-size: 13px; line-height: 1.8;">
+                <li>All subscriptions (active and expired)</li>
+                <li>All uploaded scripts and memorandums</li>
+                <li>All report cards</li>
+                <li>All study plans</li>
+                <li>All scan history</li>
+                <li>All study group memberships and created groups</li>
+                <li>All chat messages</li>
+            </ul>
+        </div>
+
+        <form method="POST" action="/admin/users/delete" id="deleteUserForm">
+            <input type="hidden" name="user_id" id="delete-user-id">
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" onclick="closeDeleteModal()" style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 10px 20px;">
+                    <i class="fas fa-trash"></i> Yes, Delete User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(userId, username) {
+    document.getElementById('delete-user-id').value = userId;
+    document.getElementById('delete-username').textContent = username;
+    document.getElementById('deleteUserModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteUserModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('deleteUserModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../../layouts/admin_footer.php'; ?>

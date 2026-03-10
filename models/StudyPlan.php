@@ -11,9 +11,9 @@ class StudyPlan {
     }
     
     public function create($studentId, $title, $content) {
-        $stmt = $this->db->prepare("INSERT INTO study_plans (student_id, title, content) VALUES (?, ?, ?)");
+        $stmt = $this->db->prepare("INSERT INTO study_plans (student_id, title, content, is_active) VALUES (?, ?, ?, 1)");
         $stmt->execute([$studentId, $title, $content]);
-        
+
         return $this->db->lastInsertId();
     }
     

@@ -118,6 +118,79 @@ class AIHelper {
         return $response;
     }
     
+    /**
+     * Extract text from image using OpenAI Vision API (OCR)
+     */
+    public function extractTextFromImage($imageData, $mimeType = 'image/jpeg') {
+        if (!$this->isValidApiKey()) {
+            return null;
+        }
+
+        // Convert binary image data to base64
+        $base64Image = base64_encode($imageData);
+        
+        $messages = [
+            [
+                'role' => 'user',
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => 'Extract all readable text from this image. Return only the text content, nothing else.'
+                    ],
+                    [
+                        'type' => 'image_url',
+                        'image_url' => [
+                            'url' => "data:{$mimeType};base64,{$base64Image}"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->makeVisionRequest($messages);
+        return $response;
+    }
+
+    /**
+     * Make request to OpenAI Vision API
+     */
+    private function makeVisionRequest($messages, $maxTokens = 1000) {
+        if (!$this->isValidApiKey()) {
+            return null;
+        }
+
+        $data = [
+            'model' => 'gpt-4o-mini',
+            'messages' => $messages,
+            'max_tokens' => $maxTokens
+        ];
+
+        $ch = curl_init($this->apiUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response && $httpCode === 200) {
+            $result = json_decode($response, true);
+            if (isset($result['error'])) {
+                error_log("OpenAI Vision API Error: " . json_encode($result['error']));
+                return null;
+            }
+            return $result['choices'][0]['message']['content'] ?? null;
+        }
+
+        error_log("Vision API HTTP Error: " . $httpCode);
+        return null;
+    }
+
     public function analyzeDocumentTopics($content) {
         if (!$this->isValidApiKey()) {
             // Fallback: simple keyword extraction
@@ -170,41 +243,196 @@ class AIHelper {
         if (!$this->isValidApiKey()) {
             return "This memorandum summarizes the key topics: " . implode(', ', array_slice($topics, 0, 5)) . ".";
         }
-        
+
+        // Validate content is not binary/corrupted
+        if (empty($content) || 
+            strpos($content, '%PDF-') !== false ||
+            strpos($content, '/Type /Catalog') !== false ||
+            preg_match('/[^\x20-\x7E\x0A\x0D]{50,}/', $content)) {
+            error_log("generateMemorandum: Invalid or corrupted content detected");
+            return "Unable to generate memorandum: The uploaded file content could not be processed. Please ensure you are uploading a text-based PDF or other supported document format.";
+        }
+
         $topicsStr = implode(', ', $topics);
         $messages = [
             ['role' => 'system', 'content' => 'You are an educational assistant that creates concise memorandums summarizing educational content.'],
             ['role' => 'user', 'content' => "Create a concise memorandum summarizing this educational content focusing on these key topics: {$topicsStr}. Content: " . substr($content, 0, 4000)]
         ];
-        
+
         $response = $this->makeRequest($messages, 300, 0.4);
-        
+
         return $response ?: "Memorandum for topics: " . implode(', ', array_slice($topics, 0, 5));
     }
     
     public function generateStudyPlan($challengingTopics, $studentName) {
         if (!$this->isValidApiKey() || empty($challengingTopics)) {
-            $topicsStr = implode(', ', array_slice($challengingTopics, 0, 3));
+            $topicsStr = !empty($challengingTopics) ? implode(', ', array_slice($challengingTopics, 0, 3)) : 'General Study';
+            error_log("GenerateStudyPlan: Using fallback response. Topics: " . json_encode($challengingTopics));
             return [
                 'title' => "Study Plan for {$topicsStr}",
-                'content' => "Focus on these challenging topics: {$topicsStr}. Spend extra time practicing problems related to these concepts."
+                'content' => "Focus on these challenging topics: {$topicsStr}. Spend extra time practicing problems related to these concepts. Review your notes regularly and create summary sheets for each topic."
             ];
         }
-        
+
         $topicsStr = implode(', ', $challengingTopics);
         $messages = [
             ['role' => 'system', 'content' => 'You are an educational advisor that creates personalized study plans focusing on challenging topics.'],
             ['role' => 'user', 'content' => "Create a personalized study plan for a student named {$studentName} who finds these topics challenging: {$topicsStr}. Include study tips and resources."]
         ];
-        
+
         $response = $this->makeRequest($messages, 400, 0.5);
-        
+        error_log("GenerateStudyPlan: API Response: " . substr($response ?: 'NULL', 0, 100));
+
         return [
             'title' => "Personalized Study Plan for {$studentName}",
-            'content' => $response ?: "Focus on these challenging topics: {$topicsStr}."
+            'content' => $response ?: "Focus on these challenging topics: {$topicsStr}. Review regularly and practice problems."
         ];
     }
     
+    /**
+     * Calculate APS (Admission Point Score) from grades
+     * South African NSC APS calculation
+     */
+    private function calculateAPS($gradesData) {
+        $total = 0;
+        $count = 0;
+        
+        foreach ($gradesData as $subject => $grade) {
+            // Skip Life Orientation for APS (doesn't count for most universities)
+            if (stripos($subject, 'Life Orientation') !== false || stripos($subject, 'LO') !== false) {
+                continue;
+            }
+            
+            $percentage = $this->extractPercentage($grade);
+            $points = $this->percentageToAPSPoints($percentage);
+            $total += $points;
+            $count++;
+        }
+        
+        return $count > 0 ? $total : 0;
+    }
+    
+    /**
+     * Extract percentage from grade string
+     */
+    private function extractPercentage($grade) {
+        // Handle percentage format like "75%"
+        if (preg_match('/(\d+)/', $grade, $matches)) {
+            return intval($matches[1]);
+        }
+        
+        // Handle level format like "Level 5" or just "5"
+        if (preg_match('/[Ll]evel\s*(\d+)/', $grade, $matches)) {
+            $level = intval($matches[1]);
+            return $this->levelToPercentage($level);
+        }
+        
+        // Handle range like "70-79%"
+        if (preg_match('/(\d+)-(\d+)/', $grade, $matches)) {
+            return intval(($matches[1] + $matches[2]) / 2);
+        }
+        
+        // Default to 65% if can't parse
+        return 65;
+    }
+    
+    /**
+     * Convert percentage to APS points (SA NSC scale)
+     */
+    private function percentageToAPSPoints($percentage) {
+        if ($percentage >= 80) return 7;
+        if ($percentage >= 70) return 6;
+        if ($percentage >= 60) return 5;
+        if ($percentage >= 50) return 4;
+        if ($percentage >= 40) return 3;
+        if ($percentage >= 30) return 2;
+        if ($percentage >= 0) return 1;
+        return 0;
+    }
+    
+    /**
+     * Convert NSC level to approximate percentage
+     */
+    private function levelToPercentage($level) {
+        $levels = [
+            7 => 85, // 80-100%
+            6 => 75, // 70-79%
+            5 => 65, // 60-69%
+            4 => 55, // 50-59%
+            3 => 45, // 40-49%
+            2 => 35, // 30-39%
+            1 => 20  // 0-29%
+        ];
+        return $levels[$level] ?? 65;
+    }
+    
+    /**
+     * Extract institutions from courses array
+     */
+    private function extractInstitutionsFromCourses($courses) {
+        $institutions = [];
+        
+        if (!is_array($courses)) {
+            return [];
+        }
+        
+        foreach ($courses as $course) {
+            if (isset($course['institutions']) && is_array($course['institutions'])) {
+                foreach ($course['institutions'] as $inst) {
+                    $name = is_array($inst) ? ($inst['name'] ?? $inst[0] ?? null) : $inst;
+                    if ($name && !in_array($name, $institutions)) {
+                        $institutions[] = $name;
+                    }
+                }
+            }
+        }
+        
+        return array_values(array_unique($institutions));
+    }
+    
+    /**
+     * Determine career theme based on subjects
+     */
+    private function determineCareerTheme($gradesData) {
+        $subjects = array_keys($gradesData);
+        
+        // Check for STEM subjects
+        $hasMath = false;
+        $hasScience = false;
+        $hasGeography = false;
+        $hasBusiness = false;
+        $hasIT = false;
+        $hasEducation = false;
+        
+        foreach ($subjects as $subject) {
+            $subjectLower = strtolower($subject);
+            
+            if (strpos($subjectLower, 'math') !== false) $hasMath = true;
+            if (strpos($subjectLower, 'physics') !== false || strpos($subjectLower, 'chemistry') !== false || strpos($subjectLower, 'science') !== false) $hasScience = true;
+            if (strpos($subjectLower, 'geography') !== false || strpos($subjectLower, 'geo') !== false) $hasGeography = true;
+            if (strpos($subjectLower, 'accounting') !== false || strpos($subjectLower, 'business') !== false || strpos($subjectLower, 'economics') !== false) $hasBusiness = true;
+            if (strpos($subjectLower, 'computer') !== false || strpos($subjectLower, 'it ') !== false || strpos($subjectLower, 'programming') !== false) $hasIT = true;
+            if (strpos($subjectLower, 'education') !== false || strpos($subjectLower, 'teaching') !== false) $hasEducation = true;
+        }
+        
+        // Determine theme based on subject combination
+        if ($hasMath && $hasScience) {
+            return 'Science, Technology, Engineering and Mathematics (STEM)';
+        } elseif ($hasGeography && $hasScience) {
+            return 'Environmental and Earth Sciences';
+        } elseif ($hasMath && $hasBusiness) {
+            return 'Business, Finance and Commerce';
+        } elseif ($hasIT || ($hasMath && !$hasScience)) {
+            return 'Information Technology and Computer Science';
+        } elseif ($hasBusiness) {
+            return 'Business and Management';
+        } elseif ($hasEducation) {
+            return 'Education and Teaching';
+        } else {
+            return 'General Academic Studies';
+        }
+    }
+
     public function generateCareerRecommendations($gradesData) {
         $defaultRecommendations = [
             'careers' => ['Teacher', 'Engineer', 'Doctor'],
@@ -212,43 +440,88 @@ class AIHelper {
             'areas_for_improvement' => ['Writing', 'History'],
             'courses' => [],
             'institutions' => [],
-            'bursaries' => []
+            'bursaries' => [],
+            'aps' => 0
         ];
 
         if (!$this->isValidApiKey() || empty($gradesData)) {
             return $defaultRecommendations;
         }
 
+        // Calculate APS score
+        $aps = $this->calculateAPS($gradesData);
+        
+        // Determine career theme based on strongest subjects
+        $careerTheme = $this->determineCareerTheme($gradesData);
+
         $subjectsGrades = implode(', ', array_map(function($k, $v) {
             return "$k: $v";
         }, array_keys($gradesData), $gradesData));
 
         $messages = [
-            ['role' => 'system', 'content' => 'You are an expert career counselor. Analyze academic performance and provide comprehensive career guidance including: recommended careers, suitable courses with requirements, institutions offering those courses, and available bursaries/scholarships. Format as JSON.'],
-            ['role' => 'user', 'content' => "Based on these academic results: {$subjectsGrades}, provide:
-1. 5 recommended careers based on strengths
-2. 3 suitable courses/degrees with entry requirements for each
-3. 3 South African institutions offering these courses
-4. 3 bursaries/scholarships the student might qualify for
+            ['role' => 'system', 'content' => 'You are an expert South African career counselor. Analyze academic performance and provide comprehensive career guidance. IMPORTANT: All recommendations must be CONSISTENT and RELATED to each other. Focus on the suggested career theme based on the student\'s subjects. Consider APS scores and subject requirements for South African universities. Format as JSON.'],
+            ['role' => 'user', 'content' => "Based on these South African National Senior Certificate results: {$subjectsGrades}, with an APS score of {$aps}.
 
-Return as JSON with keys: careers, courses (array with name, requirements, duration), institutions (array with name, location, website), bursaries (array with name, provider, eligibility, deadline, apply_url)"]
+The student's strongest subjects suggest a career theme of: {$careerTheme}
+
+IMPORTANT: All careers and courses must be THEMATICALLY CONSISTENT with the suggested theme above.
+
+1. 5 recommended careers - ALL from the {$careerTheme} field
+2. 5 suitable bachelor's degree courses - ALL must be {$careerTheme}-related and lead to the careers above, with specific entry requirements for each
+3. For EACH course, list 3-5 South African institutions that offer it, with their specific entry requirements
+4. 3 bursaries/scholarships related to {$careerTheme}
+
+Return as JSON with keys: 
+- careers (array of career names, all from {$careerTheme} field)
+- courses (array with: name, requirements, duration, institutions (array with name, location, website, entry_requirements)) - ALL courses must relate to {$careerTheme}
+- bursaries (array with: name, provider, eligibility, deadline, apply_url)"]
         ];
 
-        $response = $this->makeRequest($messages, 800, 0.5);
+        $response = $this->makeRequest($messages, 1200, 0.5);
+        
+        error_log("Career Recommendations API Response: " . substr($response ?: 'NULL', 0, 500));
 
         if ($response) {
             // Try to parse JSON from response
             $jsonMatch = [];
             if (preg_match('/\{.*\}/s', $response, $jsonMatch)) {
                 $parsed = json_decode($jsonMatch[0], true);
+                error_log("Parsed JSON: " . json_encode($parsed));
                 if ($parsed) {
+                    // Generate meaningful strengths from subjects
+                    $subjectList = array_keys($gradesData);
+                    $strengths = [];
+                    
+                    // Create strength statements based on subjects
+                    foreach ($subjectList as $subject) {
+                        if (stripos($subject, 'Math') !== false) {
+                            $strengths[] = 'Strong analytical and problem-solving skills';
+                        } elseif (stripos($subject, 'Science') !== false || stripos($subject, 'Physics') !== false || stripos($subject, 'Chemistry') !== false) {
+                            $strengths[] = 'Scientific thinking and research abilities';
+                        } elseif (stripos($subject, 'English') !== false || stripos($subject, 'Language') !== false) {
+                            $strengths[] = 'Effective communication skills';
+                        } elseif (stripos($subject, 'Geography') !== false) {
+                            $strengths[] = 'Spatial awareness and environmental understanding';
+                        } elseif (stripos($subject, 'History') !== false) {
+                            $strengths[] = 'Critical thinking and research skills';
+                        } elseif (stripos($subject, 'Accounting') !== false || stripos($subject, 'Business') !== false) {
+                            $strengths[] = 'Financial literacy and business acumen';
+                        } else {
+                            $strengths[] = "Proficiency in $subject";
+                        }
+                    }
+                    
+                    // Limit to top 5 strengths
+                    $strengths = array_slice(array_unique($strengths), 0, 5);
+                    
                     return [
                         'careers' => $parsed['careers'] ?? $defaultRecommendations['careers'],
-                        'strengths' => array_keys($gradesData),
-                        'areas_for_improvement' => array_slice(array_keys($gradesData), 0, 2),
+                        'strengths' => !empty($strengths) ? $strengths : $subjectList,
+                        'areas_for_improvement' => array_slice($subjectList, 0, 2),
                         'courses' => $parsed['courses'] ?? [],
-                        'institutions' => $parsed['institutions'] ?? [],
-                        'bursaries' => $parsed['bursaries'] ?? []
+                        'institutions' => $this->extractInstitutionsFromCourses($parsed['courses'] ?? []),
+                        'bursaries' => $parsed['bursaries'] ?? [],
+                        'aps' => $aps
                     ];
                 }
             }
@@ -414,7 +687,7 @@ Return as JSON with keys: careers, courses (array with name, requirements, durat
 
         // Match career field to courses
         foreach ($courses as $field => $courseList) {
-            if (stripos($careerField, $field) !== false) {
+            if (stripos(is_array($careerField) ? implode(' ', $careerField) : $careerField, $field) !== false) {
                 return $courseList;
             }
         }

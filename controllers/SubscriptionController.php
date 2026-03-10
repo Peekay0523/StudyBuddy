@@ -75,9 +75,16 @@ class SubscriptionController {
 
     public function checkout() {
         requireStudent();
-        
+
         $plan = $_GET['plan'] ?? 'basic';
-        
+
+        // Premium is not available yet
+        if ($plan === 'premium') {
+            setFlashMessage('error', 'Premium plan is coming soon. Please select Basic plan for now.');
+            header('Location: /subscription');
+            exit;
+        }
+
         if (!isset($this->plans[$plan])) {
             setFlashMessage('error', 'Invalid plan selected');
             header('Location: /subscription');
@@ -86,10 +93,10 @@ class SubscriptionController {
 
         $user = getCurrentUser();
         $planDetails = $this->plans[$plan];
-        
+
         $pageTitle = 'Checkout - ' . $planDetails['name'] . ' Plan';
         $currentPage = 'subscription';
-        
+
         include __DIR__ . '/../templates/pages/subscription_checkout.php';
     }
 
@@ -104,6 +111,13 @@ class SubscriptionController {
         $user = getCurrentUser();
         $plan = $_POST['plan'] ?? 'basic';
         $paymentMethod = $_POST['payment_method'] ?? 'card';
+
+        // Premium is not available yet
+        if ($plan === 'premium') {
+            setFlashMessage('error', 'Premium plan is coming soon. Please select Basic plan.');
+            header('Location: /subscription');
+            exit;
+        }
 
         if (!isset($this->plans[$plan])) {
             setFlashMessage('error', 'Invalid plan selected');

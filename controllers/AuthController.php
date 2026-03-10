@@ -5,13 +5,14 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/otp.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Student.php';
 
 class AuthController {
     private $userModel;
     private $studentModel;
-    
+
     public function __construct() {
         $this->userModel = new User();
         $this->studentModel = new Student();
@@ -65,37 +66,95 @@ class AuthController {
         $error = '';
         $username = '';
         $phone = '';
+        $step = $_GET['step'] ?? '1'; // Step 1: Register form, Step 2: OTP verification
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = $_POST['username'] ?? '';
-            $phone = $_POST['phone'] ?? '';
-            $password = $_POST['password'] ?? '';
-            $passwordConfirm = $_POST['password_confirm'] ?? '';
+            if ($step === '1') {
+                // Step 1: Initial registration - send OTP
+                $username = $_POST['username'] ?? '';
+                $phone = $_POST['phone'] ?? '';
+                $password = $_POST['password'] ?? '';
+                $passwordConfirm = $_POST['password_confirm'] ?? '';
 
-            if (empty($username) || empty($password) || empty($phone)) {
-                $error = 'Please fill in all fields';
-            } elseif (strlen($password) < 8) {
-                $error = 'Password must be at least 8 characters';
-            } elseif ($password !== $passwordConfirm) {
-                $error = 'Passwords do not match';
-            } else {
-                // Check if phone number already exists
-                $existingUser = $this->userModel->findByPhone($phone);
-                if ($existingUser) {
-                    $error = 'Phone number already registered. Please use a different number or login.';
+                if (empty($username) || empty($password) || empty($phone)) {
+                    $error = 'Please fill in all fields';
+                } elseif (strlen($password) < 8) {
+                    $error = 'Password must be at least 8 characters';
+                } elseif ($password !== $passwordConfirm) {
+                    $error = 'Passwords do not match';
                 } else {
-                    try {
-                        $userId = $this->userModel->create($username, $password, null, $phone);
-                        $this->studentModel->create($userId);
-
-                        // Create 7-day free trial subscription for Basic plan
-                        $this->createFreeTrialSubscription($userId);
-
-                        setFlashMessage('success', 'Account created successfully! You have been enrolled in a 7-day free trial of the Basic plan. Please login.');
-                        header('Location: /login');
-                        exit;
-                    } catch (Exception $e) {
-                        $error = 'Username or phone number already exists';
+                    // Check if phone number already exists
+                    $existingUser = $this->userModel->findByPhone($phone);
+                    if ($existingUser) {
+                        $error = 'Phone number already registered. Please use a different number or login.';
+                    } else {
+                        try {
+                            // Validate phone format
+                            if (!$this->validatePhone($phone)) {
+                                $error = 'Invalid phone number format. Please enter a valid phone number.';
+                            } else {
+                                // Generate and send OTP
+                                $otpCode = createOtp($phone, 'registration');
+                                sendOtpSms($phone, $otpCode, 'registration');
+                                
+                                // Store registration data in session for step 2
+                                $_SESSION['pending_registration'] = [
+                                    'username' => $username,
+                                    'phone' => $phone,
+                                    'password' => $password
+                                ];
+                                
+                                // Redirect to OTP verification step
+                                header('Location: /register?step=2');
+                                exit;
+                            }
+                        } catch (Exception $e) {
+                            $error = 'Username or phone number already exists';
+                        }
+                    }
+                }
+            } elseif ($step === '2') {
+                // Step 2: Verify OTP
+                $otpCode = $_POST['otp_code'] ?? '';
+                $pendingReg = $_SESSION['pending_registration'] ?? null;
+                
+                if (!$pendingReg) {
+                    $error = 'Registration session expired. Please start again.';
+                    $step = '1';
+                } elseif (empty($otpCode)) {
+                    $error = 'Please enter the OTP code';
+                } else {
+                    // Verify OTP
+                    $result = verifyOtp($pendingReg['phone'], $otpCode, 'registration');
+                    
+                    if ($result['success']) {
+                        // OTP verified - create user account
+                        try {
+                            $userId = $this->userModel->create(
+                                $pendingReg['username'],
+                                $pendingReg['password'],
+                                null,
+                                $pendingReg['phone']
+                            );
+                            $this->studentModel->create($userId);
+                            
+                            // Create 7-day free trial subscription
+                            $this->createFreeTrialSubscription($userId);
+                            
+                            // Clear pending registration
+                            unset($_SESSION['pending_registration']);
+                            
+                            setFlashMessage('success', 'Account created successfully! You have been enrolled in a 7-day free trial of the Basic plan. Please login.');
+                            header('Location: /login');
+                            exit;
+                        } catch (Exception $e) {
+                            $error = 'Failed to create account. Please try again.';
+                            $step = '1';
+                        }
+                    } else {
+                        $error = $result['message'];
+                        // Increment attempt counter
+                        incrementOtpAttempts($pendingReg['phone'], $otpCode, 'registration');
                     }
                 }
             }
@@ -143,6 +202,88 @@ class AuthController {
     public function logout() {
         session_destroy();
         header('Location: /');
+        exit;
+    }
+
+    /**
+     * Validate phone number format
+     */
+    private function validatePhone($phone) {
+        // Remove spaces, dashes, and parentheses
+        $cleaned = preg_replace('/[\s\-\(\)]/', '', $phone);
+        
+        // Check if it starts with + followed by digits (international format)
+        // Or just digits (local format)
+        if (preg_match('/^\+?[0-9]{7,15}$/', $cleaned)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Resend OTP code
+     */
+    public function resendOtp() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /register');
+            exit;
+        }
+
+        $pendingReg = $_SESSION['pending_registration'] ?? null;
+        
+        if (!$pendingReg) {
+            echo json_encode(['success' => false, 'message' => 'Registration session expired. Please start again.']);
+            exit;
+        }
+
+        // Check cooldown
+        $canResend = canResendOtp($pendingReg['phone'], 'registration');
+        
+        if (!$canResend['can_resend']) {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Please wait ' . $canResend['wait_time'] . ' seconds before requesting a new OTP.',
+                'wait_time' => $canResend['wait_time']
+            ]);
+            exit;
+        }
+
+        // Generate and send new OTP
+        $otpCode = createOtp($pendingReg['phone'], 'registration');
+        sendOtpSms($pendingReg['phone'], $otpCode, 'registration');
+
+        echo json_encode(['success' => true, 'message' => 'OTP resent successfully. Please check your phone.']);
+        exit;
+    }
+
+    /**
+     * Check if phone number already exists (AJAX endpoint)
+     */
+    public function checkPhone() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /register');
+            exit;
+        }
+
+        $phone = $_POST['phone'] ?? '';
+        
+        if (empty($phone)) {
+            echo json_encode(['exists' => false, 'message' => '']);
+            exit;
+        }
+
+        // Check if phone number exists
+        $existingUser = $this->userModel->findByPhone($phone);
+        
+        if ($existingUser) {
+            echo json_encode([
+                'exists' => true, 
+                'message' => 'This phone number is already registered. Please use a different number or login.'
+            ]);
+        } else {
+            echo json_encode(['exists' => false, 'message' => '']);
+        }
         exit;
     }
 }

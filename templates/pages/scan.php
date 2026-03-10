@@ -2,10 +2,40 @@
 $pageTitle = 'Scan to PDF - StudySmart';
 $currentPage = 'scan';
 include __DIR__ . '/../layouts/header.php';
+
+// Get scan limit info
+$scanInfo = getScanLimitInfo(getCurrentUser()['id']);
+$isFreeTier = $scanInfo['is_free_tier'];
+$scanLimit = $scanInfo['limit'];
+$scansUsed = $scanInfo['used'];
+$scansRemaining = $scanInfo['remaining'];
+$periodEnd = $scanInfo['period_end'];
 ?>
 
 <h1 class="title">Scan to PDF</h1>
 <p class="subtitle">Convert images to PDF documents instantly</p>
+
+<?php if ($isFreeTier): ?>
+<div class="scan-info-banner" style="max-width: 800px; margin: 20px auto; padding: 15px 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border-left: 4px solid #f59e0b;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-info-circle" style="color: #f59e0b; font-size: 20px;"></i>
+            <div>
+                <strong style="color: #92400e;">Free Plan Scan Limit</strong>
+                <p style="margin: 5px 0 0 0; color: #78350f; font-size: 14px;">
+                    You've used <strong><?php echo $scansUsed; ?> of <?php echo $scanLimit; ?></strong> scan(s) this period.
+                    <?php if ($periodEnd): ?>
+                        Resets on <?php echo date('M d, Y', strtotime($periodEnd)); ?>.
+                    <?php endif; ?>
+                </p>
+            </div>
+        </div>
+        <a href="/subscription" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none; white-space: nowrap;">
+            <i class="fas fa-arrow-up"></i> Upgrade for Unlimited
+        </a>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="scan-container" style="max-width: 800px; margin: 0 auto;">
     <!-- Upload Area -->
@@ -30,7 +60,7 @@ include __DIR__ . '/../layouts/header.php';
         </div>
 
         <!-- Convert Buttons -->
-        <div style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <div class="convert-buttons-container" style="text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <button id="convert-btn" class="btn-primary" style="padding: 15px 40px; font-size: 16px;">
                 <i class="fas fa-file-pdf"></i> Convert to PDF
             </button>
@@ -70,11 +100,11 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <!-- Saved PDFs Section -->
-<div id="saved-pdfs-section" style="max-width: 800px; margin: 40px auto;">
+<div id="saved-pdfs-section" class="saved-pdfs-section" style="max-width: 800px; margin: 40px auto;">
     <h3 style="margin-bottom: 20px; color: #1f2937; display: flex; align-items: center; gap: 10px;">
         <i class="fas fa-folder-open" style="color: #667eea;"></i> My Saved PDFs
     </h3>
-    <div id="saved-pdfs-list" style="display: grid; gap: 15px;">
+    <div id="saved-pdfs-list" class="saved-pdfs-list" style="display: grid; gap: 15px;">
         <!-- Saved PDFs will be loaded here -->
     </div>
     <div id="no-saved-pdfs" style="text-align: center; padding: 40px; color: #6b7280; display: none;">
@@ -126,6 +156,7 @@ const saveModalConfirm = document.getElementById('save-modal-confirm');
 const saveFilenameInput = document.getElementById('save-filename');
 
 let currentPdfUrl = '';
+let currentScanId = null;
 
 let selectedImages = [];
 
@@ -231,6 +262,17 @@ convertBtn.addEventListener('click', async () => {
         return;
     }
 
+    // Check scan limit before proceeding
+    <?php if ($isFreeTier && $scansRemaining <= 0): ?>
+    alert('You have reached your free tier scan limit for this period. Please upgrade to Basic or Premium for unlimited scans.');
+    window.location.href = '/subscription';
+    return;
+    <?php elseif ($isFreeTier && $scansRemaining === 1): ?>
+    if (!confirm('Warning: This will use your last free scan for this period. Continue?')) {
+        return;
+    }
+    <?php endif; ?>
+
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
 
@@ -242,23 +284,49 @@ convertBtn.addEventListener('click', async () => {
     try {
         const response = await fetch('/api/scan-to-pdf', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin' // Ensure cookies are sent
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response headers:', [...response.headers.entries()]);
+        
         const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        
+        // Debug: log raw response text first
+        const rawText = await response.text();
+        console.log('Raw response text:', rawText);
+
         if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            throw new Error('Server returned non-JSON response: ' + text.substring(0, 200));
+            console.error('Non-JSON response:', rawText);
+            throw new Error('Server returned non-JSON response: ' + rawText.substring(0, 200));
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            console.error('Failed to parse:', rawText);
+            throw new Error('Failed to parse JSON response: ' + parseError.message);
+        }
+        
+        console.log('Parsed response data:', data);
+        console.log('data.scan_id type:', typeof data.scan_id);
+        console.log('data.scan_id value:', data.scan_id);
 
         if (data.success) {
+            console.log('Conversion successful!');
             processingSection.style.display = 'none';
             successSection.style.display = 'block';
             downloadLink.href = data.download_url;
             currentPdfUrl = data.download_url;
+            currentScanId = data.scan_id;
+            console.log('currentScanId is now:', currentScanId);
+            console.log('currentScanId truthy?:', !!currentScanId);
         } else {
+            console.error('API returned success=false:', data.error);
             throw new Error(data.error || 'Conversion failed');
         }
     } catch (error) {
@@ -275,6 +343,17 @@ convertBwBtn.addEventListener('click', async () => {
         alert('Please select at least one image');
         return;
     }
+
+    // Check scan limit before proceeding
+    <?php if ($isFreeTier && $scansRemaining <= 0): ?>
+    alert('You have reached your free tier scan limit for this period. Please upgrade to Basic or Premium for unlimited scans.');
+    window.location.href = '/subscription';
+    return;
+    <?php elseif ($isFreeTier && $scansRemaining === 1): ?>
+    if (!confirm('Warning: This will use your last free scan for this period. Continue?')) {
+        return;
+    }
+    <?php endif; ?>
 
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
@@ -299,11 +378,16 @@ convertBwBtn.addEventListener('click', async () => {
 
         const data = await response.json();
 
+        console.log('B&W conversion response:', data);
+        console.log('data.scan_id:', data.scan_id);
+
         if (data.success) {
             processingSection.style.display = 'none';
             successSection.style.display = 'block';
             downloadLink.href = data.download_url;
             currentPdfUrl = data.download_url;
+            currentScanId = data.scan_id;
+            console.log('currentScanId set to:', currentScanId);
         } else {
             throw new Error(data.error || 'Conversion failed');
         }
@@ -326,6 +410,11 @@ convertAnotherBtn.addEventListener('click', () => {
 
 // Save Here - show modal to prompt for filename and save
 saveHereBtn.addEventListener('click', () => {
+    if (!currentScanId) {
+        alert('No scan ID available. Please try converting the images to PDF again.');
+        return;
+    }
+    
     const defaultName = 'my_scan_' + new Date().toISOString().slice(0,10);
     saveFilenameInput.value = defaultName;
     saveModalOverlay.style.display = 'flex';
@@ -347,14 +436,19 @@ saveModalOverlay.addEventListener('click', (e) => {
 // Confirm save
 saveModalConfirm.addEventListener('click', async () => {
     const filename = saveFilenameInput.value.trim();
-    
+
     if (!filename) {
         alert('Please enter a filename');
         return;
     }
     
+    if (!currentScanId) {
+        alert('No scan ID available. Please try converting the images to PDF again.');
+        return;
+    }
+
     const cleanFilename = filename.replace(/[^a-zA-Z0-9_-]/g, '_') + '.pdf';
-    
+
     try {
         const response = await fetch('/api/scan-save', {
             method: 'POST',
@@ -362,16 +456,17 @@ saveModalConfirm.addEventListener('click', async () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                pdf_url: currentPdfUrl,
+                scan_id: currentScanId,
                 filename: cleanFilename
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             alert('PDF saved successfully as: ' + data.filename);
             saveModalOverlay.style.display = 'none';
+            loadSavedPdfs(); // Reload saved list
         } else {
             throw new Error(data.error || 'Failed to save PDF');
         }
@@ -413,10 +508,10 @@ async function loadSavedPdfs() {
     try {
         const response = await fetch('/api/scan-saved-list');
         const data = await response.json();
-        
+
         const savedPdfsList = document.getElementById('saved-pdfs-list');
         const noSavedPdfs = document.getElementById('no-saved-pdfs');
-        
+
         if (data.success && data.files.length > 0) {
             noSavedPdfs.style.display = 'none';
             savedPdfsList.innerHTML = data.files.map(file => `
@@ -429,13 +524,13 @@ async function loadSavedPdfs() {
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <a href="/view-scan-saved/${encodeURIComponent(file.name)}" target="_blank" class="btn-sm btn-sm-warning" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: linear-gradient(135deg, #f59e0b, #f97316); color: white;">
+                        <a href="/view-scan-saved/${file.id}" target="_blank" class="btn-sm btn-sm-warning" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: linear-gradient(135deg, #f59e0b, #f97316); color: white;">
                             <i class="fas fa-eye"></i> View
                         </a>
                         <a href="${file.url}" class="btn-sm btn-sm-primary" style="text-decoration: none; padding: 8px 16px; border-radius: 6px;">
                             <i class="fas fa-download"></i> Download
                         </a>
-                        <button onclick="deleteSavedPdf('${file.name}')" class="btn-sm btn-sm-danger" style="padding: 8px 16px; border-radius: 6px; border: none; background: #dc2626; color: white; cursor: pointer;">
+                        <button onclick="deleteSavedPdf(${file.id})" class="btn-sm btn-sm-danger" style="padding: 8px 16px; border-radius: 6px; border: none; background: #dc2626; color: white; cursor: pointer;">
                             <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>
@@ -457,22 +552,22 @@ function escapeHtml(text) {
 }
 
 // Delete saved PDF
-async function deleteSavedPdf(filename) {
-    if (!confirm('Are you sure you want to delete "' + filename + '"?')) {
+async function deleteSavedPdf(id) {
+    if (!confirm('Are you sure you want to delete this scan?')) {
         return;
     }
-    
+
     try {
         const response = await fetch('/api/scan-delete-saved', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ filename: filename })
+            body: JSON.stringify({ id: id })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
             loadSavedPdfs(); // Reload the list
         } else {
@@ -486,3 +581,152 @@ async function deleteSavedPdf(filename) {
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
+
+<style>
+/* Scan Page Mobile Responsiveness */
+@media (max-width: 768px) {
+    .scan-container,
+    #saved-pdfs-section {
+        padding: 0 15px;
+    }
+
+    .upload-area {
+        padding: 20px 15px !important;
+    }
+
+    .upload-area i {
+        font-size: 36px !important;
+    }
+
+    .upload-area h3 {
+        font-size: 16px !important;
+    }
+
+    .upload-area p {
+        font-size: 13px !important;
+    }
+
+    #image-previews {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    #image-previews img {
+        height: 100px !important;
+    }
+
+    .convert-buttons-container {
+        flex-direction: column !important;
+        width: 100%;
+    }
+
+    #convert-btn,
+    #convert-bw-btn {
+        width: 100% !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+    }
+
+    #success-section {
+        padding: 20px 15px !important;
+    }
+
+    #success-section i {
+        font-size: 36px !important;
+    }
+
+    #success-section h3 {
+        font-size: 18px !important;
+    }
+
+    #success-section p {
+        font-size: 14px !important;
+    }
+
+    #success-section .btn-primary,
+    #success-section .btn-secondary {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    /* Saved PDFs Mobile */
+    .saved-pdfs-list > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+        padding: 15px !important;
+    }
+
+    .saved-pdfs-list .btn-sm {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+        display: block !important;
+    }
+
+    .saved-pdfs-list > div > div:last-child {
+        width: 100%;
+        display: flex !important;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Modal Mobile */
+    #save-modal {
+        max-width: 95% !important;
+        padding: 20px 15px !important;
+    }
+
+    #save-filename {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+
+    #save-modal .btn-secondary,
+    #save-modal .btn-primary {
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+    }
+
+    /* Info Banner Mobile */
+    .scan-info-banner {
+        flex-direction: column !important;
+        text-align: center;
+    }
+
+    .scan-info-banner > div {
+        justify-content: center !important;
+    }
+
+    .scan-info-banner .btn-primary {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .upload-area {
+        padding: 15px 10px !important;
+    }
+
+    .upload-area i {
+        font-size: 28px !important;
+    }
+
+    .upload-area h3 {
+        font-size: 14px !important;
+    }
+
+    #image-previews {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .title {
+        font-size: 24px !important;
+    }
+
+    .subtitle {
+        font-size: 14px !important;
+    }
+}
+</style>

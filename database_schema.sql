@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS scripts (
     subject TEXT DEFAULT '',
     memorandum_generated INTEGER DEFAULT 0,
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed INTEGER DEFAULT 0,
+    processing_error TEXT,
+    processed_topics TEXT DEFAULT '[]',
+    challenging_topics TEXT DEFAULT '[]',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -45,6 +49,8 @@ CREATE TABLE IF NOT EXISTS uploaded_scripts (
     grade_level TEXT DEFAULT '',
     file_path TEXT NOT NULL,
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed INTEGER DEFAULT 0,
+    processing_error TEXT,
     processed_topics TEXT DEFAULT '[]',
     challenging_topics TEXT DEFAULT '[]',
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
@@ -183,6 +189,31 @@ CREATE TABLE IF NOT EXISTS study_group_messages (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Scan Usage Tracking (for free tier limits)
+CREATE TABLE IF NOT EXISTS scan_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    scan_count INTEGER DEFAULT 1,
+    period_start DATETIME DEFAULT CURRENT_TIMESTAMP,
+    period_end DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, period_start)
+);
+
+-- Scans table (PDF files stored in database)
+CREATE TABLE IF NOT EXISTS scans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    original_filename TEXT,
+    file_data BLOB NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    mime_type TEXT DEFAULT 'application/pdf',
+    is_saved INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
 CREATE INDEX IF NOT EXISTS idx_scripts_student_id ON uploaded_scripts(student_id);
@@ -194,5 +225,8 @@ CREATE INDEX IF NOT EXISTS idx_study_group_members_group ON study_group_members(
 CREATE INDEX IF NOT EXISTS idx_study_group_members_user ON study_group_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_study_group_scripts_group ON study_group_scripts(study_group_id);
 CREATE INDEX IF NOT EXISTS idx_study_group_messages_group ON study_group_messages(study_group_id);
+CREATE INDEX IF NOT EXISTS idx_scan_usage_user_id ON scan_usage(user_id);
+CREATE INDEX IF NOT EXISTS idx_scans_user_id ON scans(user_id);
+CREATE INDEX IF NOT EXISTS idx_scans_is_saved ON scans(is_saved);
 
 UPDATE users SET role = 'admin' WHERE username = 'Pontsho09';
