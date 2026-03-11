@@ -1,7 +1,8 @@
 <?php
 $pageTitle = 'Upload Script - StudySmart';
 $currentPage = 'scripts';
-$extraScripts = '<script>
+$extraHead = <<<'SCRIPT'
+<script>
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("script_file");
 const previewSection = document.getElementById("preview-section");
@@ -116,7 +117,7 @@ async function generateMemorandum(scriptId) {
                         </div>
                     </div>
                     <div class="memo-content">
-                        <p>${data.memorandum.replace(/\\n/g, "<br>")}</p>
+                        <p>${data.memorandum.replace(new RegExp('\\n', 'g'), "<br>")}</p>
                     </div>
                 </div>
             `;
@@ -180,7 +181,8 @@ async function loadUploadedScripts() {
         console.error("Failed to load scripts:", error);
     }
 }
-</script>';
+</script>
+SCRIPT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 

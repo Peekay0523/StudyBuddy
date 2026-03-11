@@ -11,11 +11,21 @@ class ReportCard {
     }
     
     public function create($userId, $filePath, $grade = '', $term = '') {
+        // Get student_id from user_id
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT id FROM students WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $student = $stmt->fetch();
+        
+        if (!$student) {
+            throw new Exception("Student record not found for user ID: $userId");
+        }
+        
         $stmt = $this->db->prepare("
-            INSERT INTO report_cards (user_id, file_path, grade, term)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO report_cards (student_id, user_id, file_path, grade, term)
+            VALUES (?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$userId, $filePath, $grade, $term]);
+        $stmt->execute([$student['id'], $userId, $filePath, $grade, $term]);
 
         return $this->db->lastInsertId();
     }

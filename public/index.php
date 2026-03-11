@@ -133,6 +133,11 @@ $router->get('/view-career-recommendations/{id}', function($recId) {
     $controller = new ReportCardController();
     $controller->viewCareerRecommendations($recId);
 });
+$router->post('/reprocess-report-card/{id}', function($recId) {
+    require_once __DIR__ . '/../controllers/ReportCardController.php';
+    $controller = new ReportCardController();
+    $controller->reprocessReportCard($recId);
+});
 $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCards');
 
 // AI Chat
@@ -287,6 +292,31 @@ $router->post('/test-pdf-generation', function() {
 // Check GD status
 $router->get('/check-gd-status', function() {
     require __DIR__ . '/../check-gd-status.php';
+});
+
+// Check OpenAI configuration
+$router->get('/check-openai-config', function() {
+    require __DIR__ . '/../check-openai-config.php';
+});
+
+// Debug report card processing
+$router->get('/debug-report-card-processing', function() {
+    require __DIR__ . '/../debug-report-card-processing.php';
+});
+
+// List all report cards
+$router->get('/list-report-cards', function() {
+    require __DIR__ . '/../list-report-cards.php';
+});
+
+// Reprocess report card directly
+$router->get('/reprocess-report-card-direct', function() {
+    require __DIR__ . '/../reprocess-report-card.php';
+});
+
+// Debug database
+$router->get('/debug-database', function() {
+    require __DIR__ . '/../debug-database.php';
 });
 
 // Admin Routes

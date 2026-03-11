@@ -12,7 +12,10 @@ class AIHelper {
     }
 
     private function isValidApiKey() {
-        return !empty($this->apiKey) && $this->apiKey !== 'your-openai-api-key-here';
+        return !empty($this->apiKey) && 
+               $this->apiKey !== 'your-openai-api-key-here' && 
+               $this->apiKey !== 'YOUR_OPENAI_API_KEY_HERE' &&
+               strlen($this->apiKey) > 20;
     }
 
     private function makeRequest($messages, $maxTokens = 500, $temperature = 0.7) {
@@ -444,19 +447,51 @@ class AIHelper {
             'aps' => 0
         ];
 
+        // Calculate APS score locally (always do this, even without OpenAI)
+        $aps = $this->calculateAPS($gradesData);
+        error_log("Calculated APS: $aps");
+
         if (!$this->isValidApiKey() || empty($gradesData)) {
+            error_log("Using fallback - API key invalid or no grades");
+            // Return fallback with calculated APS
+            $defaultRecommendations['aps'] = $aps;
+
+            // Generate meaningful strengths from subjects
+            $subjectList = array_keys($gradesData);
+            $strengths = [];
+
+            foreach ($subjectList as $subject) {
+                if (stripos($subject, 'Math') !== false) {
+                    $strengths[] = 'Mathematical proficiency';
+                } elseif (stripos($subject, 'Science') !== false || stripos($subject, 'Physics') !== false || stripos($subject, 'Chemistry') !== false) {
+                    $strengths[] = 'Scientific understanding';
+                } elseif (stripos($subject, 'English') !== false || stripos($subject, 'Language') !== false) {
+                    $strengths[] = 'Language skills';
+                } elseif (stripos($subject, 'Geography') !== false) {
+                    $strengths[] = 'Geographical knowledge';
+                } elseif (stripos($subject, 'History') !== false) {
+                    $strengths[] = 'Historical analysis';
+                } elseif (stripos($subject, 'Accounting') !== false || stripos($subject, 'Business') !== false) {
+                    $strengths[] = 'Business acumen';
+                } else {
+                    $strengths[] = $subject;
+                }
+            }
+
+            $defaultRecommendations['strengths'] = array_slice(array_unique($strengths), 0, 5);
+            $defaultRecommendations['careers'] = $this->getCareersForSubjects($gradesData);
+
             return $defaultRecommendations;
         }
 
-        // Calculate APS score
-        $aps = $this->calculateAPS($gradesData);
-        
         // Determine career theme based on strongest subjects
         $careerTheme = $this->determineCareerTheme($gradesData);
 
         $subjectsGrades = implode(', ', array_map(function($k, $v) {
             return "$k: $v";
         }, array_keys($gradesData), $gradesData));
+
+        error_log("Sending to OpenAI API with APS: $aps");
 
         $messages = [
             ['role' => 'system', 'content' => 'You are an expert South African career counselor. Analyze academic performance and provide comprehensive career guidance. IMPORTANT: All recommendations must be CONSISTENT and RELATED to each other. Focus on the suggested career theme based on the student\'s subjects. Consider APS scores and subject requirements for South African universities. Format as JSON.'],
@@ -471,14 +506,14 @@ IMPORTANT: All careers and courses must be THEMATICALLY CONSISTENT with the sugg
 3. For EACH course, list 3-5 South African institutions that offer it, with their specific entry requirements
 4. 3 bursaries/scholarships related to {$careerTheme}
 
-Return as JSON with keys: 
+Return as JSON with keys:
 - careers (array of career names, all from {$careerTheme} field)
 - courses (array with: name, requirements, duration, institutions (array with name, location, website, entry_requirements)) - ALL courses must relate to {$careerTheme}
 - bursaries (array with: name, provider, eligibility, deadline, apply_url)"]
         ];
 
         $response = $this->makeRequest($messages, 1200, 0.5);
-        
+
         error_log("Career Recommendations API Response: " . substr($response ?: 'NULL', 0, 500));
 
         if ($response) {
@@ -491,7 +526,7 @@ Return as JSON with keys:
                     // Generate meaningful strengths from subjects
                     $subjectList = array_keys($gradesData);
                     $strengths = [];
-                    
+
                     // Create strength statements based on subjects
                     foreach ($subjectList as $subject) {
                         if (stripos($subject, 'Math') !== false) {
@@ -510,24 +545,62 @@ Return as JSON with keys:
                             $strengths[] = "Proficiency in $subject";
                         }
                     }
-                    
+
                     // Limit to top 5 strengths
                     $strengths = array_slice(array_unique($strengths), 0, 5);
-                    
-                    return [
+
+                    $result = [
                         'careers' => $parsed['careers'] ?? $defaultRecommendations['careers'],
                         'strengths' => !empty($strengths) ? $strengths : $subjectList,
                         'areas_for_improvement' => array_slice($subjectList, 0, 2),
                         'courses' => $parsed['courses'] ?? [],
                         'institutions' => $this->extractInstitutionsFromCourses($parsed['courses'] ?? []),
                         'bursaries' => $parsed['bursaries'] ?? [],
-                        'aps' => $aps
+                        'aps' => $aps  // Always use calculated APS
                     ];
+                    
+                    error_log("Returning AI recommendations with APS: " . $result['aps']);
+                    return $result;
                 }
             }
         }
 
+        // Fallback: Return calculated APS with default recommendations
+        error_log("API failed, returning fallback with APS: $aps");
+        $defaultRecommendations['aps'] = $aps;
+        $defaultRecommendations['strengths'] = array_keys($gradesData);
+        $defaultRecommendations['careers'] = $this->getCareersForSubjects($gradesData);
         return $defaultRecommendations;
+    }
+
+    /**
+     * Get career suggestions based on subjects (fallback)
+     */
+    private function getCareersForSubjects($gradesData) {
+        $careers = [];
+        $hasMath = false;
+        $hasScience = false;
+        $hasEnglish = false;
+        
+        foreach (array_keys($gradesData) as $subject) {
+            if (stripos($subject, 'Math') !== false) $hasMath = true;
+            if (stripos($subject, 'Science') !== false || stripos($subject, 'Physics') !== false) $hasScience = true;
+            if (stripos($subject, 'English') !== false) $hasEnglish = true;
+        }
+        
+        if ($hasMath && $hasScience) {
+            $careers = ['Engineer', 'Data Scientist', 'Architect', 'Software Developer', 'Actuary'];
+        } elseif ($hasMath) {
+            $careers = ['Accountant', 'Financial Analyst', 'Statistician', 'Economist', 'Teacher'];
+        } elseif ($hasScience) {
+            $careers = ['Nurse', 'Medical Technician', 'Environmental Scientist', 'Lab Technician', 'Teacher'];
+        } elseif ($hasEnglish) {
+            $careers = ['Journalist', 'Teacher', 'Content Writer', 'Public Relations Officer', 'Librarian'];
+        } else {
+            $careers = ['Teacher', 'Administrator', 'Sales Representative', 'Customer Service Manager', 'Entrepreneur'];
+        }
+        
+        return $careers;
     }
 
     /**

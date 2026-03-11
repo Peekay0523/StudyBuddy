@@ -1,15 +1,24 @@
 <?php
 $pageTitle = 'Scan to PDF - StudySmart';
 $currentPage = 'scan';
-include __DIR__ . '/../layouts/header.php';
+
+requireLogin();
+
+$currentUser = getCurrentUser();
+if (!$currentUser) {
+    header('Location: /login');
+    exit;
+}
 
 // Get scan limit info
-$scanInfo = getScanLimitInfo(getCurrentUser()['id']);
+$scanInfo = getScanLimitInfo($currentUser['id']);
 $isFreeTier = $scanInfo['is_free_tier'];
 $scanLimit = $scanInfo['limit'];
 $scansUsed = $scanInfo['used'];
 $scansRemaining = $scanInfo['remaining'];
 $periodEnd = $scanInfo['period_end'];
+
+include __DIR__ . '/../layouts/header.php';
 ?>
 
 <h1 class="title">Scan to PDF</h1>

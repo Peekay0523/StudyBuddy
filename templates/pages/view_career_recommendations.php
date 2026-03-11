@@ -2,6 +2,22 @@
 $pageTitle = 'Career Recommendations - StudySmart';
 $currentPage = 'careers';
 $extraHead = '<script>
+function reprocessReportCard() {
+    const reportCardId = "' . ($reportCard['id'] ?? '') . '";
+    if (!reportCardId) {
+        alert("Report card ID not found");
+        return;
+    }
+    
+    if (confirm("This will reprocess your report card using AI-powered grade extraction. This may take a few seconds. Continue?")) {
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/reprocess-report-card/" + reportCardId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM loaded, initializing speech...");
     
@@ -168,6 +184,13 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     <div class="recommendation-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
         <div class="card-header">
             <h3><i class="fas fa-graduation-cap"></i> Your APS Score</h3>
+            <?php if (($careerRec['aps'] ?? 0) === 0): ?>
+                <form method="POST" action="/reprocess-report-card/<?php echo $reportCard['id']; ?>" style="display: inline;">
+                    <button type="submit" class="btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                        <i class="fas fa-sync"></i> Reprocess with AI
+                    </button>
+                </form>
+            <?php endif; ?>
         </div>
         <div class="card-content" style="text-align: center; padding: 20px;">
             <?php
@@ -185,7 +208,9 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                 <?php elseif ($aps > 0): ?>
                     Consider Diploma or Higher Certificate programs
                 <?php else: ?>
-                    Upload your results to calculate your APS score
+                    <button onclick="reprocessReportCard()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+                        <i class="fas fa-sync"></i> Reprocess with AI to Calculate APS
+                    </button>
                 <?php endif; ?>
             </p>
         </div>
