@@ -302,11 +302,9 @@ class ScanController {
             error_log("convertToPdf: Insert completed, scanId = $scanId");
 
             if ($scanId) {
-                // Increment scan usage for free tier users
-                if (isFreeTierUser($user['id'])) {
-                    incrementScanUsage($user['id']);
-                    error_log("convertToPdf: Incremented scan usage");
-                }
+                // Record scan usage (uses free scans first, then regular quota)
+                recordScan($user['id']);
+                error_log("convertToPdf: Recorded scan usage");
 
                 // Clear buffer and send clean JSON response
                 ob_end_clean();
@@ -736,5 +734,38 @@ class PurePhpPdf {
         $pdf .= "%%EOF\n";
         
         return $pdf;
+    }
+
+    /**
+     * Convert points to free scan
+     */
+    public function convertPoints() {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /scan');
+            exit;
+        }
+
+        $user = getCurrentUser();
+        require_once __DIR__ . '/../models/UserPoints.php';
+        $pointsModel = new UserPoints();
+
+        // Check if user has enough points
+        if (!$pointsModel->hasPoints($user['id'], 500)) {
+            setFlashMessage('error', 'Insufficient points. You need at least 500 points to convert.');
+            header('Location: /scan');
+            exit;
+        }
+
+        // Convert points to free scan
+        if ($pointsModel->spendPoints($user['id'], 500)) {
+            setFlashMessage('success', 'Successfully converted 500 points to 1 free scan!');
+        } else {
+            setFlashMessage('error', 'Failed to convert points. Please try again.');
+        }
+
+        header('Location: /scan');
+        exit;
     }
 }

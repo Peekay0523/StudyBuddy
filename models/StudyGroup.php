@@ -13,12 +13,12 @@ class StudyGroup {
     /**
      * Create a new study group
      */
-    public function create($userId, $title, $description = '', $gradeLevel = '', $maxMembers = 10) {
+    public function create($userId, $title, $description = '', $gradeLevel = '', $schoolName = '', $maxMembers = 10) {
         $stmt = $this->db->prepare("
-            INSERT INTO study_groups (creator_user_id, title, description, grade_level, max_members) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO study_groups (creator_user_id, title, description, grade_level, school_name, max_members)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([$userId, $title, $description, $gradeLevel, $maxMembers]);
+        $stmt->execute([$userId, $title, $description, $gradeLevel, $schoolName, $maxMembers]);
 
         $groupId = $this->db->lastInsertId();
 
@@ -34,9 +34,10 @@ class StudyGroup {
     public function findById($id) {
         $stmt = $this->db->prepare("
             SELECT sg.*, u.username as creator_name,
-                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count
-            FROM study_groups sg 
-            JOIN users u ON sg.creator_user_id = u.id 
+                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count,
+                   (SELECT COUNT(*) FROM study_group_scripts sgs WHERE sgs.study_group_id = sg.id) as script_count
+            FROM study_groups sg
+            JOIN users u ON sg.creator_user_id = u.id
             WHERE sg.id = ?
         ");
         $stmt->execute([$id]);
@@ -49,10 +50,11 @@ class StudyGroup {
     public function getAllActive() {
         $stmt = $this->db->query("
             SELECT sg.*, u.username as creator_name,
-                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count
-            FROM study_groups sg 
-            JOIN users u ON sg.creator_user_id = u.id 
-            WHERE sg.is_active = 1 
+                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count,
+                   (SELECT COUNT(*) FROM study_group_scripts sgs WHERE sgs.study_group_id = sg.id) as script_count
+            FROM study_groups sg
+            JOIN users u ON sg.creator_user_id = u.id
+            WHERE sg.is_active = 1
             ORDER BY sg.created_at DESC
         ");
         return $stmt->fetchAll();
@@ -63,9 +65,10 @@ class StudyGroup {
      */
     public function findByCreator($userId) {
         $stmt = $this->db->prepare("
-            SELECT sg.*, 
-                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count
-            FROM study_groups sg 
+            SELECT sg.*,
+                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count,
+                   (SELECT COUNT(*) FROM study_group_scripts sgs WHERE sgs.study_group_id = sg.id) as script_count
+            FROM study_groups sg
             WHERE sg.creator_user_id = ? AND sg.is_active = 1
             ORDER BY sg.created_at DESC
         ");
@@ -80,8 +83,9 @@ class StudyGroup {
         $stmt = $this->db->prepare("
             SELECT sg.*, u.username as creator_name,
                    (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count,
+                   (SELECT COUNT(*) FROM study_group_scripts sgs WHERE sgs.study_group_id = sg.id) as script_count,
                    sgm.role as user_role
-            FROM study_groups sg 
+            FROM study_groups sg
             JOIN users u ON sg.creator_user_id = u.id
             JOIN study_group_members sgm ON sg.id = sgm.study_group_id
             WHERE sgm.user_id = ? AND sg.is_active = 1

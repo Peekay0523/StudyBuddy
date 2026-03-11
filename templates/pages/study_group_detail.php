@@ -532,9 +532,14 @@ include __DIR__ . '/../layouts/header.php';
 <!-- Members Tab -->
 <div id="members-tab" class="tab-content">
     <section style="margin-bottom: 30px;">
-        <h2 style="font-size: 20px; margin-bottom: 20px; color: #1e293b;">
-            <i class="fas fa-users" style="color: #667eea;"></i> Members (<?php echo $group['member_count']; ?>)
-        </h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="font-size: 20px; margin: 0; color: #1e293b;">
+                <i class="fas fa-users" style="color: #667eea;"></i> Members (<?php echo $group['member_count']; ?>)
+            </h2>
+            <button onclick="document.getElementById('inviteToGroupModal').style.display='flex'" class="btn-primary" style="padding: 10px 20px; font-size: 14px;">
+                <i class="fas fa-user-plus"></i> Invite Friends
+            </button>
+        </div>
         
         <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
@@ -975,6 +980,68 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
+<!-- Invite to Group Modal -->
+<div id="inviteToGroupModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto;">
+        <button onclick="document.getElementById('inviteToGroupModal').style.display='none'"
+                style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+            &times;
+        </button>
+
+        <h2 style="margin-bottom: 20px; color: #1e293b;">
+            <i class="fas fa-user-plus" style="color: #667eea;"></i> Invite Friends to <?php echo htmlspecialchars($group['title']); ?>
+        </h2>
+
+        <form method="POST" action="/study-group/send-invite">
+            <input type="hidden" name="study_group_id" value="<?php echo $group['id']; ?>">
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                    Friend's Email <span style="color: #ef4444;">*</span>
+                </label>
+                <textarea name="friend_emails" required rows="3"
+                          placeholder="Enter email addresses (separate multiple emails with commas)"
+                          style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
+                <small style="color: #64748b; display: block; margin-top: 5px;">Example: friend@example.com, buddy@example.com</small>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                    Friend's Name (Optional)
+                </label>
+                <input type="text" name="friend_name" maxlength="100"
+                       placeholder="e.g., John"
+                       style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                    Personal Message (Optional)
+                </label>
+                <textarea name="invite_message" rows="3"
+                          placeholder="e.g., Join our study group for Mathematics!"
+                          style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                <p style="margin: 0; color: #0369a1; font-size: 13px;">
+                    <i class="fas fa-info-circle"></i> Your friends will receive an email invitation to join this study group. Invites expire after 7 days.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="document.getElementById('inviteToGroupModal').style.display='none'"
+                        style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none;">
+                    <i class="fas fa-paper-plane"></i> Send Invitation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Close modal when clicking outside
     window.onclick = function(event) {
@@ -985,6 +1052,10 @@ include __DIR__ . '/../layouts/header.php';
         var modal2 = document.getElementById('uploadScriptModal');
         if (event.target == modal2) {
             modal2.style.display = 'none';
+        }
+        var modal3 = document.getElementById('inviteToGroupModal');
+        if (event.target == modal3) {
+            modal3.style.display = 'none';
         }
     }
 </script>

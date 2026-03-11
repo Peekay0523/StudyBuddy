@@ -156,6 +156,12 @@ $router->post('/study-group/{id}/upload-script', 'StudyGroupController@uploadScr
 $router->get('/study-group/{groupId}/download-script/{scriptId}', 'StudyGroupController@downloadScript');
 $router->post('/study-group/{groupId}/delete-script/{scriptId}', 'StudyGroupController@deleteScript');
 
+// Study Group Invites
+$router->post('/study-group/send-invite', 'StudyGroupController@sendInvite');
+$router->get('/study-group/accept-invite/{token}', 'StudyGroupController@acceptInvite');
+$router->get('/invites', 'StudyGroupController@viewInvites');
+$router->post('/study-group/cancel-invite/{id}', 'StudyGroupController@cancelInvite');
+
 // Serve voice recordings from database (MUST be before /send-message and /get-messages)
 $router->get('/study-group/{groupId}/voice/{messageId}', function($groupId, $messageId) {
     requireLogin();
@@ -252,6 +258,7 @@ $router->post('/subscription/downgrade', 'SubscriptionController@downgrade');
 
 // Scan to PDF
 $router->get('/scan', 'ScanController@index');
+$router->post('/scan/convert-points', 'ScanController@convertPoints');
 $router->post('/api/scan-to-pdf', 'ScanController@convertToPdf');
 $router->post('/api/scan-save', 'ScanController@saveScan');
 $router->get('/api/scan-saved-list', 'ScanController@getSavedPdfs');

@@ -112,11 +112,17 @@ class AIHelper {
         ];
 
         $response = $this->makeRequest($messages, 500, 0.7);
-        
+
         // Use fallback if OpenAI fails
         if (!$response) {
             return $this->getFallbackResponse($userMessage);
         }
+
+        // Remove markdown formatting for cleaner display
+        $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
+        $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
+        $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
+        $response = str_replace(['**', '__', '_'], '', $response); // Remove any remaining markdown chars
 
         return $response;
     }
@@ -258,11 +264,19 @@ class AIHelper {
 
         $topicsStr = implode(', ', $topics);
         $messages = [
-            ['role' => 'system', 'content' => 'You are an educational assistant that creates concise memorandums summarizing educational content.'],
+            ['role' => 'system', 'content' => 'You are an educational assistant that creates concise memorandums summarizing educational content. Do NOT use markdown formatting (no **, ##, **, or other markdown symbols). Write in plain text only. Use simple formatting with clear headings and bullet points without special characters.'],
             ['role' => 'user', 'content' => "Create a concise memorandum summarizing this educational content focusing on these key topics: {$topicsStr}. Content: " . substr($content, 0, 4000)]
         ];
 
         $response = $this->makeRequest($messages, 300, 0.4);
+
+        // Remove any remaining markdown formatting
+        if ($response) {
+            $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
+            $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
+            $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
+            $response = str_replace(['**', '__', '_'], '', $response); // Remove any remaining markdown chars
+        }
 
         return $response ?: "Memorandum for topics: " . implode(', ', array_slice($topics, 0, 5));
     }
@@ -285,6 +299,18 @@ class AIHelper {
 
         $response = $this->makeRequest($messages, 400, 0.5);
         error_log("GenerateStudyPlan: API Response: " . substr($response ?: 'NULL', 0, 100));
+
+        // Remove markdown formatting from response
+        if ($response) {
+            $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
+            $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
+            $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
+            $response = preg_replace('/^---\s*$/m', '', $response); // Remove horizontal rules
+            $response = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $response); // Remove markdown links
+            $response = str_replace(['\\'], '', $response); // Remove escaped characters
+            $response = preg_replace('/\n{3,}/', "\n\n", $response); // Clean up multiple newlines
+            $response = trim($response);
+        }
 
         return [
             'title' => "Personalized Study Plan for {$studentName}",

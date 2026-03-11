@@ -46,6 +46,46 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 <?php endif; ?>
 
+<!-- Points & Rewards Banner -->
+<div class="points-banner" style="max-width: 800px; margin: 20px auto; padding: 20px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border: 2px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                <i class="fas fa-coins" style="font-size: 28px; color: white;"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 5px 0; color: #1e40af; font-size: 18px;">
+                    <i class="fas fa-gift"></i> Your Rewards
+                </h3>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <p style="margin: 0; color: #1e3a8a; font-size: 14px;">
+                        <strong style="color: #f59e0b; font-size: 18px;"><?php echo $scanInfo['points']; ?> Points</strong>
+                        <span style="color: #64748b; font-size: 12px;">| Earn 100 points per friend who joins!</span>
+                    </p>
+                    <?php if ($scanInfo['free_scans'] > 0): ?>
+                        <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                            <i class="fas fa-check-circle"></i> <?php echo $scanInfo['free_scans']; ?> Free Scan(s) Available
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <p style="margin: 5px 0 0 0; color: #3b82f6; font-size: 13px;">
+                    <i class="fas fa-bolt"></i> 500 points = 1 Free Scan
+                </p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="/dashboard" class="btn-secondary" style="padding: 10px 16px; font-size: 14px; text-decoration: none; border: 2px solid #3b82f6; color: #3b82f6; background: white;">
+                <i class="fas fa-users"></i> Invite Friends
+            </a>
+            <?php if ($scanInfo['points'] >= 500): ?>
+                <button onclick="convertPointsToScan()" class="btn-primary" style="padding: 10px 16px; font-size: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                    <i class="fas fa-exchange-alt"></i> Convert 500 Points to Free Scan
+                </button>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
 <div class="scan-container" style="max-width: 800px; margin: 0 auto;">
     <!-- Upload Area -->
     <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
@@ -739,3 +779,51 @@ async function deleteSavedPdf(id) {
     }
 }
 </style>
+
+<!-- Convert Points Modal -->
+<div id="convertPointsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; position: relative; text-align: center;">
+        <button onclick="document.getElementById('convertPointsModal').style.display='none'"
+                style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+            &times;
+        </button>
+
+        <div style="margin-bottom: 20px;">
+            <i class="fas fa-coins" style="font-size: 48px; color: #fbbf24; margin-bottom: 15px;"></i>
+            <h2 style="margin: 0 0 10px 0; color: #1e293b;">Convert Points to Free Scan</h2>
+            <p style="color: #64748b; font-size: 14px;">Exchange 500 points for 1 free scan</p>
+        </div>
+
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+            <p style="margin: 0; color: #0369a1; font-size: 14px;">
+                <i class="fas fa-info-circle"></i> This will deduct 500 points from your balance and add 1 free scan to your account.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" onclick="document.getElementById('convertPointsModal').style.display='none'"
+                    style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Cancel
+            </button>
+            <form method="POST" action="/scan/convert-points" style="display: inline;">
+                <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                    <i class="fas fa-check"></i> Confirm Conversion
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function convertPointsToScan() {
+    document.getElementById('convertPointsModal').style.display = 'flex';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    var modal = document.getElementById('convertPointsModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>

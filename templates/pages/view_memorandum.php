@@ -1,15 +1,95 @@
 <?php
 $pageTitle = 'View Memorandum - StudySmart';
 $currentPage = 'scripts';
-$extraScripts = '<script>
+$extraScripts = <<<EOT
+<script>
 let synthesis = window.speechSynthesis;
 let isSpeaking = false;
 let currentUtterance = null;
 
+function preprocessMathForSpeech(text) {
+    // Replace mathematical symbols with spoken words
+    let processed = text;
+
+    // Remove bullet point dashes first (before processing math symbols)
+    // This handles: "   - Understanding" or "- Understanding"
+    processed = processed.replace(/^\s*-\s+/gm, " ");
+
+    // Replace division symbols
+    processed = processed.replace(/\s*÷\s*/g, " divided by ");
+    processed = processed.replace(/\s*\//g, " divided by ");
+    
+    // Replace multiplication symbols
+    processed = processed.replace(/\s*×\s*/g, " times ");
+    processed = processed.replace(/\s*\*/g, " times ");
+    processed = processed.replace(/\s*·\s*/g, " times ");
+    
+    // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
+    processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "\$1 plus \$2");
+    processed = processed.replace(/(\d)\s*-\s*(\d)/g, "\$1 minus \$2");
+    processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "\$1 plus \$2");
+    processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "\$1 minus \$2");
+    
+    // Replace equals
+    processed = processed.replace(/\s*=\s*/g, " equals ");
+    
+    // Replace inequality symbols
+    processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
+    processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
+    processed = processed.replace(/\s*≠\s*/g, " not equal to ");
+    
+    // Remove parentheses silently (don't announce them for regular text)
+    processed = processed.split("(").join("");
+    processed = processed.split(")").join("");
+
+    // Remove square brackets silently
+    processed = processed.split("[").join("");
+    processed = processed.split("]").join("");
+    
+    // Replace exponents
+    processed = processed.replace(/\^(\d+)/g, " to the power of \$1 ");
+    
+    // Replace square root
+    processed = processed.replace(/√/g, " square root of ");
+    
+    // Replace pi
+    processed = processed.replace(/π/g, " pi ");
+    
+    // Replace percentage
+    processed = processed.replace(/%/g, " percent ");
+    
+    // Replace degree symbol
+    processed = processed.replace(/°/g, " degrees ");
+    
+    // Replace angle symbol
+    processed = processed.replace(/∠/g, " angle ");
+    
+    // Replace therefore symbol
+    processed = processed.replace(/∴/g, " therefore ");
+    
+    // Replace because symbol
+    processed = processed.replace(/∵/g, " because ");
+    
+    // Replace infinity
+    processed = processed.replace(/∞/g, " infinity ");
+    
+    // Replace less than and greater than (only in math context with numbers)
+    processed = processed.replace(/(\d)\s*</g, "\$1 less than ");
+    processed = processed.replace(/>/g, " greater than ");
+    
+    // Replace "m =" with "m equals" for gradient context
+    processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "\$1 equals ");
+    
+    // Clean up multiple spaces
+    processed = processed.replace(/\s+/g, " ").trim();
+    
+    return processed;
+}
+
 function toggleSpeech() {
     const btn = document.getElementById("speech-btn");
     const icon = document.getElementById("speech-icon");
-    
+
     if (isSpeaking) {
         // Stop speech
         synthesis.cancel();
@@ -22,7 +102,8 @@ function toggleSpeech() {
     } else {
         // Start speech
         const content = document.getElementById("memo-content").textContent;
-        speakContent(content);
+        const processedContent = preprocessMathForSpeech(content);
+        speakContent(processedContent);
         isSpeaking = true;
         btn.classList.remove("btn-primary");
         btn.classList.add("btn-danger");
@@ -34,27 +115,27 @@ function toggleSpeech() {
 
 function speakContent(text) {
     if (!synthesis) return;
-    
+
     synthesis.cancel();
-    
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 1;
-    
+
     // Select a natural voice if available
     const voices = synthesis.getVoices();
-    const preferredVoice = voices.find(voice => 
+    const preferredVoice = voices.find(voice =>
         voice.lang.includes("en-US") && voice.name.includes("Natural")
     ) || voices.find(voice => voice.lang.includes("en")) || voices[0];
-    
+
     if (preferredVoice) {
         utterance.voice = preferredVoice;
     }
-    
+
     currentUtterance = utterance;
-    
+
     utterance.onend = () => {
         isSpeaking = false;
         const btn = document.getElementById("speech-btn");
@@ -67,7 +148,7 @@ function speakContent(text) {
             btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
         }
     };
-    
+
     utterance.onerror = () => {
         isSpeaking = false;
         const btn = document.getElementById("speech-btn");
@@ -76,7 +157,7 @@ function speakContent(text) {
             btn.classList.add("btn-primary");
         }
     };
-    
+
     synthesis.speak(utterance);
 }
 
@@ -86,7 +167,8 @@ window.addEventListener("beforeunload", () => {
         synthesis.cancel();
     }
 });
-</script>';
+</script>
+EOT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 

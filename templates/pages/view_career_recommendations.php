@@ -1,9 +1,11 @@
 <?php
 $pageTitle = 'Career Recommendations - StudySmart';
 $currentPage = 'careers';
-$extraHead = '<script>
+$reportCardIdJs = htmlspecialchars($reportCard['id'] ?? '');
+$extraHead = <<<EOT
+<script>
 function reprocessReportCard() {
-    const reportCardId = "' . ($reportCard['id'] ?? '') . '";
+    const reportCardId = "{$reportCardIdJs}";
     if (!reportCardId) {
         alert("Report card ID not found");
         return;
@@ -40,17 +42,17 @@ document.addEventListener("DOMContentLoaded", function() {
         console.log("Toggle speech called for:", sectionId);
         const btn = document.getElementById("speech-btn-" + sectionId);
         const contentDiv = document.getElementById(sectionId);
-        
+
         console.log("Button element:", btn);
         console.log("Content div:", contentDiv);
-        
+
         if (!btn) {
             console.error("Button not found for ID: speech-btn-" + sectionId);
         }
         if (!contentDiv) {
             console.error("Content div not found for ID:", sectionId);
         }
-        
+
         if (!btn || !contentDiv) {
             alert("Could not find speech controls. Check console for details.");
             return;
@@ -70,20 +72,101 @@ document.addEventListener("DOMContentLoaded", function() {
             paragraphs.forEach(el => {
                 content += el.textContent.trim() + " ";
             });
-            
+
             if (!content.trim()) {
                 content = contentDiv.textContent.replace(/\s+/g, " ").trim();
             }
-            
+
             if (!content) {
                 alert("No content to read");
                 return;
             }
-            
+
             console.log("Content length:", content.length);
-            speakContent(content, btn);
+            // Preprocess math symbols before speaking
+            const processedContent = preprocessMathForSpeech(content);
+            speakContent(processedContent, btn);
         }
     };
+
+    // Preprocess mathematical symbols for speech
+    function preprocessMathForSpeech(text) {
+        let processed = text;
+        
+        // Remove bullet point dashes first (before processing math symbols)
+        // This handles: "   - Understanding" or "- Understanding"
+        processed = processed.replace(/^\s*-\s+/gm, " ");
+
+        // Replace division symbols
+        processed = processed.replace(/\s*÷\s*/g, " divided by ");
+        processed = processed.replace(/\s*\/\s*/g, " divided by ");
+        
+        // Replace multiplication symbols
+        processed = processed.replace(/\s*×\s*/g, " times ");
+        processed = processed.replace(/\s*\*\s*/g, " times ");
+        processed = processed.replace(/\s*·\s*/g, " times ");
+        
+        // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
+        processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "$1 plus $2");
+        processed = processed.replace(/(\d)\s*-\s*(\d)/g, "$1 minus $2");
+        processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "$1 plus $2");
+        processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "$1 minus $2");
+        
+        // Replace equals
+        processed = processed.replace(/\s*=\s*/g, " equals ");
+        
+        // Replace inequality symbols
+        processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
+        processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
+        processed = processed.replace(/\s*≠\s*/g, " not equal to ");
+        
+        // Remove parentheses silently (don't announce them for regular text)
+        processed = processed.split("(").join("");
+        processed = processed.split(")").join("");
+        
+        // Remove square brackets silently
+        processed = processed.split("[").join("");
+        processed = processed.split("]").join("");
+        
+        // Replace exponents
+        processed = processed.replace(/\^(\d+)/g, " to the power of $1 ");
+        
+        // Replace square root
+        processed = processed.replace(/√/g, " square root of ");
+        
+        // Replace pi
+        processed = processed.replace(/π/g, " pi ");
+        
+        // Replace percentage
+        processed = processed.replace(/%/g, " percent ");
+        
+        // Replace degree symbol
+        processed = processed.replace(/°/g, " degrees ");
+        
+        // Replace angle symbol
+        processed = processed.replace(/∠/g, " angle ");
+        
+        // Replace therefore symbol
+        processed = processed.replace(/∴/g, " therefore ");
+        
+        // Replace because symbol
+        processed = processed.replace(/∵/g, " because ");
+        
+        // Replace infinity
+        processed = processed.replace(/∞/g, " infinity ");
+        
+        // Replace less than and greater than (only in math context with numbers)
+        processed = processed.replace(/(\d)\s*</g, "$1 less than ");
+        processed = processed.replace(/>/g, " greater than ");
+        
+        // Replace "m =" with "m equals" for gradient context
+        processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "$1 equals ");
+        
+        // Clean up multiple spaces
+        processed = processed.replace(/\s+/g, " ").trim();
+        
+        return processed;
+    }
 
     function speakContent(text, btn) {
         if (!synthesis) {
@@ -145,7 +228,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-</script>';
+</script>
+EOT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 

@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/StudyGroup.php';
 require_once __DIR__ . '/../models/StudyGroupScript.php';
 require_once __DIR__ . '/../models/StudyGroupMessage.php';
+require_once __DIR__ . '/../models/StudyGroupInvite.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class StudyGroupController {
@@ -24,7 +25,12 @@ class StudyGroupController {
         requireLogin();
 
         $user = getCurrentUser();
-        
+
+        // Update user's activity
+        require_once __DIR__ . '/../models/UserActivity.php';
+        $activityModel = new UserActivity();
+        $activityModel->updateActivity($user['id']);
+
         // Check if user is on free plan
         $subscriptionController = new SubscriptionController();
         $userSubscription = $subscriptionController->getUserSubscription($user['id']);
@@ -42,6 +48,9 @@ class StudyGroupController {
         $availableGroups = array_filter($allGroups, function($group) use ($joinedGroupIds, $user) {
             return !in_array($group['id'], $joinedGroupIds) && $group['creator_user_id'] != $user['id'];
         });
+
+        // Get potential study buddies
+        $studyBuddies = $activityModel->getStudyBuddies($user['id'], 5);
 
         include __DIR__ . '/../templates/pages/study_group.php';
     }
@@ -69,10 +78,11 @@ class StudyGroupController {
             header('Location: /subscription');
             exit;
         }
-        
+
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $gradeLevel = trim($_POST['grade_level'] ?? '');
+        $schoolName = trim($_POST['school_name'] ?? '');
         $maxMembers = intval($_POST['max_members'] ?? 10);
 
         // Validation
@@ -93,7 +103,7 @@ class StudyGroupController {
         }
 
         // Create the study group
-        $groupId = $this->studyGroupModel->create($user['id'], $title, $description, $gradeLevel, $maxMembers);
+        $groupId = $this->studyGroupModel->create($user['id'], $title, $description, $gradeLevel, $schoolName, $maxMembers);
 
         if ($groupId) {
             setFlashMessage('success', 'Study group "' . htmlspecialchars($title) . '" created successfully!');
@@ -651,6 +661,149 @@ class StudyGroupController {
         $this->studyGroupModel->removeMember($groupId, $userId);
         setFlashMessage('success', 'Member removed from group.');
         header('Location: /study-group/view/' . $groupId);
+        exit;
+    }
+
+    /**
+     * Send invite to friends
+     */
+    public function sendInvite() {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $user = getCurrentUser();
+        $inviteModel = new StudyGroupInvite();
+
+        $friendEmails = $_POST['friend_emails'] ?? '';
+        $friendName = trim($_POST['friend_name'] ?? '');
+        $studyGroupId = $_POST['study_group_id'] ?? null;
+        $message = trim($_POST['invite_message'] ?? '');
+
+        // Split emails by comma, newline, or semicolon
+        $emails = preg_split('/[,\n;]+/', $friendEmails);
+        $emails = array_map('trim', $emails);
+        $emails = array_filter($emails); // Remove empty values
+
+        if (empty($emails)) {
+            setFlashMessage('error', 'Please enter at least one email address.');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $sentCount = 0;
+        $skippedCount = 0;
+
+        foreach ($emails as $email) {
+            // Validate email
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            // Check if already has pending invite
+            if ($inviteModel->hasPendingInvite($email)) {
+                $skippedCount++;
+                continue;
+            }
+
+            // Create invite
+            $inviteModel->create($user['id'], $email, $friendName, $studyGroupId, $message);
+            $sentCount++;
+        }
+
+        if ($sentCount > 0) {
+            setFlashMessage('success', "Invitation sent to {$sentCount} friend(s)!" . ($skippedCount > 0 ? " ({$skippedCount} already invited)" : ""));
+        } else {
+            setFlashMessage('error', 'Failed to send invites. All emails may already have pending invitations.');
+        }
+
+        $redirectUrl = $studyGroupId ? '/study-group/view/' . $studyGroupId : '/dashboard';
+        header('Location: ' . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Accept invite
+     */
+    public function acceptInvite($token) {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $inviteModel = new StudyGroupInvite();
+
+        $invite = $inviteModel->getByToken($token);
+
+        if (!$invite) {
+            setFlashMessage('error', 'Invalid invite token.');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        if ($invite['status'] !== 'pending') {
+            setFlashMessage('error', 'This invite has already been ' . $invite['status'] . '.');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        if (strtotime($invite['expires_at']) < time()) {
+            setFlashMessage('error', 'This invite has expired.');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Accept the invite
+        $inviteModel->accept($token, $user['id']);
+
+        // If it's a group invite, add user to the group
+        if ($invite['study_group_id']) {
+            $this->studyGroupModel->addMember($invite['study_group_id'], $user['id'], 'member');
+            setFlashMessage('success', "You've successfully joined the study group: " . htmlspecialchars($invite['group_title']));
+        } else {
+            setFlashMessage('success', "Welcome to StudySmart! Your friend " . htmlspecialchars($invite['sender_name']) . " invited you.");
+        }
+
+        header('Location: /dashboard');
+        exit;
+    }
+
+    /**
+     * View sent invites
+     */
+    public function viewInvites() {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $inviteModel = new StudyGroupInvite();
+
+        $invites = $inviteModel->getBySender($user['id']);
+        $stats = $inviteModel->getStats($user['id']);
+
+        include __DIR__ . '/../templates/pages/invites.php';
+    }
+
+    /**
+     * Cancel an invite
+     */
+    public function cancelInvite($inviteId) {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $inviteModel = new StudyGroupInvite();
+
+        $invite = $inviteModel->getByToken($inviteId); // Using token as ID for simplicity
+
+        if (!$invite || $invite['user_id'] != $user['id']) {
+            setFlashMessage('error', 'Invalid invite or not authorized.');
+            header('Location: /invites');
+            exit;
+        }
+
+        $inviteModel->delete($inviteId);
+        setFlashMessage('success', 'Invite cancelled.');
+        header('Location: /invites');
         exit;
     }
 }

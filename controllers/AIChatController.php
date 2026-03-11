@@ -45,7 +45,7 @@ class AIChatController {
             exit;
         }
 
-        $systemPrompt = 'You are a helpful AI Study Assistant. Help students with their questions about various subjects, explain concepts clearly, provide study tips, and create quiz questions when asked. Be encouraging and supportive.';
+        $systemPrompt = 'You are a helpful AI Study Assistant. Help students with their questions about various subjects, explain concepts clearly, provide study tips, and create quiz questions when asked. Be encouraging and supportive. Do NOT use markdown formatting (no **, ##, *, or other markdown symbols). Write in plain text only.';
 
         $response = $this->aiHelper->chat($message, $systemPrompt);
 

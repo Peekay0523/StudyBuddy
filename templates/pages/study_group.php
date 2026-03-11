@@ -50,6 +50,78 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 <?php endif; ?>
 
+<!-- Study Buddies Section -->
+<section style="margin-bottom: 40px;">
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h2 style="margin: 0 0 20px 0; color: #166534; font-size: 20px;">
+            <i class="fas fa-user-friends" style="color: #22c55e;"></i> Find Study Buddies
+        </h2>
+        <p style="color: #166534; font-size: 14px; margin-bottom: 20px;">
+            Connect with active students who can help you with academic assistance
+        </p>
+
+        <?php if (empty($studyBuddies)): ?>
+            <div style="text-align: center; padding: 30px; color: #64748b;">
+                <i class="fas fa-users-slash" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                <p>No study buddies available at the moment. Check back later!</p>
+            </div>
+        <?php else: ?>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                <?php foreach ($studyBuddies as $buddy): ?>
+                    <div class="feature-card" style="border: 1px solid #86efac; background: white; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="position: relative;">
+                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 20px;">
+                                    <?php echo strtoupper(substr($buddy['username'], 0, 1)); ?>
+                                </div>
+                                <span style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background: <?php echo $buddy['is_online'] ? '#22c55e' : '#ef4444'; ?>; border: 2px solid white; border-radius: 50%;" title="<?php echo $buddy['is_online'] ? 'Online now' : 'Offline'; ?>"></span>
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px; color: #1e293b;">
+                                    <?php echo htmlspecialchars($buddy['username']); ?>
+                                </h3>
+                                <p style="margin: 3px 0 0 0; font-size: 12px; color: <?php echo $buddy['is_online'] ? '#22c55e' : '#64748b'; ?>; font-weight: 500;">
+                                    <i class="fas fa-circle" style="font-size: 8px;"></i> <?php echo $buddy['is_online'] ? 'Active now' : 'Last active: ' . date('M d, H:i', strtotime($buddy['last_active'])); ?>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                                <span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #86efac;">
+                                    <i class="fas fa-book"></i> <?php echo $buddy['scripts_uploaded'] ?? 0; ?> scripts
+                                </span>
+                                <span style="background: #f0f9ff; color: #0369a1; padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #bae6fd;">
+                                    <i class="fas fa-users"></i> <?php echo $buddy['groups_count'] ?? 0; ?> groups
+                                </span>
+                            </div>
+                            <?php if (!empty($buddy['grade_level'])): ?>
+                                <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b;">
+                                    <i class="fas fa-graduation-cap"></i> Grade <?php echo htmlspecialchars($buddy['grade_level']); ?>
+                                </p>
+                            <?php endif; ?>
+                            <?php if (!empty($buddy['bio'])): ?>
+                                <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.4;">
+                                    <?php echo htmlspecialchars(substr($buddy['bio'], 0, 60)); ?><?php if (strlen($buddy['bio']) > 60): ?>...<?php endif; ?>
+                                </p>
+                            <?php endif; ?>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="flex: 1; text-align: center; padding: 8px 12px; font-size: 13px; text-decoration: none;">
+                                <i class="fas fa-envelope"></i> Ask for Help
+                            </a>
+                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 13px;">
+                                <i class="fas fa-user-plus"></i> Invite
+                            </button>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
+
 <!-- My Study Groups Section -->
 <?php if (!empty($myGroups)): ?>
     <section style="margin-bottom: 40px;">
@@ -86,7 +158,7 @@ include __DIR__ . '/../layouts/header.php';
                             <i class="fas fa-users"></i> <?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members
                         </span>
                         <span>
-                            <i class="fas fa-user"></i> <?php echo htmlspecialchars($group['creator_name']); ?>
+                            <i class="fas fa-file-upload"></i> <?php echo $group['script_count'] ?? 0; ?> scripts
                         </span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
@@ -132,7 +204,7 @@ include __DIR__ . '/../layouts/header.php';
                             <i class="fas fa-users"></i> <?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members
                         </span>
                         <span>
-                            <i class="fas fa-user"></i> <?php echo htmlspecialchars($group['creator_name']); ?>
+                            <i class="fas fa-file-upload"></i> <?php echo $group['script_count'] ?? 0; ?> scripts
                         </span>
                     </div>
                     
@@ -159,7 +231,7 @@ include __DIR__ . '/../layouts/header.php';
 
 <!-- Create Group Modal -->
 <div id="createGroupModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative;">
+    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto;">
         <button onclick="document.getElementById('createGroupModal').style.display='none'" 
                 style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
             &times;
@@ -193,6 +265,15 @@ include __DIR__ . '/../layouts/header.php';
                     <option value="College">College/University</option>
                     <option value="Other">Other</option>
                 </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                    School Name
+                </label>
+                <input type="text" name="school_name" maxlength="100"
+                       placeholder="e.g., Springfield High School"
+                       style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
             </div>
             
             <div style="margin-bottom: 20px;">
@@ -238,6 +319,10 @@ include __DIR__ . '/../layouts/header.php';
         if (event.target == modal) {
             modal.style.display = 'none';
         }
+    }
+
+    function inviteToGroupModal(username) {
+        alert('To invite ' + username + ' to a study group, you can:\n\n1. Click "Ask for Help" to send them an email\n2. Create a study group and share the invite link\n3. Message them directly if you\'re in the same group');
     }
 </script>
 

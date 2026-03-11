@@ -39,8 +39,26 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 
     <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-clipboard-list"></i> Plan Details</h4>
-    <div style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
-        <?php echo htmlspecialchars($studyPlan['content']); ?>
+    <div style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap; line-height: 1.8;">
+        <?php
+        // Remove markdown formatting from study plan content
+        $content = $studyPlan['content'];
+        // Remove bold (**text**)
+        $content = preg_replace('/\*\*(.*?)\*\*/', '$1', $content);
+        // Remove italic (*text*)
+        $content = preg_replace('/\*(.*?)\*/', '$1', $content);
+        // Remove headers (###, ##, #)
+        $content = preg_replace('/^#+\s*/m', '', $content);
+        // Remove horizontal rules (---)
+        $content = preg_replace('/^---\s*$/m', '', $content);
+        // Remove markdown links [text](url)
+        $content = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $content);
+        // Remove escaped characters
+        $content = str_replace(['\\'], '', $content);
+        // Clean up multiple spaces/newlines
+        $content = preg_replace('/\n{3,}/', "\n\n", $content);
+        echo htmlspecialchars(trim($content));
+        ?>
     </div>
 </div>
 
@@ -48,6 +66,85 @@ include __DIR__ . '/../layouts/header.php';
 let isReciting = false;
 let synthesis = null;
 let availableVoices = [];
+
+// Preprocess mathematical symbols for speech
+function preprocessMathForSpeech(text) {
+    let processed = text;
+    
+    // Remove bullet point dashes first (before processing math symbols)
+    // This handles: "   - Understanding" or "- Understanding"
+    processed = processed.replace(/^\s*-\s+/gm, " ");
+
+    // Replace division symbols
+    processed = processed.replace(/\s*÷\s*/g, " divided by ");
+    processed = processed.replace(/\s*\/\s*/g, " divided by ");
+    
+    // Replace multiplication symbols
+    processed = processed.replace(/\s*×\s*/g, " times ");
+    processed = processed.replace(/\s*\*\s*/g, " times ");
+    processed = processed.replace(/\s*·\s*/g, " times ");
+    
+    // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
+    processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "$1 plus $2");
+    processed = processed.replace(/(\d)\s*-\s*(\d)/g, "$1 minus $2");
+    processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "$1 plus $2");
+    processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "$1 minus $2");
+
+    // Replace equals
+    processed = processed.replace(/\s*=\s*/g, " equals ");
+
+    // Replace inequality symbols
+    processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
+    processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
+    processed = processed.replace(/\s*≠\s*/g, " not equal to ");
+
+    // Remove parentheses silently (don't announce them for regular text)
+    processed = processed.split("(").join("");
+    processed = processed.split(")").join("");
+
+    // Remove square brackets silently
+    processed = processed.split("[").join("");
+    processed = processed.split("]").join("");
+
+    // Replace exponents
+    processed = processed.replace(/\^(\d+)/g, " to the power of $1 ");
+
+    // Replace square root
+    processed = processed.replace(/√/g, " square root of ");
+
+    // Replace pi
+    processed = processed.replace(/π/g, " pi ");
+
+    // Replace percentage
+    processed = processed.replace(/%/g, " percent ");
+
+    // Replace degree symbol
+    processed = processed.replace(/°/g, " degrees ");
+
+    // Replace angle symbol
+    processed = processed.replace(/∠/g, " angle ");
+
+    // Replace therefore symbol
+    processed = processed.replace(/∴/g, " therefore ");
+
+    // Replace because symbol
+    processed = processed.replace(/∵/g, " because ");
+
+    // Replace infinity
+    processed = processed.replace(/∞/g, " infinity ");
+
+    // Replace less than and greater than (only in math context with numbers)
+    processed = processed.replace(/(\d)\s*</g, "$1 less than ");
+    processed = processed.replace(/>/g, " greater than ");
+
+    // Replace "m =" with "m equals" for gradient context
+    processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "$1 equals ");
+    
+    // Clean up multiple spaces
+    processed = processed.replace(/\s+/g, " ").trim();
+    
+    return processed;
+}
 
 // Load available voices
 function loadVoices() {
@@ -96,7 +193,9 @@ async function reciteStudyPlan() {
             isReciting = true;
             stopBtn.style.display = 'inline-block';
 
-            synthesis = new SpeechSynthesisUtterance(data.recitation);
+            // Preprocess the text to convert math symbols to spoken words
+            const processedText = preprocessMathForSpeech(data.recitation);
+            synthesis = new SpeechSynthesisUtterance(processedText);
             
             // Select best available voice (prefer Google or Microsoft voices)
             const preferredVoice = availableVoices.find(v => 

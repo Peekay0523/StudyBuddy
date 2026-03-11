@@ -1,7 +1,9 @@
 <?php
 $pageTitle = 'AI Chat - StudySmart';
 $currentPage = 'ai-chat';
-$extraScripts = '<script>
+$canUseVoiceModeJs = $canUseVoiceMode ? 'true' : 'false';
+$extraScripts = <<<EOT
+<script>
 const chatForm = document.getElementById("chat-form");
 const messageInput = document.getElementById("message-input");
 const messagesContainer = document.getElementById("messages-container");
@@ -21,9 +23,7 @@ let isSpeaking = false;
 // Initialize voices on mobile browsers
 function initVoices() {
     if (synthesis) {
-        // Load voices (needed on mobile browsers)
         synthesis.getVoices();
-        // Some browsers need this event to load voices
         if (synthesis.onvoiceschanged !== undefined) {
             synthesis.onvoiceschanged = () => {
                 console.log("Voices loaded:", synthesis.getVoices().length);
@@ -32,11 +32,10 @@ function initVoices() {
     }
 }
 
-// Initialize voices immediately
 initVoices();
 
 // Only initialize voice features for paid users
-const canUseVoiceMode = ' . ($canUseVoiceMode ? 'true' : 'false') . ';
+const canUseVoiceMode = {$canUseVoiceModeJs};
 
 if (canUseVoiceMode) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -269,6 +268,84 @@ function stopListening() {
 }
 
 // Text-to-Speech
+function preprocessMathForSpeech(text) {
+    let processed = text;
+    
+    // Remove bullet point dashes first (before processing math symbols)
+    // This handles: "   - Understanding" or "- Understanding"
+    processed = processed.replace(/^\s*-\s+/gm, " ");
+
+    // Replace division symbols
+    processed = processed.replace(/\s*÷\s*/g, " divided by ");
+    processed = processed.replace(/\s*\/\s*/g, " divided by ");
+    
+    // Replace multiplication symbols
+    processed = processed.replace(/\s*×\s*/g, " times ");
+    processed = processed.replace(/\s*\*\s*/g, " times ");
+    processed = processed.replace(/\s*·\s*/g, " times ");
+    
+    // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
+    processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "$1 plus $2");
+    processed = processed.replace(/(\d)\s*-\s*(\d)/g, "$1 minus $2");
+    processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "$1 plus $2");
+    processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "$1 minus $2");
+    
+    // Replace equals
+    processed = processed.replace(/\s*=\s*/g, " equals ");
+    
+    // Replace inequality symbols
+    processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
+    processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
+    processed = processed.replace(/\s*≠\s*/g, " not equal to ");
+    
+    // Remove parentheses silently (don't announce them for regular text)
+    processed = processed.split("(").join("");
+    processed = processed.split(")").join("");
+
+    // Remove square brackets silently
+    processed = processed.split("[").join("");
+    processed = processed.split("]").join("");
+    
+    // Replace exponents
+    processed = processed.replace(/\^(\d+)/g, " to the power of $1 ");
+    
+    // Replace square root
+    processed = processed.replace(/√/g, " square root of ");
+    
+    // Replace pi
+    processed = processed.replace(/π/g, " pi ");
+    
+    // Replace percentage
+    processed = processed.replace(/%/g, " percent ");
+    
+    // Replace degree symbol
+    processed = processed.replace(/°/g, " degrees ");
+    
+    // Replace angle symbol
+    processed = processed.replace(/∠/g, " angle ");
+    
+    // Replace therefore symbol
+    processed = processed.replace(/∴/g, " therefore ");
+    
+    // Replace because symbol
+    processed = processed.replace(/∵/g, " because ");
+    
+    // Replace infinity
+    processed = processed.replace(/∞/g, " infinity ");
+    
+    // Replace less than and greater than (only in math context with numbers)
+    processed = processed.replace(/(\d)\s*</g, "$1 less than ");
+    processed = processed.replace(/>/g, " greater than ");
+    
+    // Replace "m =" with "m equals" for gradient context
+    processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "$1 equals ");
+    
+    // Clean up multiple spaces
+    processed = processed.replace(/\s+/g, " ").trim();
+    
+    return processed;
+}
+
 function speakMessage(text) {
     return new Promise((resolve) => {
         if (!synthesis) {
@@ -282,7 +359,9 @@ function speakMessage(text) {
 
         // Small delay after cancel (needed on some mobile browsers)
         setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance(text);
+            // Preprocess the text to convert math symbols to spoken words
+            const processedText = preprocessMathForSpeech(text);
+            const utterance = new SpeechSynthesisUtterance(processedText);
             utterance.lang = "en-US";
             utterance.rate = 0.9;
             utterance.pitch = 1;
@@ -379,7 +458,8 @@ if (canUseVoiceMode) {
         }
     });
 }
-</script>';
+</script>
+EOT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 
@@ -389,7 +469,7 @@ include __DIR__ . '/../layouts/header.php';
 <div class="chat-container">
     <div class="chat-messages" id="messages-container">
         <div class="chat-message ai">
-            Hello! I\'m your AI Study Assistant. I can help you with questions about various subjects, explain concepts, provide study tips, or create quiz questions. What would you like to know?
+            Hello! I'm your AI Study Assistant. I can help you with questions about various subjects, explain concepts, provide study tips, or create quiz questions. What would you like to know?
         </div>
     </div>
 

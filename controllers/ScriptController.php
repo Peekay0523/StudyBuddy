@@ -307,16 +307,7 @@ class ScriptController {
 
         $db = Database::getInstance()->getConnection();
 
-        // Delete memorandum file if exists
-        $memo = $db->prepare("SELECT file_path FROM memorandums WHERE script_id = ?");
-        $memo->execute([$scriptId]);
-        $memoData = $memo->fetch();
-
-        if ($memoData && !empty($memoData['file_path']) && file_exists(UPLOAD_DIR_SCRIPTS . $memoData['file_path'])) {
-            unlink(UPLOAD_DIR_SCRIPTS . $memoData['file_path']);
-        }
-
-        // Delete memorandum record
+        // Delete memorandum record (no file to delete, content is stored in database)
         $db->prepare("DELETE FROM memorandums WHERE script_id = ?")->execute([$scriptId]);
 
         // Delete script file
