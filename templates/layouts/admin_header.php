@@ -429,6 +429,9 @@
             <a href="/admin/topics" class="<?php echo ($currentPage ?? '') === 'admin-topics' ? 'active' : ''; ?>">
                 <i class="fas fa-brain"></i> Topics Mastered
             </a>
+            <a href="/admin/seo/pages" class="<?php echo ($currentPage ?? '') === 'admin-seo' ? 'active' : ''; ?>">
+                <i class="fas fa-search"></i> SEO Pages
+            </a>
             <a href="/" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                 <i class="fas fa-arrow-left"></i> Back to Site
             </a>

@@ -10,8 +10,71 @@ $subscription = getUserSubscription($user['id']);
 $isFreeTierJson = $isFreeTier ? 'true' : 'false';
 
 $extraHead = <<<'SCRIPT'
+<style>
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.loading-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 50px);
+    color: #6c757d;
+    font-size: 1rem;
+    font-weight: 500;
+}
+</style>
+SCRIPT;
+
+$extraHead .= <<<'SCRIPT'
 <script>
 let isFreeTierGlobal = false;
+
+// Show/hide loading overlay
+function showLoading(message) {
+    const overlay = document.getElementById('loadingOverlay');
+    const text = document.querySelector('.loading-text');
+    if (overlay) {
+        if (message) text.textContent = message;
+        overlay.classList.add('active');
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
 
 function initUploadHandlers() {
     const fileInput = document.getElementById("report_card_file");
@@ -147,6 +210,12 @@ $extraHead .= '<script>isFreeTierGlobal = ' . $isFreeTierJson . ';</script>';
 include __DIR__ . '/../layouts/header.php';
 ?>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Uploading...</div>
+</div>
+
 <h1 class="title">Upload Report Card</h1>
 <p class="subtitle">Upload your report card for AI-powered career recommendations.</p>
 
@@ -248,6 +317,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return false;
             }
+            
+            // Show loading overlay
+            showLoading('Uploading report card...');
         });
     }
 

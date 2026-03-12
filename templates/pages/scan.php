@@ -21,6 +21,18 @@ $periodEnd = $scanInfo['period_end'];
 include __DIR__ . '/../layouts/header.php';
 ?>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;">
+    <div class="loading-spinner" style="width: 60px; height: 60px; border: 4px solid #e9ecef; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <div class="loading-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, 50px); color: #6c757d; font-size: 1rem; font-weight: 500;">Converting to PDF...</div>
+</div>
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
 <h1 class="title">Scan to PDF</h1>
 <p class="subtitle">Convert images to PDF documents instantly</p>
 
@@ -324,6 +336,12 @@ convertBtn.addEventListener('click', async () => {
 
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
+    
+    // Show loading overlay
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = loadingOverlay.querySelector('.loading-text');
+    if (loadingText) loadingText.textContent = 'Converting to PDF...';
+    if (loadingOverlay) loadingOverlay.classList.add('active');
 
     const formData = new FormData();
     selectedImages.forEach((file, index) => {
@@ -339,10 +357,10 @@ convertBtn.addEventListener('click', async () => {
 
         console.log('Response status:', response.status);
         console.log('Response headers:', [...response.headers.entries()]);
-        
+
         const contentType = response.headers.get('content-type');
         console.log('Content-Type:', contentType);
-        
+
         // Debug: log raw response text first
         const rawText = await response.text();
         console.log('Raw response text:', rawText);
@@ -360,7 +378,7 @@ convertBtn.addEventListener('click', async () => {
             console.error('Failed to parse:', rawText);
             throw new Error('Failed to parse JSON response: ' + parseError.message);
         }
-        
+
         console.log('Parsed response data:', data);
         console.log('data.scan_id type:', typeof data.scan_id);
         console.log('data.scan_id value:', data.scan_id);
@@ -374,6 +392,9 @@ convertBtn.addEventListener('click', async () => {
             currentScanId = data.scan_id;
             console.log('currentScanId is now:', currentScanId);
             console.log('currentScanId truthy?:', !!currentScanId);
+            
+            // Hide loading overlay
+            if (loadingOverlay) loadingOverlay.classList.remove('active');
         } else {
             console.error('API returned success=false:', data.error);
             throw new Error(data.error || 'Conversion failed');
@@ -383,6 +404,9 @@ convertBtn.addEventListener('click', async () => {
         alert('Error converting to PDF: ' + error.message);
         processingSection.style.display = 'none';
         previewSection.style.display = 'block';
+        
+        // Hide loading overlay on error
+        if (loadingOverlay) loadingOverlay.classList.remove('active');
     }
 });
 
@@ -406,6 +430,12 @@ convertBwBtn.addEventListener('click', async () => {
 
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
+    
+    // Show loading overlay
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = loadingOverlay.querySelector('.loading-text');
+    if (loadingText) loadingText.textContent = 'Converting to B&W PDF...';
+    if (loadingOverlay) loadingOverlay.classList.add('active');
 
     const formData = new FormData();
     selectedImages.forEach((file, index) => {
@@ -437,6 +467,9 @@ convertBwBtn.addEventListener('click', async () => {
             currentPdfUrl = data.download_url;
             currentScanId = data.scan_id;
             console.log('currentScanId set to:', currentScanId);
+            
+            // Hide loading overlay
+            if (loadingOverlay) loadingOverlay.classList.remove('active');
         } else {
             throw new Error(data.error || 'Conversion failed');
         }
@@ -445,6 +478,9 @@ convertBwBtn.addEventListener('click', async () => {
         alert('Error converting to PDF: ' + error.message);
         processingSection.style.display = 'none';
         previewSection.style.display = 'block';
+        
+        // Hide loading overlay on error
+        if (loadingOverlay) loadingOverlay.classList.remove('active');
     }
 });
 

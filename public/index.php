@@ -103,6 +103,25 @@ $router->get('/logout', 'AuthController@logout');
 // Dashboard
 $router->get('/dashboard', 'DashboardController@index');
 
+// SEO Pages - Long-tail content
+$router->get('/seo', 'SEOController@browse');
+$router->get('/seo/search', 'SEOController@search');
+$router->get('/seo/sitemap.xml', 'SEOController@sitemap');
+$router->get('/seo/{subject}/{grade}', 'SEOController@browse');
+$router->get('/seo/{slug}', 'SEOController@show');
+$router->get('/seo/{slug}/pdf', 'SEOController@downloadPdf');
+
+// Admin - SEO Management
+$router->get('/admin/seo/pages', 'SEOController@adminList');
+$router->get('/admin/seo/add', 'SEOController@adminAdd');
+$router->post('/admin/seo/create', 'SEOController@adminCreate');
+$router->get('/admin/seo/generate', 'SEOController@generate');
+$router->post('/admin/seo/generate', 'SEOController@generate');
+$router->get('/admin/seo/edit/{id}', 'SEOController@adminEdit');
+$router->post('/admin/seo/update/{id}', 'SEOController@adminUpdate');
+$router->get('/admin/seo/delete/{id}', 'SEOController@adminDelete');
+$router->get('/admin/seo/toggle-publish/{id}', 'SEOController@adminTogglePublish');
+
 // Scripts
 $router->get('/upload-script', 'ScriptController@upload');
 $router->post('/upload-script', 'ScriptController@upload');
@@ -123,6 +142,36 @@ $router->get('/recite-study-plan/{id}', function($planId) {
     require_once __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
     $controller->recite($planId);
+});
+$router->post('/study-plan/share', function() {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->share();
+});
+$router->post('/study-plan/share-respond/{id}', function($shareId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->respondToShare($shareId);
+});
+$router->post('/study-plan/reminders', function() {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->createReminder();
+});
+$router->get('/study-plan/calendar', function() {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->getCalendarData();
+});
+$router->post('/study-plan/reminder-complete/{id}', function($reminderId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->completeReminder($reminderId);
+});
+$router->post('/study-plan/reminder-delete/{id}', function($reminderId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->deleteReminder($reminderId);
 });
 
 // Report Cards
