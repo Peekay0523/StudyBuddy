@@ -448,7 +448,7 @@ body {
 }
 
 .action.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.action.orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+.action.orange { background: white; color: #1f2937; }
 .action.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .action.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
 

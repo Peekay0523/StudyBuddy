@@ -85,7 +85,7 @@ include __DIR__ . '/../layouts/header.php';
 
 <!-- INVITE FRIENDS -->
 <section style="margin: 30px 0;">
-    <div class="feature-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9;">
+    <div class="feature-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: none; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);">
         <div style="display: flex; align-items: flex-start; gap: 20px;">
             <div style="flex-shrink: 0;">
                 <i class="fas fa-user-plus" style="font-size: 40px; color: #0ea5e9;"></i>

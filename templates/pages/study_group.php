@@ -108,10 +108,10 @@ include __DIR__ . '/../layouts/header.php';
                         </div>
 
                         <div style="display: flex; gap: 10px;">
-                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="flex: 1; text-align: center; padding: 8px 12px; font-size: 13px; text-decoration: none;">
+                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="flex: 1; text-align: center; padding: 10px 14px; font-size: 13px; text-decoration: none; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3); transition: all 0.3s ease;">
                                 <i class="fas fa-envelope"></i> Ask for Help
                             </a>
-                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 13px;">
+                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="flex: 1; padding: 10px 14px; font-size: 13px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 10px rgba(100, 116, 139, 0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 6px rgba(100, 116, 139, 0.3)'" onclick="this.blur()">
                                 <i class="fas fa-user-plus"></i> Invite
                             </button>
                         </div>
