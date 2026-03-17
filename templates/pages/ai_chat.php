@@ -466,6 +466,81 @@ include __DIR__ . '/../layouts/header.php';
 <h1 class="title">AI Chat Assistant</h1>
 <p class="subtitle">Ask me anything about your studies!</p>
 
+<style>
+/* Mobile Voice Mode Enhancements */
+@media (max-width: 768px) {
+    /* Make mic button more prominent when listening */
+    #mic-btn.listening {
+        background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+        color: white !important;
+        animation: mic-pulse 1.5s infinite;
+    }
+
+    @keyframes mic-pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+            transform: scale(1.1);
+        }
+    }
+
+    /* Voice mode toggle container */
+    .voice-mode-control {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 10px 15px !important;
+    }
+
+    /* Chat message text size */
+    .chat-message {
+        line-height: 1.5;
+    }
+
+    /* Ensure buttons are touch-friendly */
+    .chat-input-form .btn-icon {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Stop speech button visibility */
+    #stop-speech-btn {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+        border: 1px solid #fca5a5;
+    }
+
+    #stop-speech-btn:hover {
+        background: #fecaca !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens */
+    #mic-btn {
+        min-width: 40px !important;
+        min-height: 40px !important;
+    }
+
+    /* Make voice mode toggle easier to tap */
+    .toggle-switch {
+        touch-action: manipulation;
+    }
+
+    /* Reduce chat height for better viewport fit */
+    .chat-container {
+        height: calc(100vh - 170px);
+    }
+
+    /* Scrollable messages with smooth scrolling */
+    .chat-messages {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+</style>
+
 <div class="chat-container">
     <div class="chat-messages" id="messages-container">
         <div class="chat-message ai">

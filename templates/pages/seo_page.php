@@ -115,11 +115,16 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
     <!-- Styles -->
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="stylesheet" href="/assets/css/seo-pages.css">
-    
+
     <?php if (!empty($page['latex_formula'])): ?>
     <!-- MathJax for LaTeX formulas -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <?php endif; ?>
+    
+    <!-- Google AdSense -->
+    <?php if (!empty($adsenseClientId)): ?>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<?php echo htmlspecialchars($adsenseClientId); ?>" crossorigin="anonymous"></script>
     <?php endif; ?>
 </head>
 <body>
@@ -140,8 +145,8 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
         <!-- Main Content -->
         <article class="seo-content" itemscope itemtype="https://schema.org/LearningResource">
             <header class="seo-header">
-                <h1 itemprop="name"><?php echo htmlspecialchars($page['title']); ?></h1>
-                
+                <h1 itemprop="name"><?php echo htmlspecialchars($page['meta_title'] ?: $page['title']); ?></h1>
+
                 <?php if ($page['subject'] && $page['grade_level']): ?>
                 <div class="seo-meta-info">
                     <span class="badge badge-subject"><?php echo htmlspecialchars($page['subject']); ?></span>
@@ -152,11 +157,15 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
-                
+
                 <div class="seo-description">
                     <?php echo nl2br(htmlspecialchars($page['meta_description'])); ?>
                 </div>
             </header>
+
+            <!-- Google AdSense - Top -->
+            <span class="ad-label">Advertisement</span>
+            <?php $adSlot = 'top'; include __DIR__ . '/../components/adsense.php'; ?>
 
             <!-- Table of Contents (if multiple sections) -->
             <?php if (count($qaContent) > 3): ?>
@@ -178,6 +187,10 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
             <div class="seo-body" itemprop="description">
                 <?php echo $page['full_content']; ?>
             </div>
+
+            <!-- Google AdSense - Middle -->
+            <span class="ad-label">Advertisement</span>
+            <?php $adSlot = 'middle'; include __DIR__ . '/../components/adsense.php'; ?>
 
             <!-- Q&A Section -->
             <?php if (!empty($qaContent)): ?>
@@ -240,6 +253,58 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
                 </div>
             </section>
 
+            <!-- Scripts & Memorandums Section -->
+            <?php if (!empty($resources) && count($resources) > 0): ?>
+            <section class="resources-section">
+                <h2>📚 Scripts & Memorandums</h2>
+                <p class="resources-intro">Download study scripts, memorandums, and other resources for this topic</p>
+                
+                <div class="resources-grid">
+                    <?php foreach ($resources as $resource): ?>
+                    <div class="resource-card resource-<?php echo htmlspecialchars($resource['resource_type']); ?>">
+                        <div class="resource-icon">
+                            <?php
+                            $icons = [
+                                'script' => '📝',
+                                'memorandum' => '✅',
+                                'study_guide' => '📚',
+                                'past_paper' => '📋',
+                                'checklist' => '✓'
+                            ];
+                            echo $icons[$resource['resource_type']] ?? '📄';
+                            ?>
+                        </div>
+                        <h3><?php echo htmlspecialchars($resource['title']); ?></h3>
+                        <?php if ($resource['description']): ?>
+                        <p class="resource-description"><?php echo htmlspecialchars($resource['description']); ?></p>
+                        <?php endif; ?>
+                        <div class="resource-meta">
+                            <span class="resource-type"><?php echo ucfirst(str_replace('_', ' ', $resource['resource_type'])); ?></span>
+                            <?php if ($resource['file_size']): ?>
+                            <span class="resource-size"><?php echo number_format($resource['file_size'] / 1024, 1); ?> KB</span>
+                            <?php endif; ?>
+                            <span class="resource-downloads">⬇️ <?php echo number_format($resource['download_count']); ?></span>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="/uploads/seo-resources/<?php echo basename($resource['file_path']); ?>" 
+                               class="btn btn-download-resource" 
+                               download="<?php echo htmlspecialchars($resource['file_name']); ?>">
+                                📥 Download
+                            </a>
+                            <?php if ($resource['is_free'] == 0): ?>
+                            <span class="premium-badge">🔒 Premium</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <!-- Google AdSense - Bottom -->
+            <span class="ad-label">Advertisement</span>
+            <?php $adSlot = 'bottom'; include __DIR__ . '/../components/adsense.php'; ?>
+
             <!-- Related Pages -->
             <?php if (!empty($relatedPages)): ?>
             <aside class="related-pages">
@@ -262,6 +327,10 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
 
         <!-- Sidebar -->
         <aside class="seo-sidebar">
+            <!-- Google AdSense - Sidebar -->
+            <span class="ad-label">Advertisement</span>
+            <?php $adSlot = 'sidebar'; include __DIR__ . '/../components/adsense.php'; ?>
+            
             <!-- Quick Navigation -->
             <div class="sidebar-widget">
                 <h3>Quick Links</h3>

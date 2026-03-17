@@ -102,14 +102,18 @@ $router->get('/logout', 'AuthController@logout');
 
 // Dashboard
 $router->get('/dashboard', 'DashboardController@index');
+$router->get('/dashboard/login-streak-info', 'DashboardController@getLoginStreakInfo');
 
 // SEO Pages - Long-tail content
-$router->get('/seo', 'SEOController@browse');
+$router->get('/seo', 'SEOController@index');
 $router->get('/seo/search', 'SEOController@search');
 $router->get('/seo/sitemap.xml', 'SEOController@sitemap');
 $router->get('/seo/{subject}/{grade}', 'SEOController@browse');
 $router->get('/seo/{slug}', 'SEOController@show');
 $router->get('/seo/{slug}/pdf', 'SEOController@downloadPdf');
+
+// SEO Resources - Download
+$router->get('/seo-resource/download/{id}', 'SEOController@downloadResource');
 
 // Admin - SEO Management
 $router->get('/admin/seo/pages', 'SEOController@adminList');
@@ -121,10 +125,26 @@ $router->get('/admin/seo/edit/{id}', 'SEOController@adminEdit');
 $router->post('/admin/seo/update/{id}', 'SEOController@adminUpdate');
 $router->get('/admin/seo/delete/{id}', 'SEOController@adminDelete');
 $router->get('/admin/seo/toggle-publish/{id}', 'SEOController@adminTogglePublish');
+$router->post('/admin/seo/upload-resource/{id}', 'SEOController@adminUploadResource');
+$router->get('/admin/seo/delete-resource/{id}', 'SEOController@adminDeleteResource');
 
 // Scripts
 $router->get('/upload-script', 'ScriptController@upload');
 $router->post('/upload-script', 'ScriptController@upload');
+
+// View and Download Script files
+$router->get('/view-script/{id}', function($scriptId) {
+    require_once __DIR__ . '/../controllers/ScriptController.php';
+    $ctrl = new ScriptController();
+    $ctrl->viewScript($scriptId);
+});
+
+$router->get('/download-script/{id}', function($scriptId) {
+    require_once __DIR__ . '/../controllers/ScriptController.php';
+    $ctrl = new ScriptController();
+    $ctrl->downloadScript($scriptId);
+});
+
 $router->get('/view-memorandum/{id}', function($scriptId) {
     require_once __DIR__ . '/../controllers/ScriptController.php';
     $controller = new ScriptController();

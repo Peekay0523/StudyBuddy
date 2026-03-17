@@ -3,13 +3,18 @@ $pageTitle = 'My Invitations - StudySmart';
 $currentPage = 'invites';
 include __DIR__ . '/../layouts/header.php';
 
-// Get user's points
+// Get user's points and subscription status
 require_once __DIR__ . '/../../models/UserPoints.php';
+require_once __DIR__ . '/../../config/config.php';
 $pointsModel = new UserPoints();
 $user = getCurrentUser();
 $userPoints = $pointsModel->getUserPoints($user['id']);
 $points = $userPoints['points'] ?? 0;
 $freeScans = $userPoints['free_scans'] ?? 0;
+
+// Check if user is on free tier
+$scanInfo = getScanLimitInfo($user['id']);
+$isFreeTier = $scanInfo['is_free_tier'];
 ?>
 
 <h1 class="title">My Invitations</h1>
@@ -19,7 +24,8 @@ $freeScans = $userPoints['free_scans'] ?? 0;
     <i class="fas fa-arrow-left"></i> Back to Dashboard
 </a>
 
-<!-- Points Summary Banner -->
+<!-- Points Summary Banner (Free Tier Only) -->
+<?php if ($isFreeTier): ?>
 <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -52,6 +58,7 @@ $freeScans = $userPoints['free_scans'] ?? 0;
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <!-- Invite Stats -->
 <?php if (!empty($stats)): ?>

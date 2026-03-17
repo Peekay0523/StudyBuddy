@@ -284,9 +284,9 @@ class SEOPage {
      * Get related pages
      */
     public function getRelatedPages($pageId, $subject, $gradeLevel, $limit = 5) {
-        $sql = "SELECT id, title, slug, meta_description 
-                FROM seo_pages 
-                WHERE id != ? 
+        $sql = "SELECT id, title, slug, meta_description
+                FROM seo_pages
+                WHERE id != ?
                 AND (subject = ? OR grade_level = ?)
                 AND status = 'published'
                 ORDER BY views DESC
@@ -294,5 +294,89 @@ class SEOPage {
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$pageId, $subject, $gradeLevel, $limit]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get all unique subjects
+     */
+    public function getAllSubjects() {
+        $sql = "SELECT DISTINCT subject FROM seo_pages WHERE status = 'published' AND subject != '' ORDER BY subject";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Get all unique grades
+     */
+    public function getAllGrades() {
+        $sql = "SELECT DISTINCT grade_level FROM seo_pages WHERE status = 'published' AND grade_level != '' ORDER BY grade_level";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * Get recent pages
+     */
+    public function getRecentPages($limit = 10) {
+        $sql = "SELECT id, title, slug, subject, grade_level, meta_description, created_at
+                FROM seo_pages
+                WHERE status = 'published'
+                ORDER BY created_at DESC
+                LIMIT ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Get resources for a page
+     */
+    public function getResources($pageId) {
+        $sql = "SELECT * FROM seo_resources WHERE page_id = ? ORDER BY is_featured DESC, created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$pageId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Add a resource to a page
+     */
+    public function addResource($pageId, $data) {
+        $sql = "INSERT INTO seo_resources (
+            page_id, resource_type, title, description, file_path, file_name,
+            file_size, file_mime_type, subject, grade_level, is_free, uploaded_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            $pageId,
+            $data['resource_type'],
+            $data['title'],
+            $data['description'] ?? '',
+            $data['file_path'],
+            $data['file_name'],
+            $data['file_size'] ?? null,
+            $data['file_mime_type'] ?? '',
+            $data['subject'] ?? '',
+            $data['grade_level'] ?? '',
+            $data['is_free'] ?? 1,
+            $data['uploaded_by'] ?? null
+        ]);
+    }
+    
+    /**
+     * Delete a resource
+     */
+    public function deleteResource($id) {
+        $sql = "DELETE FROM seo_resources WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$id]);
+    }
+    
+    /**
+     * Increment resource download count
+     */
+    public function incrementResourceDownloads($id) {
+        $sql = "UPDATE seo_resources SET download_count = download_count + 1 WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$id]);
     }
 }

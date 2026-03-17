@@ -3,6 +3,7 @@ $pageTitle = 'Upload Script - StudySmart';
 $currentPage = 'scripts';
 $extraHead = <<<'SCRIPT'
 <script>
+document.addEventListener("DOMContentLoaded", function() {
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("script_file");
 const previewSection = document.getElementById("preview-section");
@@ -10,11 +11,39 @@ const fileName = document.getElementById("file-name");
 const fileSize = document.getElementById("file-size");
 const clearBtn = document.getElementById("clear-btn");
 
+console.log('Upload script page loaded');
+console.log('uploadArea:', uploadArea);
+console.log('fileInput:', fileInput);
+
 // Click to upload
 if (uploadArea && fileInput) {
-    uploadArea.addEventListener("click", () => {
-        fileInput.click();
+    uploadArea.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Upload area clicked, triggering file input click');
+        
+        // Create a temporary file input and trigger it
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.accept = fileInput.accept;
+        tempInput.style.display = 'none';
+        tempInput.id = 'temp-file-input';
+        tempInput.name = 'script_file';
+        
+        tempInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileInput.files = this.files;
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+            tempInput.remove();
+        });
+        
+        document.body.appendChild(tempInput);
+        tempInput.click();
     });
+} else {
+    console.error('Upload area or file input not found!');
 }
 
 // Drag and drop
@@ -45,6 +74,7 @@ if (uploadArea) {
 // File input change
 if (fileInput) {
     fileInput.addEventListener("change", (e) => {
+        console.log('File input change event. Files:', e.target.files.length);
         if (e.target.files && e.target.files[0]) {
             handleFile(e.target.files[0]);
         }
@@ -52,6 +82,8 @@ if (fileInput) {
 }
 
 function handleFile(file) {
+    console.log('handleFile called with:', file.name, file.type, file.size);
+    
     const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
 
     if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx") && !file.name.endsWith(".txt")) {
@@ -64,11 +96,25 @@ function handleFile(file) {
         return;
     }
 
-    if (fileName && fileSize && previewSection && uploadArea) {
+    if (fileName && fileSize && previewSection && uploadArea && fileInput) {
         fileName.textContent = file.name;
         fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
         previewSection.style.display = "block";
         uploadArea.style.display = "none";
+        
+        // Create a DataTransfer and set the file to the input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        console.log('File set to input successfully. Files count:', fileInput.files.length);
+    } else {
+        console.error('Missing elements:', {
+            fileName: !!fileName,
+            fileSize: !!fileSize,
+            previewSection: !!previewSection,
+            uploadArea: !!uploadArea,
+            fileInput: !!fileInput
+        });
     }
 }
 
@@ -181,6 +227,7 @@ async function loadUploadedScripts() {
         console.error("Failed to load scripts:", error);
     }
 }
+});
 </script>
 SCRIPT;
 include __DIR__ . '/../layouts/header.php';
@@ -195,11 +242,11 @@ include __DIR__ . '/../layouts/header.php';
 
 <div class="upload-container">
     <div class="auth-box" style="max-width: 600px;">
-        <form method="post" action="/upload-script" enctype="multipart/form-data">
+        <form method="post" action="/upload-script" enctype="multipart/form-data" id="upload-script-form">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Script File (PDF, DOCX, or TXT)</label>
-                <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
+                <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease; user-select: none;" onmouseover="this.style.borderColor='#667eea';this.style.background='#e0e7ff'" onmouseout="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc'">
                     <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
                     <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
@@ -259,30 +306,46 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function() {
 // Form validation - check if file is selected before submit
-document.querySelector('form')?.addEventListener('submit', function(e) {
-    const fileInput = document.getElementById('script_file');
-    const selectedScanInput = document.getElementById('selected_scan_file');
+const form = document.getElementById('upload-script-form');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        const fileInput = document.getElementById('script_file');
+        const selectedScanInput = document.getElementById('selected_scan_file');
 
-    // Check if either a file is selected OR a scan is selected
-    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
-    const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== '';
+        // Check if either a file is selected OR a scan is selected
+        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+        const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== '';
 
-    if (!hasFile && !hasScan) {
-        e.preventDefault();
-        alert('Please select a file to upload. Click or drag a file into the upload area, or use "Select from My Scans" button.');
-        const uploadArea = document.getElementById('upload-area');
-        if (uploadArea) {
-            uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            uploadArea.style.borderColor = '#ef4444';
-            uploadArea.style.background = '#fef2f2';
-            setTimeout(() => {
-                uploadArea.style.borderColor = '#cbd5e1';
-                uploadArea.style.background = '#f8fafc';
-            }, 2000);
+        console.log('Form submit triggered');
+        console.log('Has file:', hasFile, 'Files count:', fileInput?.files?.length);
+        console.log('Has scan:', hasScan, 'Scan value:', selectedScanInput?.value);
+
+        if (!hasFile && !hasScan) {
+            e.preventDefault();
+            alert('Please select a file to upload. Click or drag a file into the upload area, or use "Select from My Scans" button.');
+            const uploadArea = document.getElementById('upload-area');
+            if (uploadArea) {
+                uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                uploadArea.style.borderColor = '#ef4444';
+                uploadArea.style.background = '#fef2f2';
+                setTimeout(() => {
+                    uploadArea.style.borderColor = '#cbd5e1';
+                    uploadArea.style.background = '#f8fafc';
+                }, 2000);
+            }
+            return false;
         }
-        return false;
-    }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        }
+    });
+}
 });
 </script>
 
@@ -315,6 +378,7 @@ document.querySelector('form')?.addEventListener('submit', function(e) {
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function() {
 // Select from scans functionality
 const selectFromScansBtn = document.getElementById('select-from-scans-btn');
 const scansModalOverlay = document.getElementById('scans-modal-overlay');
@@ -403,6 +467,7 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+});
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

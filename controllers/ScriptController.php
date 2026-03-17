@@ -35,8 +35,14 @@ class ScriptController {
         $error = '';
         $success = '';
 
+        // Debug logging
+        error_log("Upload request method: " . $_SERVER['REQUEST_METHOD']);
+        error_log("POST data: " . print_r($_POST, true));
+        error_log("FILES data: " . print_r($_FILES, true));
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $student = getCurrentStudent();
+            error_log("Current student ID: " . ($student['id'] ?? 'NOT FOUND'));
 
             // Handle selected scan file (from database)
             if (isset($_POST['selected_scan_file']) && !empty($_POST['selected_scan_file'])) {
@@ -576,37 +582,108 @@ class ScriptController {
             $imagick->setResolution(150, 150); // Good resolution for OCR
             $imagick->readImage($filePath);
             $imagick->setImageFormat('jpeg');
-            
+
             $fullText = '';
             $pageCount = $imagick->getNumberImages();
-            
+
             error_log("PDF has {$pageCount} page(s)");
-            
+
             // Process each page (limit to first 3 pages to avoid API limits)
             $maxPages = min($pageCount, 3);
-            
+
             for ($i = 0; $i < $maxPages; $i++) {
                 $imagick->setIteratorIndex($i);
-                
+
                 // Get image blob
                 $imageBlob = $imagick->getImageBlob();
-                
+
                 // Use OpenAI Vision to extract text
                 $extractedText = $this->aiHelper->extractTextFromImage($imageBlob, 'image/jpeg');
-                
+
                 if ($extractedText) {
                     $fullText .= "\n--- Page " . ($i + 1) . " ---\n";
                     $fullText .= $extractedText;
                 }
             }
-            
+
             $imagick->clear();
-            
+
             return trim($fullText);
-            
+
         } catch (Exception $e) {
             error_log("Imagick OCR error: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * View a script file (display in browser)
+     */
+    public function viewScript($scriptId) {
+        requireLogin();
+
+        $student = getCurrentStudent();
+        $script = $this->scriptModel->findById($scriptId);
+
+        if (!$script || $script['student_id'] != $student['id']) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $filePath = UPLOAD_DIR_SCRIPTS . $script['file_path'];
+
+        if (!file_exists($filePath)) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mimeType = 'application/octet-stream';
+
+        switch ($extension) {
+            case 'pdf':
+                $mimeType = 'application/pdf';
+                break;
+            case 'docx':
+                $mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                break;
+            case 'txt':
+                $mimeType = 'text/plain';
+                break;
+        }
+
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . filesize($filePath));
+        header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
+        readfile($filePath);
+        exit;
+    }
+
+    /**
+     * Download a script file
+     */
+    public function downloadScript($scriptId) {
+        requireLogin();
+
+        $student = getCurrentStudent();
+        $script = $this->scriptModel->findById($scriptId);
+
+        if (!$script || $script['student_id'] != $student['id']) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $filePath = UPLOAD_DIR_SCRIPTS . $script['file_path'];
+
+        if (!file_exists($filePath)) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $script['file_path'] . '"');
+        header('Content-Length: ' . filesize($filePath));
+        readfile($filePath);
+        exit;
     }
 }

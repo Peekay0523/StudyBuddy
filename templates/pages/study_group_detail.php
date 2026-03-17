@@ -288,6 +288,91 @@ include __DIR__ . '/../layouts/header.php';
             padding: 10px 16px;
             font-size: 13px;
         }
+
+        /* Chat mobile styles */
+        .chat-container {
+            border-radius: 8px;
+        }
+
+        .chat-messages {
+            height: 350px;
+            padding: 15px;
+        }
+
+        .chat-message {
+            max-width: 85% !important;
+        }
+
+        .message-bubble {
+            max-width: 95%;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        .chat-input-area {
+            padding: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chat-input {
+            width: calc(100% - 100px);
+            order: -1;
+            padding: 10px 14px;
+            font-size: 13px;
+        }
+
+        .chat-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .voice-note audio {
+            height: 32px;
+        }
+
+        /* Tabs mobile */
+        .tab-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* Scripts section mobile */
+        .scripts-section {
+            padding: 16px;
+        }
+
+        .script-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .script-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .script-name {
+            font-size: 14px;
+        }
+
+        .script-meta {
+            font-size: 11px;
+        }
+
+        /* Members grid mobile */
+        #members-tab > section > div {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+        }
     }
 
     @media (max-width: 480px) {
@@ -319,10 +404,172 @@ include __DIR__ . '/../layouts/header.php';
             text-align: center;
             justify-content: center;
         }
+
+        /* Chat extra small screens */
+        .chat-messages {
+            height: 300px;
+            padding: 10px;
+        }
+
+        .chat-message {
+            max-width: 90% !important;
+        }
+
+        .message-bubble {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .message-sender {
+            font-size: 11px;
+        }
+
+        .message-time {
+            font-size: 10px;
+        }
+
+        .chat-input-area {
+            padding: 10px;
+        }
+
+        .chat-input {
+            width: 100%;
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+
+        .chat-btn {
+            width: 36px;
+            height: 36px;
+        }
+
+        .voice-note {
+            min-width: 150px;
+        }
+
+        .voice-note audio {
+            height: 28px;
+        }
+
+        /* Tabs */
+        .tab-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Script cards */
+        .script-card {
+            padding: 10px;
+        }
+
+        .script-name {
+            font-size: 13px;
+        }
+
+        .script-meta {
+            font-size: 10px;
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+
+        /* Members grid */
+        #members-tab > section > div {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* Modals */
+        #uploadScriptModal > div,
+        #editGroupModal > div,
+        #inviteToGroupModal > div {
+            width: 95% !important;
+            max-width: 95% !important;
+            padding: 16px !important;
+            max-height: 85vh !important;
+            overflow-y: auto !important;
+        }
+
+        #uploadScriptModal h2,
+        #editGroupModal h2,
+        #inviteToGroupModal h2 {
+            font-size: 16px !important;
+            margin-bottom: 14px !important;
+            padding-right: 25px !important;
+        }
+
+        #uploadScriptModal input,
+        #uploadScriptModal textarea,
+        #editGroupModal input,
+        #editGroupModal select,
+        #editGroupModal textarea,
+        #inviteToGroupModal input,
+        #inviteToGroupModal textarea {
+            font-size: 12px !important;
+            padding: 8px !important;
+        }
+
+        #uploadScriptModal label,
+        #editGroupModal label,
+        #inviteToGroupModal label {
+            font-size: 12px !important;
+        }
+
+        #uploadScriptModal button,
+        #editGroupModal button,
+        #inviteToGroupModal button {
+            padding: 8px 14px !important;
+            font-size: 12px !important;
+        }
+
+        /* Modal close button */
+        #uploadScriptModal > div > button,
+        #editGroupModal > div > button,
+        #inviteToGroupModal > div > button {
+            top: 10px !important;
+            right: 10px !important;
+            font-size: 20px !important;
+        }
+
+        /* Back button on mobile */
+        .back-button-container {
+            margin-bottom: 15px;
+        }
+
+        .back-button-container a {
+            font-size: 13px !important;
+            padding: 8px 12px !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Main container padding */
+        .content > div[style*="background: white"] {
+            padding: 20px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        /* Back button extra small */
+        .back-button-container a {
+            font-size: 12px !important;
+        }
+
+        /* Main container */
+        .content > div[style*="background: white"] {
+            padding: 16px !important;
+        }
+
+        /* Description section */
+        .study-group-description {
+            font-size: 13px !important;
+        }
     }
 </style>
 
-<div style="margin-bottom: 20px;">
+<div class="back-button-container" style="margin-bottom: 20px;">
     <a href="/study-group" style="color: #667eea; text-decoration: none; font-size: 14px;">
         <i class="fas fa-arrow-left"></i> Back to Study Groups
     </a>

@@ -8,14 +8,17 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/otp.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Student.php';
+require_once __DIR__ . '/../models/UserActivity.php';
 
 class AuthController {
     private $userModel;
     private $studentModel;
+    private $userActivityModel;
 
     public function __construct() {
         $this->userModel = new User();
         $this->studentModel = new Student();
+        $this->userActivityModel = new UserActivity();
     }
     
     public function login() {
@@ -40,6 +43,9 @@ class AuthController {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['user'] = $user;
+
+                    // Track login activity and streak
+                    $this->userActivityModel->updateActivity($user['id']);
 
                     // Redirect admin users to admin panel
                     if ($user['role'] === 'admin') {

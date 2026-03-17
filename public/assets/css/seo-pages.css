@@ -13,6 +13,58 @@
     padding: 0 1rem;
 }
 
+/* Google AdSense Styles */
+.adsense-ad-container {
+    margin: 2rem 0;
+    text-align: center;
+    min-height: 100px;
+}
+
+.adsense-ad-top {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.adsense-ad-middle {
+    margin: 2rem 0;
+}
+
+.adsense-ad-bottom {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.adsense-ad-sidebar {
+    margin-bottom: 1.5rem;
+}
+
+.adsense-placeholder {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    margin: 2rem 0;
+}
+
+.adsense-placeholder small {
+    display: block;
+    font-size: 0.85rem;
+    color: #adb5bd;
+}
+
+/* Ad labels for transparency */
+.ad-label {
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 @media (max-width: 1024px) {
     .seo-page-container {
         grid-template-columns: 1fr;
@@ -886,6 +938,155 @@
 .popular-resources li {
     padding: 0.5rem 0;
     border-bottom: 1px solid #e9ecef;
+}
+
+/* Resources Section (Scripts & Memorandums) */
+.resources-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 3px solid #007bff;
+}
+
+.resources-section h2 {
+    font-size: 1.75rem;
+    color: #212529;
+    margin-bottom: 0.5rem;
+}
+
+.resources-intro {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.resource-card {
+    background: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.resource-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
+    transform: translateY(-4px);
+}
+
+.resource-card.resource-memorandum {
+    border-left: 4px solid #28a745;
+}
+
+.resource-card.resource-script {
+    border-left: 4px solid #17a2b8;
+}
+
+.resource-card.resource-study_guide {
+    border-left: 4px solid #ffc107;
+}
+
+.resource-card.resource-past_paper {
+    border-left: 4px solid #dc3545;
+}
+
+.resource-card.resource-checklist {
+    border-left: 4px solid #6f42c1;
+}
+
+.resource-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.resource-card h3 {
+    font-size: 1.25rem;
+    color: #212529;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.resource-description {
+    color: #6c757d;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.resource-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.resource-type {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.resource-size {
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.resource-downloads {
+    background: #e8f5e9;
+    color: #388e3c;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.resource-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.btn-download-resource {
+    flex: 1;
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-download-resource:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.premium-badge {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Print Styles */

@@ -40,7 +40,7 @@ class AdminController {
             'total_subscriptions' => $db->query("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'")->fetchColumn(),
             'total_scripts' => $db->query("SELECT COUNT(*) FROM uploaded_scripts")->fetchColumn(),
             'total_report_cards' => $db->query("SELECT COUNT(*) FROM report_cards")->fetchColumn(),
-            'monthly_revenue' => $db->query("SELECT COALESCE(SUM(price), 0) FROM subscriptions WHERE status = 'active'")->fetchColumn(),
+            'monthly_revenue' => $db->query("SELECT COALESCE(SUM(price), 0) FROM subscriptions WHERE status = 'active' AND DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn(),
             'new_users_this_month' => $db->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE('now', '-30 days')")->fetchColumn(),
         ];
         

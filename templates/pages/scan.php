@@ -58,7 +58,8 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 <?php endif; ?>
 
-<!-- Points & Rewards Banner -->
+<!-- Points & Rewards Banner (Free Tier Only) -->
+<?php if ($isFreeTier): ?>
 <div class="points-banner" style="max-width: 800px; margin: 20px auto; padding: 20px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -97,6 +98,7 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="scan-container" style="max-width: 800px; margin: 0 auto;">
     <!-- Upload Area -->

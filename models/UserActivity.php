@@ -11,21 +11,69 @@ class UserActivity {
     }
 
     /**
-     * Update user's last active time
+     * Update user's last active time and track login streak
      */
     public function updateActivity($userId) {
-        $stmt = $this->db->prepare("
-            INSERT OR IGNORE INTO user_activity (user_id, last_active, is_online)
-            VALUES (?, datetime('now'), 1)
-        ");
-        $stmt->execute([$userId]);
+        $today = date('Y-m-d');
 
-        $stmt = $this->db->prepare("
-            UPDATE user_activity
-            SET last_active = datetime('now'), is_online = 1
-            WHERE user_id = ?
-        ");
+        // Get current streak info
+        $stmt = $this->db->prepare("SELECT last_login_date, login_streak FROM user_activity WHERE user_id = ?");
         $stmt->execute([$userId]);
+        $activity = $stmt->fetch();
+
+        if ($activity) {
+            $lastLoginDate = $activity['last_login_date'];
+            $currentStreak = $activity['login_streak'];
+
+            // If last login was before today, check if we should update streak
+            if ($lastLoginDate !== $today) {
+                $yesterday = date('Y-m-d', strtotime('-1 day'));
+
+                if ($lastLoginDate === $yesterday) {
+                    // Consecutive login - increment streak
+                    $currentStreak++;
+                } elseif ($lastLoginDate < $yesterday) {
+                    // Streak broken - reset to 1
+                    $currentStreak = 1;
+                }
+
+                // Update the streak and last login date
+                $stmt = $this->db->prepare("
+                    UPDATE user_activity
+                    SET last_active = datetime('now'), is_online = 1, login_streak = ?, last_login_date = ?
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$currentStreak, $today, $userId]);
+
+                // Award 1 point for every 3 consecutive days of login
+                if ($currentStreak > 0 && $currentStreak % 3 === 0) {
+                    require_once __DIR__ . '/UserPoints.php';
+                    $pointsModel = new UserPoints();
+                    $pointsModel->addPoints(
+                        $userId,
+                        1,
+                        "Login streak reward - {$currentStreak} days",
+                        null,
+                        'login_streak'
+                    );
+                }
+            } else {
+                // Already logged in today - just update activity
+                $stmt = $this->db->prepare("
+                    UPDATE user_activity
+                    SET last_active = datetime('now'), is_online = 1
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$userId]);
+            }
+        } else {
+            // First time activity - initialize with streak of 1
+            $stmt = $this->db->prepare("
+                INSERT OR IGNORE INTO user_activity (user_id, last_active, is_online, login_streak, last_login_date)
+                VALUES (?, datetime('now'), 1, 1, ?)
+            ");
+            $stmt->execute([$userId, $today]);
+        }
     }
 
     /**

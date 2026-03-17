@@ -29,9 +29,9 @@ class SEOController {
     public function show($slug) {
         // Decode slug (handle URL-encoded characters)
         $slug = urldecode($slug);
-        
+
         $page = $this->seoModel->findBySlug($slug);
-        
+
         if (!$page) {
             // Try to find similar pages or show 404
             $this->show404($slug);
@@ -50,9 +50,41 @@ class SEOController {
             $page['subject'],
             $page['grade_level']
         );
+        
+        // Get resources (scripts & memorandums)
+        $resources = $this->getResources($page['id']);
+        
+        // Get AdSense client ID
+        $adsenseClientId = getenv('GOOGLE_ADSENSE_CLIENT_ID') ?: $_ENV['GOOGLE_ADSENSE_CLIENT_ID'] ?? '';
 
         // Render the page
         include __DIR__ . '/../templates/pages/seo_page.php';
+    }
+    
+    /**
+     * Get resources for a page
+     */
+    private function getResources($pageId) {
+        $db = Database::getInstance()->getConnection();
+        $sql = "SELECT * FROM seo_resources WHERE page_id = ? ORDER BY is_featured DESC, created_at DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$pageId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * SEO Pages Home/Browse
+     * URL: /seo
+     */
+    public function index() {
+        // Get all available subjects and grades
+        $subjects = $this->seoModel->getAllSubjects();
+        $grades = $this->seoModel->getAllGrades();
+        
+        // Get recent pages
+        $recentPages = $this->seoModel->getRecentPages(10);
+        
+        include __DIR__ . '/../templates/pages/seo_index.php';
     }
 
     /**
@@ -547,6 +579,160 @@ class SEOController {
         $pages = $this->seoModel->getPublishedPages(1000);
         
         include __DIR__ . '/../templates/pages/seo_sitemap_xml.php';
+    }
+    
+    /**
+     * Admin: Upload resource to SEO page
+     */
+    public function adminUploadResource($pageId) {
+        $this->requireAdmin();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/seo/edit/' . $pageId);
+            exit;
+        }
+        
+        $seoModel = new SEOPage();
+        $page = $seoModel->findById($pageId);
+        
+        if (!$page) {
+            header('Location: /admin/seo/pages?notfound=1');
+            exit;
+        }
+        
+        // Handle file upload
+        if (!isset($_FILES['resource_file']) || $_FILES['resource_file']['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error'] = 'File upload failed. Please try again.';
+            header('Location: /admin/seo/edit/' . $pageId);
+            exit;
+        }
+        
+        $file = $_FILES['resource_file'];
+        $allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        $maxSize = 20 * 1024 * 1024; // 20MB
+        
+        // Validate file type
+        if (!in_array($file['type'], $allowedTypes)) {
+            $_SESSION['error'] = 'Invalid file type. Only PDF and Word documents are allowed.';
+            header('Location: /admin/seo/edit/' . $pageId);
+            exit;
+        }
+        
+        // Validate file size
+        if ($file['size'] > $maxSize) {
+            $_SESSION['error'] = 'File is too large. Maximum size is 20MB.';
+            header('Location: /admin/seo/edit/' . $pageId);
+            exit;
+        }
+        
+        // Create upload directory if it doesn't exist
+        $uploadDir = __DIR__ . '/../uploads/seo-resources/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Generate unique filename
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $safeName = uniqid('resource_') . '.' . $extension;
+        $filePath = $uploadDir . $safeName;
+        
+        // Move uploaded file
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            $_SESSION['error'] = 'Failed to save file.';
+            header('Location: /admin/seo/edit/' . $pageId);
+            exit;
+        }
+        
+        // Save to database
+        $resourceData = [
+            'resource_type' => $_POST['resource_type'] ?? 'script',
+            'title' => $_POST['title'] ?? $file['name'],
+            'description' => $_POST['description'] ?? '',
+            'file_path' => 'seo-resources/' . $safeName,
+            'file_name' => $file['name'],
+            'file_size' => $file['size'],
+            'file_mime_type' => $file['type'],
+            'subject' => $page['subject'] ?? '',
+            'grade_level' => $page['grade_level'] ?? '',
+            'is_free' => isset($_POST['is_free']) ? 1 : 0,
+            'uploaded_by' => getCurrentUser()['id'] ?? null
+        ];
+        
+        $seoModel->addResource($pageId, $resourceData);
+        
+        $_SESSION['success'] = 'Resource uploaded successfully!';
+        header('Location: /admin/seo/edit/' . $pageId);
+        exit;
+    }
+    
+    /**
+     * Admin: Delete resource
+     */
+    public function adminDeleteResource($resourceId) {
+        $this->requireAdmin();
+        
+        $seoModel = new SEOPage();
+        
+        // Get resource to find page_id
+        $db = Database::getInstance()->getConnection();
+        $sql = "SELECT * FROM seo_resources WHERE id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$resourceId]);
+        $resource = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$resource) {
+            $_SESSION['error'] = 'Resource not found.';
+            header('Location: /admin/seo/pages');
+            exit;
+        }
+        
+        // Delete file from filesystem
+        $filePath = __DIR__ . '/../uploads/' . $resource['file_path'];
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+        
+        // Delete from database
+        $seoModel->deleteResource($resourceId);
+        
+        $_SESSION['success'] = 'Resource deleted successfully!';
+        header('Location: /admin/seo/edit/' . $resource['page_id']);
+        exit;
+    }
+    
+    /**
+     * Download resource (tracks downloads)
+     */
+    public function downloadResource($resourceId) {
+        $db = Database::getInstance()->getConnection();
+        
+        // Get resource
+        $sql = "SELECT * FROM seo_resources WHERE id = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$resourceId]);
+        $resource = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$resource) {
+            http_response_code(404);
+            exit('Resource not found');
+        }
+        
+        // Increment download count
+        $seoModel = new SEOPage();
+        $seoModel->incrementResourceDownloads($resourceId);
+        
+        // Serve file
+        $filePath = __DIR__ . '/../uploads/' . $resource['file_path'];
+        if (!file_exists($filePath)) {
+            http_response_code(404);
+            exit('File not found');
+        }
+        
+        header('Content-Type: ' . $resource['file_mime_type']);
+        header('Content-Disposition: attachment; filename="' . $resource['file_name'] . '"');
+        header('Content-Length: ' . $resource['file_size']);
+        readfile($filePath);
+        exit;
     }
 }
 

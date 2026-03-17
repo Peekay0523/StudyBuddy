@@ -170,7 +170,17 @@ if (!$editMode) {
     .char-count.danger {
         color: #ef4444 !important;
     }
-    
+    .resource-item {
+        transition: all 0.2s !important;
+    }
+    .resource-item:hover {
+        background: #f3f4f6 !important;
+    }
+    .btn-sm {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.875rem !important;
+    }
+
     /* Loading Overlay */
     .loading-overlay {
         position: fixed;
@@ -324,6 +334,88 @@ if (!$editMode) {
                     </div>
                 </div>
             </div>
+
+            <!-- Resources Section (Scripts & Memorandums) -->
+            <?php if ($editMode): ?>
+            <div class="form-section" style="border-left-color: #10b981 !important;">
+                <h3><i class="fas fa-upload"></i> Upload Scripts & Memorandums</h3>
+                
+                <form action="/admin/seo/upload-resource/<?php echo $page['id']; ?>" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="resource_type">Resource Type</label>
+                            <select name="resource_type" id="resource_type" required>
+                                <option value="script">📝 Study Script</option>
+                                <option value="memorandum">✅ Memorandum</option>
+                                <option value="study_guide">📚 Study Guide</option>
+                                <option value="past_paper">📋 Past Exam Paper</option>
+                                <option value="checklist">✓ Study Checklist</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resource_title">Resource Title <span class="required">*</span></label>
+                            <input type="text" name="title" id="resource_title" required
+                                   placeholder="e.g., Grade 12 Mathematics Memorandum 2024">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="resource_description">Description</label>
+                        <textarea name="description" id="resource_description" rows="2"
+                                  placeholder="Brief description of this resource..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="resource_file">Upload File <span class="required">*</span></label>
+                        <input type="file" name="resource_file" id="resource_file" accept=".pdf,.doc,.docx" required>
+                        <small>Allowed: PDF, Word documents. Maximum size: 20MB</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_free" value="1" checked>
+                            Make this resource free to download (not premium)
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Upload Resource
+                    </button>
+                </form>
+                
+                <!-- Existing Resources List -->
+                <?php
+                if ($editMode && isset($page['id'])) {
+                    $seoModel = new SEOPage();
+                    $resources = $seoModel->getResources($page['id']);
+                    if (!empty($resources)):
+                ?>
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Existing Resources</h4>
+                    <div class="resources-list">
+                        <?php foreach ($resources as $resource): ?>
+                        <div class="resource-item" style="background: #f9fafb; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong><?php echo htmlspecialchars($resource['title']); ?></strong>
+                                <br>
+                                <small style="color: #6b7280;">
+                                    Type: <?php echo ucfirst($resource['resource_type']); ?> | 
+                                    Size: <?php echo number_format($resource['file_size'] / 1024, 1); ?> KB |
+                                    Downloads: <?php echo $resource['download_count']; ?>
+                                </small>
+                            </div>
+                            <a href="/admin/seo/delete-resource/<?php echo $resource['id']; ?>" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this resource?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; } ?>
+            </div>
+            <?php endif; ?>
 
             <!-- Content -->
             <div class="form-section" style="border-left-color: #f59e0b !important;">

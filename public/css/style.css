@@ -1079,19 +1079,39 @@ body {
 
     .chat-input-form {
         padding: 10px;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .chat-input-form input[type="text"] {
         min-width: auto;
         flex: 1;
+        width: calc(100% - 100px);
+        order: -1;
+        font-size: 14px;
+        padding: 10px 14px;
     }
 
     .chat-input-form .btn-icon {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 12px;
+        min-width: 40px;
+        min-height: 40px;
+        padding: 10px;
         flex-shrink: 0;
+    }
+
+    .chat-input-form .btn-icon.listening {
+        animation: pulse-mobile 1.5s infinite;
+    }
+
+    @keyframes pulse-mobile {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+            transform: scale(1.05);
+        }
     }
 
     .chat-controls {
@@ -1104,11 +1124,23 @@ body {
         flex: 1;
         min-width: 100%;
         justify-content: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 5px;
+    }
+
+    .voice-mode-label {
+        font-size: 13px;
+    }
+
+    .toggle-switch {
+        transform: scale(0.9);
     }
 
     #stop-speech-btn {
         width: 100%;
-        margin-top: 10px;
+        margin-top: 5px;
+        min-height: 40px;
     }
 
     .report-card-item {
@@ -1130,18 +1162,60 @@ body {
 
     .chat-container {
         height: calc(100vh - 160px);
+        min-height: 350px;
     }
 
     .chat-message {
         max-width: 90%;
+        padding: 12px;
+        font-size: 13px;
     }
 
     .chat-input-form {
-        gap: 8px;
+        gap: 6px;
+        padding: 8px;
     }
 
     .chat-input-form input[type="text"] {
-        font-size: 14px;
-        padding: 12px;
+        font-size: 13px;
+        padding: 10px 12px;
+        width: calc(100% - 90px);
+        min-height: 40px;
+    }
+
+    .chat-input-form .btn-icon {
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: 50%;
+    }
+
+    .chat-controls {
+        padding: 8px 12px;
+    }
+
+    .voice-mode-control {
+        padding: 6px 0;
+        margin-bottom: 3px;
+    }
+
+    .voice-mode-label {
+        font-size: 12px;
+    }
+
+    .toggle-switch {
+        width: 44px;
+        height: 24px;
+        transform: scale(0.85);
+    }
+
+    #stop-speech-btn {
+        min-height: 36px;
+        font-size: 12px;
+    }
+
+    /* Voice mode status message */
+    .chat-message .voice-status {
+        font-size: 12px;
+        padding: 8px 12px;
     }
 }

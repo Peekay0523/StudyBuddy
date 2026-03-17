@@ -51,14 +51,54 @@ include __DIR__ . '/../layouts/header.php';
 
 <div class="badge">✨ AI-Powered Learning</div>
 
-<h1 class="title">
-    Study <span>Smart</span>, Not <span class="hard">Hard</span>
-</h1>
+<!-- Main Header with Invite Friends - Inline Layout -->
+<div class="dashboard-header-grid" style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin-bottom: 30px;">
+    <!-- Left: Study Smart Heading -->
+    <div style="min-width: 0;">
+        <h1 class="title" style="margin-bottom: 10px;">
+            Study <span>Smart</span>, Not <span class="hard">Hard</span>
+        </h1>
+        <p class="subtitle" style="margin: 0;">
+            Upload your scripts, get instant memorandums, personalized study plans,
+            and discover your ideal career path.
+        </p>
+    </div>
+    
+    <!-- Right: Invite Friends Card -->
+    <div class="dashboard-invite-card" style="flex-shrink: 0;">
+        <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15); min-width: 320px;">
+            <div style="display: flex; align-items: flex-start; gap: 15px;">
+                
+                <div style="flex: 1; min-width: 0;">
+                    <h3 style="margin: 0 0 8px 0; color: #0369a1; font-size: 16px; line-height: 1.3;">
+                        </i> Invite Friends to StudySmart
+                    </h3>
+                    
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button onclick="document.getElementById('inviteFriendsModal').style.display='flex'" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; padding: 8px 16px; font-size: 13px;">
+                            <i class="fas fa-envelope"></i> Invite Friends
+                        </button>
+                        <a href="/invites" style="padding: 8px 16px; color: #0369a1; text-decoration: none; font-weight: 500; font-size: 13px; border: 1px solid #0ea5e9; border-radius: 6px; display: inline-block;">
+                            View Sent Invites <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<p class="subtitle">
-    Upload your scripts, get instant memorandums, personalized study plans,
-    and discover your ideal career path.
-</p>
+<!-- Responsive Styles -->
+<style>
+@media (max-width: 900px) {
+    .dashboard-header-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .dashboard-invite-card {
+        min-width: 100% !important;
+    }
+}
+</style>
 
 <!-- STATS -->
 <section class="stats">
@@ -83,26 +123,79 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 </section>
 
-<!-- INVITE FRIENDS -->
+<!-- Activity Score Card -->
 <section style="margin: 30px 0;">
-    <div class="feature-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: none; box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);">
-        <div style="display: flex; align-items: flex-start; gap: 20px;">
-            <div style="flex-shrink: 0;">
-                <i class="fas fa-user-plus" style="font-size: 40px; color: #0ea5e9;"></i>
-            </div>
-            <div style="flex: 1;">
-                <h3 style="margin: 0 0 10px 0; color: #0369a1; font-size: 20px;">
-                    <i class="fas fa-gift"></i> Invite Friends to StudySmart
-                </h3>
-                <p style="margin: 0 0 15px 0; color: #0c4a6e; font-size: 14px; line-height: 1.6;">
-                    Get your friends to join StudySmart and study together! Send them an invitation via email.
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <i class="fas fa-fire-alt" style="font-size: 32px; color: #fbbf24;"></i>
+                    <h3 style="margin: 0; font-size: 22px;">Your Learning Score</h3>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 15px; margin-bottom: 10px;">
+                    <span style="font-size: 48px; font-weight: 700; line-height: 1;"><?php echo $activityScore; ?></span>
+                    <span style="font-size: 18px; opacity: 0.9;">points</span>
+                </div>
+                <p style="margin: 0; opacity: 0.9; font-size: 14px;">
+                    <i class="fas fa-chart-line"></i> Keep learning to increase your score!
                 </p>
-                <button onclick="document.getElementById('inviteFriendsModal').style.display='flex'" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none;">
-                    <i class="fas fa-envelope"></i> Invite Friends
-                </button>
-                <a href="/invites" style="margin-left: 10px; color: #0369a1; text-decoration: none; font-weight: 500;">
-                    View Sent Invites <i class="fas fa-arrow-right"></i>
-                </a>
+            </div>
+            
+            <div style="flex: 1; min-width: 250px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 14px; opacity: 0.9;">Activity Level</span>
+                        <span style="font-size: 20px; font-weight: 700;"><?php echo $activityPercentage; ?>%</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                        <div style="background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%); height: 100%; width: <?php echo $activityPercentage; ?>%; transition: width 0.5s ease; border-radius: 6px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; opacity: 0.8;">
+                        <span><i class="fas fa-seedling"></i> Getting Started</span>
+                        <span><i class="fas fa-trophy"></i> Learning Champion</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Score Breakdown -->
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <h4 style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-calculator"></i> Score Breakdown:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
+                        <i class="fas fa-file-upload"></i> Scripts
+                    </div>
+                    <div style="font-size: 20px; font-weight: 700;"><?php echo $scriptsCount; ?></div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
+                        <i class="fas fa-calendar-check"></i> Study Plans
+                    </div>
+                    <div style="font-size: 20px; font-weight: 700;"><?php echo $plansCount; ?></div>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; position: relative; overflow: hidden;">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
+                        <i class="fas fa-fire-alt"></i> Login Streak
+                    </div>
+                    <div style="font-size: 20px; font-weight: 700;"><?php echo $loginStreakPoints; ?></div>
+                    <?php if ($loginStreak > 0): ?>
+                        <div style="font-size: 10px; opacity: 0.7; margin-top: 4px;">
+                            <i class="fas fa-chart-line"></i> <?php echo $loginStreak; ?> day streak
+                        </div>
+                        <?php if ($loginStreak % 3 !== 0): ?>
+                            <div style="font-size: 10px; opacity: 0.7; margin-top: 2px;">
+                                <i class="fas fa-gift"></i> <?php echo $nextRewardAt; ?> more to earn point
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
+                        <i class="fas fa-plus-circle"></i> Total
+                    </div>
+                    <div style="font-size: 20px; font-weight: 700;"><?php echo $activityScore; ?></div>
+                </div>
             </div>
         </div>
     </div>

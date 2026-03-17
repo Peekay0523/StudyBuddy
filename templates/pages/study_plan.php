@@ -320,6 +320,197 @@ $extraHead = <<<'HTML'
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Calendar responsive */
+    .calendar-container {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .calendar-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .calendar-header h2 {
+        font-size: 1.2rem;
+        order: -1;
+        width: 100%;
+    }
+    
+    .calendar-header .btn-secondary {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .calendar-grid {
+        gap: 4px;
+    }
+    
+    .calendar-day-header {
+        padding: 8px 4px;
+        font-size: 0.7rem;
+    }
+    
+    .calendar-day {
+        min-height: 60px;
+        padding: 6px;
+    }
+    
+    .calendar-day-number {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+    
+    .calendar-event-count {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+    
+    /* Upload container */
+    .upload-container {
+        padding: 0 10px;
+    }
+    
+    .upload-container > div {
+        padding: 20px 15px;
+    }
+    
+    /* Form grid to single column */
+    .upload-container .form-group,
+    .upload-container div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    /* Button sizing */
+    #add-reminder-btn,
+    .btn-primary[style*="padding: 15px 40px"] {
+        padding: 12px 24px !important;
+        font-size: 14px !important;
+        width: 100%;
+    }
+    
+    /* Study plan cards */
+    section.actions {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    
+    .action.orange {
+        min-height: auto !important;
+    }
+    
+    .study-plan-actions {
+        flex-wrap: wrap;
+    }
+    
+    .study-plan-actions .btn-sm {
+        flex: 1;
+        min-width: calc(50% - 4px);
+        justify-content: center;
+    }
+    
+    /* Modal content */
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .modal-content .form-group {
+        margin-bottom: 15px;
+    }
+    
+    /* Reminder form grid */
+    #reminder-form div[style*="grid-template-columns: 1fr 1fr"],
+    .upload-container div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Modal buttons stack */
+    .modal-content form > div[style*="display: flex; gap: 10px"] {
+        flex-direction: column;
+    }
+    
+    .modal-content form > div[style*="display: flex; gap: 10px"] button {
+        width: 100%;
+    }
+    
+    /* Upcoming reminders */
+    div[style*="background: white; border-radius: 12px; padding: 20px"] {
+        padding: 15px !important;
+    }
+    
+    div[style*="display: flex; justify-content: space-between; align-items: center; padding: 12px"] {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+    
+    div[style*="display: flex; gap: 8px"] {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    div[style*="display: flex; gap: 8px"] .btn-sm {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    /* Hide file size on very small screens */
+    #file-size {
+        font-size: 11px !important;
+    }
+    
+    /* Title and subtitle */
+    .title {
+        font-size: 1.5rem !important;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Points banner */
+    div[style*="background: linear-gradient(135deg, #dbeafe"] {
+        padding: 15px !important;
+    }
+    
+    div[style*="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px"] {
+        gap: 15px !important;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .calendar-day {
+        min-height: 50px;
+        padding: 4px;
+    }
+    
+    .calendar-day-header {
+        font-size: 0.65rem;
+        padding: 6px 2px;
+    }
+    
+    .calendar-event-count {
+        display: none;
+    }
+    
+    .modal-content {
+        padding: 15px;
+    }
+    
+    .btn-sm {
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+    }
+}
 </style>
 HTML;
 
@@ -949,8 +1140,8 @@ function renderCalendar() {
 
     const grid = document.getElementById('calendar-grid');
     // Clear existing days (keep headers)
-    for (let i = 7; i < grid.children.length; i++) {
-        grid.removeChild(grid.children[i]);
+    while (grid.children.length > 7) {
+        grid.removeChild(grid.children[7]);
     }
 
     // Previous month days
@@ -985,8 +1176,8 @@ function renderCalendar() {
         grid.appendChild(dayEl);
     }
 
-    // Next month days to fill grid
-    const totalCells = grid.children.length - 7; // Exclude headers
+    // Next month days to fill grid (ensure 6 rows = 42 cells total)
+    const totalCells = startingDay + totalDays;
     const remainingCells = 42 - totalCells;
     for (let i = 1; i <= remainingCells; i++) {
         const day = document.createElement('div');

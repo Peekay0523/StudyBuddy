@@ -66,52 +66,45 @@ include __DIR__ . '/../layouts/header.php';
                 <p>No study buddies available at the moment. Check back later!</p>
             </div>
         <?php else: ?>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            <div class="study-buddies-list">
                 <?php foreach ($studyBuddies as $buddy): ?>
-                    <div class="feature-card" style="border: 1px solid #86efac; background: white; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);">
-                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                            <div style="position: relative;">
-                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 20px;">
+                    <div class="buddy-item" style="background: white; border: 1px solid #86efac; border-radius: 10px; padding: 15px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(34, 197, 94, 0.1);">
+                        <!-- Avatar & Name -->
+                        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 200px;">
+                            <div style="position: relative; flex-shrink: 0;">
+                                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 18px;">
                                     <?php echo strtoupper(substr($buddy['username'], 0, 1)); ?>
                                 </div>
-                                <span style="position: absolute; bottom: 0; right: 0; width: 14px; height: 14px; background: <?php echo $buddy['is_online'] ? '#22c55e' : '#ef4444'; ?>; border: 2px solid white; border-radius: 50%;" title="<?php echo $buddy['is_online'] ? 'Online now' : 'Offline'; ?>"></span>
+                                <span style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: <?php echo $buddy['is_online'] ? '#22c55e' : '#ef4444'; ?>; border: 2px solid white; border-radius: 50%;" title="<?php echo $buddy['is_online'] ? 'Online now' : 'Offline'; ?>"></span>
                             </div>
-                            <div style="flex: 1;">
-                                <h3 style="margin: 0; font-size: 16px; color: #1e293b;">
+                            <div style="min-width: 0;">
+                                <h3 style="margin: 0; font-size: 16px; color: #1e293b; font-weight: 600;">
                                     <?php echo htmlspecialchars($buddy['username']); ?>
                                 </h3>
                                 <p style="margin: 3px 0 0 0; font-size: 12px; color: <?php echo $buddy['is_online'] ? '#22c55e' : '#64748b'; ?>; font-weight: 500;">
-                                    <i class="fas fa-circle" style="font-size: 8px;"></i> <?php echo $buddy['is_online'] ? 'Active now' : 'Last active: ' . date('M d, H:i', strtotime($buddy['last_active'])); ?>
+                                    <i class="fas fa-circle" style="font-size: 6px;"></i> <?php echo $buddy['is_online'] ? 'Active now' : 'Last active: ' . date('M d, H:i', strtotime($buddy['last_active'])); ?>
                                 </p>
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                                <span style="background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #86efac;">
-                                    <i class="fas fa-book"></i> <?php echo $buddy['scripts_uploaded'] ?? 0; ?> scripts
-                                </span>
-                                <span style="background: #f0f9ff; color: #0369a1; padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #bae6fd;">
-                                    <i class="fas fa-users"></i> <?php echo $buddy['groups_count'] ?? 0; ?> groups
-                                </span>
+                        <!-- Stats -->
+                        <div style="display: flex; gap: 15px; flex-shrink: 0;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 18px; font-weight: 700; color: #166534;"><?php echo $buddy['scripts_uploaded'] ?? 0; ?></div>
+                                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">scripts</div>
                             </div>
-                            <?php if (!empty($buddy['grade_level'])): ?>
-                                <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b;">
-                                    <i class="fas fa-graduation-cap"></i> Grade <?php echo htmlspecialchars($buddy['grade_level']); ?>
-                                </p>
-                            <?php endif; ?>
-                            <?php if (!empty($buddy['bio'])): ?>
-                                <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.4;">
-                                    <?php echo htmlspecialchars(substr($buddy['bio'], 0, 60)); ?><?php if (strlen($buddy['bio']) > 60): ?>...<?php endif; ?>
-                                </p>
-                            <?php endif; ?>
+                            <div style="text-align: center;">
+                                <div style="font-size: 18px; font-weight: 700; color: #0369a1;"><?php echo $buddy['groups_count'] ?? 0; ?></div>
+                                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">groups</div>
+                            </div>
                         </div>
 
-                        <div style="display: flex; gap: 10px;">
-                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="flex: 1; text-align: center; padding: 10px 14px; font-size: 13px; text-decoration: none; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3); transition: all 0.3s ease;">
+                        <!-- Actions -->
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
+                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="text-align: center; padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3); transition: all 0.3s ease;">
                                 <i class="fas fa-envelope"></i> Ask for Help
                             </a>
-                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="flex: 1; padding: 10px 14px; font-size: 13px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 10px rgba(100, 116, 139, 0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 6px rgba(100, 116, 139, 0.3)'" onclick="this.blur()">
+                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="padding: 8px 16px; font-size: 13px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 10px rgba(100, 116, 139, 0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 6px rgba(100, 116, 139, 0.3)'" onclick="this.blur()">
                                 <i class="fas fa-user-plus"></i> Invite
                             </button>
                         </div>
@@ -121,6 +114,284 @@ include __DIR__ . '/../layouts/header.php';
         <?php endif; ?>
     </div>
 </section>
+
+<style>
+.study-buddies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.buddy-item {
+    transition: all 0.2s ease;
+}
+
+.buddy-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+
+/* Group Cards Responsive Styles */
+.features-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.feature-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .features-section {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .feature-card {
+        padding: 16px;
+    }
+
+    .feature-card h3 {
+        font-size: 16px !important;
+    }
+
+    .feature-card p {
+        font-size: 13px !important;
+    }
+
+    .buddy-item {
+        padding: 12px 15px !important;
+        gap: 12px !important;
+        flex-wrap: wrap;
+    }
+
+    /* Reduce avatar size on mobile */
+    .buddy-item > div:first-child > div:first-child {
+        width: 35px !important;
+        height: 35px !important;
+        font-size: 14px !important;
+    }
+
+    /* Smaller text on mobile */
+    .buddy-item h3 {
+        font-size: 14px !important;
+    }
+
+    .buddy-item p {
+        font-size: 11px !important;
+    }
+
+    /* Compact stats on mobile */
+    .buddy-item > div:nth-child(2) {
+        width: 100%;
+        order: 3;
+        justify-content: center;
+        gap: 20px !important;
+        margin-top: 8px;
+    }
+
+    .buddy-item > div:nth-child(2) > div {
+        text-align: center;
+    }
+
+    .buddy-item > div:nth-child(2) > div > div:first-child {
+        font-size: 16px !important;
+    }
+
+    .buddy-item > div:nth-child(2) > div > div:last-child {
+        font-size: 10px !important;
+    }
+
+    /* Stack actions on mobile */
+    .buddy-item > div:last-child {
+        width: 100%;
+        order: 4;
+        margin-top: 8px;
+    }
+
+    /* Smaller buttons on mobile */
+    .buddy-item > div:last-child a,
+    .buddy-item > div:last-child button {
+        padding: 8px 14px !important;
+        font-size: 12px !important;
+        flex: 1;
+    }
+
+    /* Page title and subtitle */
+    .title {
+        font-size: 24px !important;
+    }
+
+    .subtitle {
+        font-size: 14px !important;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+    }
+
+    /* Alert boxes */
+    .alert {
+        padding: 16px !important;
+    }
+
+    .alert h3 {
+        font-size: 16px !important;
+    }
+
+    .alert p {
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .buddy-item {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+    }
+
+    /* Avatar */
+    .buddy-item > div:first-child > div:first-child {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 13px !important;
+    }
+
+    /* Name and status */
+    .buddy-item h3 {
+        font-size: 13px !important;
+    }
+
+    .buddy-item p {
+        font-size: 10px !important;
+    }
+
+    /* Stats */
+    .buddy-item > div:nth-child(2) > div > div:first-child {
+        font-size: 14px !important;
+    }
+
+    .buddy-item > div:nth-child(2) > div > div:last-child {
+        font-size: 9px !important;
+    }
+
+    /* Buttons stack vertically on very small screens */
+    .buddy-item > div:last-child {
+        flex-direction: column;
+        gap: 8px !important;
+    }
+
+    .buddy-item > div:last-child a,
+    .buddy-item > div:last-child button {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Feature cards */
+    .feature-card {
+        padding: 14px !important;
+    }
+
+    .feature-card h3 {
+        font-size: 15px !important;
+    }
+
+    .feature-card p {
+        font-size: 12px !important;
+    }
+
+    /* Title */
+    .title {
+        font-size: 22px !important;
+    }
+
+    .subtitle {
+        font-size: 13px !important;
+    }
+
+    /* Section headings */
+    section h2 {
+        font-size: 18px !important;
+    }
+
+    /* Modal responsive styles */
+    #createGroupModal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 20px !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+    }
+
+    #createGroupModal h2 {
+        font-size: 18px !important;
+        margin-bottom: 16px !important;
+        padding-right: 30px !important;
+    }
+
+    #createGroupModal input,
+    #createGroupModal select,
+    #createGroupModal textarea {
+        font-size: 14px !important;
+        padding: 8px !important;
+    }
+
+    #createGroupModal label {
+        font-size: 13px !important;
+    }
+
+    #createGroupModal button[type="submit"],
+    #createGroupModal button[type="button"] {
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Modal on small screens */
+    #createGroupModal > div {
+        padding: 16px !important;
+    }
+
+    #createGroupModal h2 {
+        font-size: 16px !important;
+    }
+
+    #createGroupModal .form-group {
+        margin-bottom: 12px !important;
+    }
+
+    #createGroupModal input,
+    #createGroupModal select,
+    #createGroupModal textarea {
+        font-size: 13px !important;
+        padding: 8px 10px !important;
+    }
+
+    #createGroupModal button[type="submit"],
+    #createGroupModal button[type="button"] {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    #createGroupModal > div > button:last-child {
+        width: 100%;
+    }
+}
+</style>
 
 <!-- My Study Groups Section -->
 <?php if (!empty($myGroups)): ?>
