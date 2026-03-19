@@ -24,6 +24,30 @@ $extraHead = '<style>
         margin: 0 0 30px;
         font-size: 24px;
     }
+    .alert {
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .alert-error {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+    .alert-success {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .alert-info {
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
 </style>';
 ?>
 <!DOCTYPE html>
@@ -41,6 +65,19 @@ $extraHead = '<style>
     <div class="auth-box">
         <h2><i class="fas fa-sign-in-alt icon"></i> Welcome Back</h2>
 
+        <?php
+        $flash = getFlashMessage();
+        if ($flash):
+            $alertClass = 'alert-info';
+            if ($flash['type'] === 'success') $alertClass = 'alert-success';
+            if ($flash['type'] === 'error') $alertClass = 'alert-error';
+        ?>
+            <div class="alert <?php echo $alertClass; ?>">
+                <i class="fas fa-<?php echo $flash['type'] === 'success' ? 'check-circle' : ($flash['type'] === 'error' ? 'exclamation-circle' : 'info-circle'); ?>"></i>
+                <?php echo htmlspecialchars($flash['message']); ?>
+            </div>
+        <?php endif; ?>
+
         <?php if ($error): ?>
             <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
@@ -54,6 +91,12 @@ $extraHead = '<style>
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 15px;">
+                <a href="/forgot-password" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
+                    <i class="fas fa-key"></i> Forgot Password?
+                </a>
             </div>
 
             <button type="submit" class="btn-primary">Login</button>

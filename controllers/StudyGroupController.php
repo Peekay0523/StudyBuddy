@@ -67,17 +67,6 @@ class StudyGroupController {
         }
 
         $user = getCurrentUser();
-        
-        // Check if user is on free plan
-        $subscriptionController = new SubscriptionController();
-        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
-        $currentPlan = $userSubscription['plan'] ?? 'free';
-        
-        if ($currentPlan === 'free') {
-            setFlashMessage('error', 'You need to upgrade to Basic or Premium to create study groups.');
-            header('Location: /subscription');
-            exit;
-        }
 
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
@@ -122,18 +111,7 @@ class StudyGroupController {
         requireLogin();
 
         $user = getCurrentUser();
-        
-        // Check if user is on free plan
-        $subscriptionController = new SubscriptionController();
-        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
-        $currentPlan = $userSubscription['plan'] ?? 'free';
-        
-        if ($currentPlan === 'free') {
-            setFlashMessage('error', 'You need to upgrade to Basic or Premium to join study groups.');
-            header('Location: /subscription');
-            exit;
-        }
-        
+
         $group = $this->studyGroupModel->findById($groupId);
 
         if (!$group || !$group['is_active']) {

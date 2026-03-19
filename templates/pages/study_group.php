@@ -7,48 +7,12 @@ include __DIR__ . '/../layouts/header.php';
 <h1 class="title">Study Groups</h1>
 <p class="subtitle">Connect with other students and learn together!</p>
 
-<!-- Free User Upgrade Notice -->
-<?php if ($isFreeUser): ?>
-<div class="alert" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
-    <div style="display: flex; align-items: flex-start; gap: 15px;">
-        <div style="flex-shrink: 0;">
-            <i class="fas fa-lock" style="font-size: 24px; color: #f59e0b;"></i>
-        </div>
-        <div style="flex: 1;">
-            <h3 style="margin: 0 0 10px 0; color: #92400e; font-size: 18px;">
-                <i class="fas fa-crown"></i> Upgrade to Access Full Features
-            </h3>
-            <p style="margin: 0 0 15px 0; color: #78350f; font-size: 14px; line-height: 1.6;">
-                You're currently on the <strong>Free plan</strong>. To create study groups and unlock all collaborative features, 
-                please upgrade to <strong>Basic</strong> or <strong>Premium</strong>.
-            </p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="/subscription/checkout?plan=basic" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
-                    <i class="fas fa-rocket"></i> Upgrade to Basic (R39/mo)
-                </a>
-                <a href="/subscription/checkout?plan=premium" class="btn-secondary" style="border: 2px solid #f59e0b; color: #f59e0b; text-decoration: none;">
-                    <i class="fas fa-star"></i> View Premium (R69/mo)
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
 <!-- Create Study Group Button -->
-<?php if (!$isFreeUser): ?>
 <div style="margin-bottom: 30px;">
     <button onclick="document.getElementById('createGroupModal').style.display='block'" class="btn-primary">
         <i class="fas fa-plus"></i> Create Study Group
     </button>
 </div>
-<?php else: ?>
-<div style="margin-bottom: 30px;">
-    <button disabled class="btn-primary" style="opacity: 0.6; cursor: not-allowed; background: #cbd5e1;" title="Upgrade to create study groups">
-        <i class="fas fa-lock"></i> Create Study Group (Upgrade Required)
-    </button>
-</div>
-<?php endif; ?>
 
 <!-- Study Buddies Section -->
 <section style="margin-bottom: 40px;">
@@ -543,10 +507,6 @@ include __DIR__ . '/../layouts/header.php';
                     <?php if ($group['member_count'] >= $group['max_members']): ?>
                         <button disabled style="width: 100%; padding: 10px; background: #cbd5e1; color: #64748b; border: none; border-radius: 6px; cursor: not-allowed;">
                             <i class="fas fa-lock"></i> Group Full
-                        </button>
-                    <?php elseif ($isFreeUser): ?>
-                        <button disabled style="width: 100%; padding: 10px; background: #cbd5e1; color: #64748b; border: none; border-radius: 6px; cursor: not-allowed;" title="Upgrade to join study groups">
-                            <i class="fas fa-lock"></i> Join Group (Upgrade Required)
                         </button>
                     <?php else: ?>
                         <form method="POST" action="/study-group/join/<?php echo $group['id']; ?>" style="margin: 0;">

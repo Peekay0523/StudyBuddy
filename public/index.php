@@ -103,6 +103,9 @@ $router->get('/register', 'AuthController@register');
 $router->post('/register', 'AuthController@register');
 $router->post('/register/resend-otp', 'AuthController@resendOtp');
 $router->post('/register/check-phone', 'AuthController@checkPhone');
+$router->get('/forgot-password', 'AuthController@forgotPassword');
+$router->post('/forgot-password', 'AuthController@forgotPassword');
+$router->post('/forgot-password/resend-otp', 'AuthController@resendOtpForgotPassword');
 $router->get('/logout', 'AuthController@logout');
 
 // Dashboard
@@ -330,6 +333,13 @@ $router->post('/subscription/subscribe', 'SubscriptionController@subscribe');
 $router->post('/subscription/cancel', 'SubscriptionController@cancel');
 $router->post('/subscription/downgrade', 'SubscriptionController@downgrade');
 
+// PayFast Payment Gateway
+$router->get('/subscription/payfast/return', 'SubscriptionController@payfastReturn');
+$router->post('/subscription/payfast/return', 'SubscriptionController@payfastReturn');
+$router->get('/subscription/payfast/cancel', 'SubscriptionController@payfastCancel');
+$router->post('/subscription/payfast/cancel', 'SubscriptionController@payfastCancel');
+$router->post('/subscription/payfast/notify', 'SubscriptionController@payfastNotify');
+
 // Scan to PDF
 $router->get('/scan', 'ScanController@index');
 $router->post('/scan/convert-points', 'ScanController@convertPoints');
@@ -420,6 +430,8 @@ $router->post('/admin/report-cards/delete', 'AdminController@deleteReportCard');
 $router->get('/admin/topics', 'AdminController@topicsMastered');
 $router->get('/admin/openai-settings', 'AdminController@openaiSettings');
 $router->post('/admin/openai-settings/update', 'AdminController@updateOpenaiSettings');
+$router->get('/admin/banking-settings', 'AdminController@bankingSettings');
+$router->post('/admin/banking-settings/update', 'AdminController@updateBankingSettings');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');

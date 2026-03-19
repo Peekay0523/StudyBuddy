@@ -1,8 +1,13 @@
 <?php
 $pageTitle = 'Upload Script - StudySmart';
 $currentPage = 'scripts';
+$canGenerateMemorandum = $canGenerateMemorandum ?? false;
+$canGenerateMemorandumJson = json_encode($canGenerateMemorandum);
 $extraHead = <<<'SCRIPT'
 <script>
+// Subscription plan check for memorandum generation
+const CAN_GENERATE_MEMORANDUM = <?php echo $canGenerateMemorandumJson; ?>;
+
 document.addEventListener("DOMContentLoaded", function() {
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("script_file");
@@ -129,7 +134,15 @@ if (clearBtn && fileInput && previewSection && uploadArea) {
 
 async function generateMemorandum(scriptId) {
     console.log('generateMemorandum called with scriptId:', scriptId);
-    
+    console.log('CAN_GENERATE_MEMORANDUM:', CAN_GENERATE_MEMORANDUM);
+
+    // Check if user is on free plan
+    if (!CAN_GENERATE_MEMORANDUM) {
+        alert('Memorandum generation is only available for Basic and Premium subscribers. Please upgrade your plan to use this feature.');
+        window.location.href = '/subscription';
+        return;
+    }
+
     const btn = document.querySelector(`.gen-memo-btn[data-script-id="${scriptId}"]`);
     const resultDiv = document.getElementById(`memo-result-${scriptId}`);
 
@@ -258,20 +271,32 @@ async function loadUploadedScripts() {
         const data = await response.json();
 
         console.log('Loaded scripts:', data);
+        console.log('CAN_GENERATE_MEMORANDUM:', CAN_GENERATE_MEMORANDUM);
 
         if (data.scripts && data.scripts.length > 0) {
             const scriptsList = document.getElementById("scripts-list");
             if (scriptsList) {
                 scriptsList.innerHTML = data.scripts.map(script => {
                     const hasMemorandum = script.has_memorandum == 1;
-                    const buttonHtml = hasMemorandum
-                        ? `<button data-script-id="${script.id}" class="view-memo-btn btn-sm btn-sm-secondary" style="cursor: pointer;">
+                    let buttonHtml = '';
+                    
+                    if (hasMemorandum) {
+                        // Already has memorandum - show view button
+                        buttonHtml = `<button data-script-id="${script.id}" class="view-memo-btn btn-sm btn-sm-secondary" style="cursor: pointer;">
                             <i class="fas fa-eye"></i> View Memorandum
-                           </button>`
-                        : `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-primary">
+                           </button>`;
+                    } else if (CAN_GENERATE_MEMORANDUM) {
+                        // Paid user - show generate button
+                        buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-primary">
                             <i class="fas fa-magic"></i> Generate Memorandum
                            </button>`;
-                    
+                    } else {
+                        // Free user - show locked button with upgrade tooltip
+                        buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-secondary" style="cursor: not-allowed; opacity: 0.7;" title="Upgrade to Basic or Premium to generate memorandums">
+                            <i class="fas fa-lock"></i> Upgrade to Generate
+                           </button>`;
+                    }
+
                     return `
                         <div class="script-item">
                             <div class="script-info">
@@ -298,6 +323,13 @@ async function loadUploadedScripts() {
                 // Attach event listeners to generate memorandum buttons
                 document.querySelectorAll('.gen-memo-btn').forEach(btn => {
                     btn.addEventListener('click', function() {
+                        // Skip if this is a locked button (free user)
+                        if (this.style.cursor === 'not-allowed') {
+                            alert('Memorandum generation is only available for Basic and Premium subscribers. Please upgrade your plan to use this feature.');
+                            window.location.href = '/subscription';
+                            return;
+                        }
+                        
                         const scriptId = this.getAttribute('data-script-id');
                         generateMemorandum(scriptId);
                     });
@@ -333,6 +365,14 @@ include __DIR__ . '/../layouts/header.php';
 
 <h1 class="title">Upload Script</h1>
 <p class="subtitle">Upload your study script for AI analysis and memorandum generation.</p>
+
+<?php if (!$canGenerateMemorandum): ?>
+    <div class="alert alert-info" style="padding: 12px 16px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; margin-bottom: 20px;">
+        <i class="fas fa-lock" style="margin-right: 8px;"></i>
+        <strong>Memorandum generation is locked.</strong> 
+        Upgrade to <a href="/subscription" style="color: #c2410c; text-decoration: underline; font-weight: 600;">Basic</a> or <a href="/subscription" style="color: #c2410c; text-decoration: underline; font-weight: 600;">Premium</a> to unlock AI-powered memorandum generation for your scripts.
+    </div>
+<?php endif; ?>
 
 <?php if ($error): ?>
     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>

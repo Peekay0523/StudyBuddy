@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/payfast.php';
 
 class SubscriptionController {
     
@@ -150,23 +151,23 @@ class SubscriptionController {
             if (isset($_FILES['proof_upload']) && $_FILES['proof_upload']['error'] !== UPLOAD_ERR_NO_FILE) {
                 // Upload directory - files go in public/uploads/eft_proofs/ for web access
                 $uploadDir = __DIR__ . '/../../../public/uploads/eft_proofs/';
-                
+
                 // Create upload directory if it doesn't exist
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
-                
+
                 $file = $_FILES['proof_upload'];
                 $originalName = $file['name'];
                 $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-                
+
                 // Check for upload errors
                 if ($file['error'] !== UPLOAD_ERR_OK) {
                     setFlashMessage('error', 'File upload error: ' . $file['error']);
                     header('Location: /subscription/checkout?plan=' . $plan);
                     exit;
                 }
-                
+
                 // Validate file type
                 $allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
                 if (!in_array($fileExt, $allowedExts)) {
@@ -174,18 +175,18 @@ class SubscriptionController {
                     header('Location: /subscription/checkout?plan=' . $plan);
                     exit;
                 }
-                
+
                 // Validate file size (5MB max)
                 if ($file['size'] > 5 * 1024 * 1024) {
                     setFlashMessage('error', 'File size must be less than 5MB.');
                     header('Location: /subscription/checkout?plan=' . $plan);
                     exit;
                 }
-                
+
                 // Generate unique filename with full extension
                 $newFilename = 'eft_proof_' . $user['id'] . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $fileExt;
                 $destination = $uploadDir . $newFilename;
-                
+
                 // Move uploaded file
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
                     $proofPath = 'uploads/eft_proofs/' . $newFilename;
@@ -211,38 +212,193 @@ class SubscriptionController {
             );
             header('Location: /subscription/success?plan=' . $plan . '&status=pending');
             exit;
-        } else if ($paymentMethod === 'paypal') {
-            // PayPal - redirect to PayPal (in production)
-            // For now, simulate successful payment
-            $this->activateSubscription($user['id'], $plan);
-            setFlashMessage('success', "Successfully subscribed to {$this->plans[$plan]['name']} plan via PayPal! Your subscription is now active.");
-            header('Location: /subscription/success?plan=' . $plan);
+        } else if ($paymentMethod === 'payfast') {
+            // PayFast - redirect to PayFast payment page
+            $this->processPayFastPayment($user, $plan);
             exit;
-        } else {
-            // Card Payment - simulate processing
-            $cardNumber = $_POST['card_number'] ?? '';
-            $expiryDate = $_POST['expiry_date'] ?? '';
-            $cvv = $_POST['cvv'] ?? '';
-
-            // Basic validation (in production, use payment gateway validation)
-            if (empty($cardNumber) || empty($expiryDate) || empty($cvv)) {
-                setFlashMessage('error', 'Please fill in all payment details');
-                header('Location: /subscription/checkout?plan=' . $plan);
-                exit;
-            }
-
-            // Process payment (in production, use PayFast/PayPal/Stripe API)
-            $paymentSuccess = true; // Simulated
-
-            if ($paymentSuccess) {
-                $this->activateSubscription($user['id'], $plan);
-                setFlashMessage('success', "Successfully subscribed to {$this->plans[$plan]['name']} plan! Your subscription is now active.");
-                header('Location: /subscription/success?plan=' . $plan);
-            } else {
-                setFlashMessage('error', 'Payment failed. Please try again.');
-                header('Location: /subscription/checkout?plan=' . $plan);
-            }
+        } else if ($paymentMethod === 'card') {
+            // Card Payment via PayFast
+            $this->processPayFastPayment($user, $plan);
+            exit;
         }
+        exit;
+    }
+
+    /**
+     * Process PayFast Payment
+     */
+    private function processPayFastPayment($user, $plan) {
+        $payFast = new PayFastHelper();
+        
+        if (!$payFast->isConfigured()) {
+            setFlashMessage('error', 'PayFast is not configured. Please contact the administrator.');
+            header('Location: /subscription/checkout?plan=' . $plan);
+            exit;
+        }
+
+        $planDetails = $this->plans[$plan];
+        
+        // Generate a unique token for this transaction
+        $token = bin2hex(random_bytes(16));
+        
+        // Store transaction data in session for verification on return
+        $_SESSION['payfast_transaction'] = [
+            'user_id' => $user['id'],
+            'plan' => $plan,
+            'amount' => $planDetails['price'],
+            'token' => $token,
+            'timestamp' => time()
+        ];
+
+        // Prepare PayFast data
+        $pfData = [
+            'amount' => $planDetails['price'],
+            'item_name' => "StudySmart {$planDetails['name']} Plan Subscription",
+            'item_description' => "Monthly subscription to {$planDetails['name']} plan",
+            'custom_str1' => $user['id'],
+            'custom_str2' => $plan,
+            'custom_str3' => $token,
+            'email_confirm' => '1',
+            'return_url' => APP_URL . '/subscription/payfast/return',
+            'cancel_url' => APP_URL . '/subscription/payfast/cancel',
+            'notify_url' => APP_URL . '/subscription/payfast/notify',
+        ];
+
+        // Redirect to PayFast
+        $payFastUrl = $payFast->getPaymentUrl($pfData);
+        header('Location: ' . $payFastUrl);
+        exit;
+    }
+
+    /**
+     * PayFast Return URL - Handle successful payment
+     */
+    public function payfastReturn() {
+        requireStudent();
+        
+        $user = getCurrentUser();
+        
+        // Get POST data from PayFast
+        $postData = $_POST;
+        
+        // Verify session token
+        $sessionToken = $_SESSION['payfast_transaction']['token'] ?? '';
+        $postToken = $postData['custom_str3'] ?? '';
+        
+        if ($sessionToken !== $postToken) {
+            setFlashMessage('error', 'Invalid transaction token. Please contact support.');
+            header('Location: /subscription');
+            exit;
+        }
+        
+        // Get plan and user ID from POST
+        $plan = $postData['custom_str2'] ?? 'basic';
+        $userId = (int)($postData['custom_str1'] ?? $user['id']);
+        
+        // Verify amounts match
+        $planDetails = $this->plans[$plan];
+        $paidAmount = (float)($postData['amount_gross'] ?? 0);
+        
+        if (abs($paidAmount - $planDetails['price']) > 0.01) {
+            setFlashMessage('error', 'Payment amount mismatch. Please contact support.');
+            header('Location: /subscription');
+            exit;
+        }
+        
+        // Activate subscription
+        $this->activateSubscription($userId, $plan);
+        
+        // Clear session transaction data
+        unset($_SESSION['payfast_transaction']);
+        
+        setFlashMessage('success', "Successfully subscribed to {$planDetails['name']} plan! Your subscription is now active.");
+        header('Location: /subscription/success?plan=' . $plan);
+        exit;
+    }
+
+    /**
+     * PayFast Cancel URL - Handle cancelled payment
+     */
+    public function payfastCancel() {
+        requireStudent();
+        
+        // Clear session transaction data
+        unset($_SESSION['payfast_transaction']);
+        
+        setFlashMessage('info', 'Payment was cancelled. You can try again when you\'re ready.');
+        header('Location: /subscription');
+        exit;
+    }
+
+    /**
+     * PayFast Notify URL - ITN (Instant Transaction Notification)
+     * This is called by PayFast servers to notify of payment status
+     */
+    public function payfastNotify() {
+        // Get all POST data
+        $postData = file_get_contents('php://input');
+        parse_str($postData, $postedData);
+        
+        // Log the ITN data for debugging
+        $logFile = __DIR__ . '/../logs/payfast_itn.log';
+        if (!is_dir(dirname($logFile))) {
+            mkdir(dirname($logFile), 0755, true);
+        }
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - ITN Received: " . print_r($postedData, true) . "\n", FILE_APPEND);
+        
+        // Verify signature
+        $payFast = new PayFastHelper();
+        if (!$payFast->verifySignature($postedData)) {
+            http_response_code(400);
+            echo 'Invalid signature';
+            exit;
+        }
+        
+        // Check transaction status
+        $transactionStatus = $postedData['payment_status'] ?? '';
+        
+        if ($transactionStatus !== 'COMPLETE') {
+            http_response_code(200);
+            echo 'Status not complete';
+            exit;
+        }
+        
+        // Get transaction details
+        $userId = (int)($postedData['custom_str1'] ?? 0);
+        $plan = $postedData['custom_str2'] ?? 'basic';
+        $token = $postedData['custom_str3'] ?? '';
+        
+        if (!$userId || !isset($this->plans[$plan])) {
+            http_response_code(400);
+            echo 'Invalid transaction data';
+            exit;
+        }
+        
+        // Verify amount
+        $planDetails = $this->plans[$plan];
+        $paidAmount = (float)($postedData['amount_gross'] ?? 0);
+        
+        if (abs($paidAmount - $planDetails['price']) > 0.01) {
+            http_response_code(400);
+            echo 'Amount mismatch';
+            exit;
+        }
+        
+        // Check if subscription already activated
+        if ($this->userHasActiveSubscription($userId)) {
+            http_response_code(200);
+            echo 'Subscription already active';
+            exit;
+        }
+        
+        // Activate subscription
+        $this->activateSubscription($userId, $plan);
+        
+        // Log successful activation
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Subscription activated for user {$userId}, plan {$plan}\n", FILE_APPEND);
+        
+        http_response_code(200);
+        echo 'OK';
         exit;
     }
 

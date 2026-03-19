@@ -13,6 +13,7 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/FileHelper.php';
 require_once __DIR__ . '/../helpers/AIHelper.php';
 require_once __DIR__ . '/../helpers/TesseractHelper.php';
+require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class ScriptController {
     private $scriptModel;
@@ -153,6 +154,13 @@ class ScriptController {
                 }
             }
         }
+
+        // Check user's subscription plan for memorandum generation feature
+        $subscriptionController = new SubscriptionController();
+        $user = getCurrentUser();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        $canGenerateMemorandum = ($currentPlan !== 'free');
 
         include __DIR__ . '/../templates/pages/upload_script.php';
     }

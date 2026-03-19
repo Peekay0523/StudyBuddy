@@ -432,6 +432,15 @@
             <a href="/admin/seo/pages" class="<?php echo ($currentPage ?? '') === 'admin-seo' ? 'active' : ''; ?>">
                 <i class="fas fa-search"></i> SEO Pages
             </a>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; padding: 0 16px;">Settings</div>
+                <a href="/admin/openai-settings" class="<?php echo ($currentPage ?? '') === 'admin-openai' ? 'active' : ''; ?>">
+                    <i class="fas fa-robot"></i> OpenAI Settings
+                </a>
+                <a href="/admin/banking-settings" class="<?php echo ($currentPage ?? '') === 'admin-banking' ? 'active' : ''; ?>">
+                    <i class="fas fa-university"></i> Banking Settings
+                </a>
+            </div>
             <a href="/" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                 <i class="fas fa-arrow-left"></i> Back to Site
             </a>

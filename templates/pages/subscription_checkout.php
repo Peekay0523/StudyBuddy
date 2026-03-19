@@ -6,6 +6,34 @@ $plan = $_GET['plan'] ?? 'basic';
 $subscriptionController = new SubscriptionController();
 $plans = $subscriptionController->getPlans();
 $planDetails = $plans[$plan] ?? $plans['basic'];
+
+// Get banking details from settings
+$bankingDetails = [
+    'bank_name' => 'FNB',
+    'account_type' => 'Current Account',
+    'account_number' => '62123456789',
+    'branch_code' => '250655',
+    'account_holder' => 'StudySmart',
+    'reference_instruction' => 'Use your username and plan (e.g., john-basic)',
+    'email_address' => 'billing@studysmart.co.za',
+    'activation_time' => '24-48 hours',
+];
+
+try {
+    $db = Database::getInstance()->getConnection();
+    $result = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")->fetch();
+    if ($result) {
+        $storedSettings = $db->query("SELECT * FROM settings WHERE setting_key LIKE 'banking_%'")->fetchAll();
+        foreach ($storedSettings as $setting) {
+            $key = str_replace('banking_', '', $setting['setting_key']);
+            if (!empty($setting['setting_value'])) {
+                $bankingDetails[$key] = $setting['setting_value'];
+            }
+        }
+    }
+} catch (Exception $e) {
+    // Use defaults
+}
 ?>
 
 <div class="dashboard-overview">
@@ -23,10 +51,6 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span style="font-weight: 600;"><?php echo $planDetails['name']; ?> Plan</span>
                 <span>R<?php echo $planDetails['price']; ?>.00</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; color: #6b7280; font-size: 14px;">
-                <span>Billing period</span>
-                <span><?php echo $planDetails['period']; ?></span>
             </div>
         </div>
         
@@ -58,12 +82,8 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Payment Method</label>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #2563eb; border-radius: 8px; cursor: pointer; background: #eff6ff; text-align: center;">
-                        <input type="radio" name="payment_method" value="card" checked style="margin-right: 8px;">
-                        <i class="fas fa-credit-card"></i> Card
-                    </label>
-                    <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center;">
-                        <input type="radio" name="payment_method" value="paypal" style="margin-right: 8px;">
-                        <i class="fab fa-paypal"></i> PayPal
+                        <input type="radio" name="payment_method" value="payfast" checked style="margin-right: 8px;">
+                        <i class="fas fa-credit-card"></i> PayFast (Card)
                     </label>
                     <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center;">
                         <input type="radio" name="payment_method" value="eft" style="margin-right: 8px;">
@@ -73,6 +93,24 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
             </div>
 
             <div id="cardPaymentFields">
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #16a34a; margin-bottom: 20px;">
+                    <p style="font-size: 14px; color: #166534; margin: 0;">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Secure Card Payment via PayFast:</strong> You will be redirected to PayFast's secure payment gateway to complete your card payment. All major credit and debit cards are accepted.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label for="cardholder_name" style="display: block; margin-bottom: 8px; font-weight: 600;">Cardholder Name</label>
+                    <input
+                        type="text"
+                        id="cardholder_name"
+                        name="cardholder_name"
+                        placeholder="John Doe"
+                        style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
+                    >
+                </div>
+
                 <div style="margin-bottom: 20px;">
                     <label for="card_number" style="display: block; margin-bottom: 8px; font-weight: 600;">Card Number</label>
                     <input
@@ -82,7 +120,6 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                         placeholder="1234 5678 9012 3456"
                         maxlength="19"
                         style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                        required
                     >
                     <div style="margin-top: 8px; display: flex; gap: 10px;">
                         <i class="fab fa-cc-visa" style="font-size: 24px; color: #1a1f71;"></i>
@@ -101,7 +138,6 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                             placeholder="MM/YY"
                             maxlength="5"
                             style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                            required
                         >
                     </div>
                     <div>
@@ -113,21 +149,8 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                             placeholder="123"
                             maxlength="4"
                             style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                            required
                         >
                     </div>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label for="cardholder_name" style="display: block; margin-bottom: 8px; font-weight: 600;">Cardholder Name</label>
-                    <input
-                        type="text"
-                        id="cardholder_name"
-                        name="cardholder_name"
-                        placeholder="John Doe"
-                        style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                        required
-                    >
                 </div>
             </div>
 
@@ -137,25 +160,32 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                     <h4 style="margin-bottom: 15px; color: #0369a1;">
                         <i class="fas fa-university"></i> Bank Details for EFT Transfer
                     </h4>
-                    
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div>
                             <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Bank Name</label>
-                            <div style="font-weight: 600; color: #1f2937;">FNB</div>
+                            <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['bank_name']); ?></div>
                         </div>
                         <div>
                             <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Account Type</label>
-                            <div style="font-weight: 600; color: #1f2937;">Current Account</div>
+                            <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['account_type']); ?></div>
                         </div>
                         <div>
                             <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Account Number</label>
-                            <div style="font-weight: 600; color: #1f2937;">62123456789</div>
+                            <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['account_number']); ?></div>
                         </div>
                         <div>
                             <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Branch Code</label>
-                            <div style="font-weight: 600; color: #1f2937;">250655</div>
+                            <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['branch_code']); ?></div>
                         </div>
                     </div>
+
+                    <?php if (!empty($bankingDetails['account_holder'])): ?>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Account Holder</label>
+                        <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['account_holder']); ?></div>
+                    </div>
+                    <?php endif; ?>
 
                     <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                         <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Reference (IMPORTANT)</label>
@@ -163,15 +193,17 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                             <?php echo htmlspecialchars(getCurrentUser()['username']); ?>-<?php echo strtoupper($plan); ?>
                         </div>
                         <p style="font-size: 13px; color: #6b7280; margin-top: 8px; margin-bottom: 0;">
-                            Use this exact reference when making the payment so we can identify your transaction.
+                            <?php echo htmlspecialchars($bankingDetails['reference_instruction']); ?>
                         </p>
                     </div>
 
                     <div style="background: #fef3c7; padding: 12px; border-radius: 6px; border-left: 3px solid #f59e0b;">
                         <p style="font-size: 13px; color: #92400e; margin: 0;">
-                            <i class="fas fa-exclamation-triangle"></i> 
-                            <strong>Important:</strong> Your subscription will be activated within 24-48 hours after payment is received. 
-                            Please email proof of payment to <strong>billing@studysmart.co.za</strong>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Important:</strong> Your subscription will be activated within <?php echo htmlspecialchars($bankingDetails['activation_time']); ?> after payment is received.
+                            <?php if (!empty($bankingDetails['email_address'])): ?>
+                                Please email proof of payment to <strong><?php echo htmlspecialchars($bankingDetails['email_address']); ?></strong>
+                            <?php endif; ?>
                         </p>
                     </div>
                 </div>
@@ -230,16 +262,6 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
                 </div>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
-                    <input type="checkbox" required style="margin-top: 4px;">
-                    <span style="font-size: 14px; color: #6b7280;">
-                        I agree to the <a href="#" style="color: #2563eb;">Terms of Service</a> and <a href="#" style="color: #2563eb;">Privacy Policy</a>. 
-                        I authorize the recurring charge of R<?php echo $planDetails['price']; ?>.00 <?php echo $planDetails['period']; ?>.
-                    </span>
-                </label>
-            </div>
-
             <button type="submit" class="btn-primary" id="submitBtn" style="width: 100%; padding: 15px; font-size: 16px; font-weight: 600;">
                 <i class="fas fa-lock"></i> Pay R<?php echo $planDetails['price']; ?>.00 - Subscribe Now
             </button>
@@ -258,75 +280,39 @@ $planDetails = $plans[$plan] ?? $plans['basic'];
 </div>
 
 <script>
-// Format card number with spaces
-document.getElementById('card_number')?.addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\s/g, '');
-    let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-    e.target.value = formatted;
-});
-
-// Format expiry date
-document.getElementById('expiry_date')?.addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-        value = value.slice(0, 2) + '/' + value.slice(2, 4);
-    }
-    e.target.value = value;
-});
-
 // Toggle payment fields
 document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener('change', function() {
         const cardFields = document.getElementById('cardPaymentFields');
         const eftFields = document.getElementById('eftPaymentFields');
         const submitBtn = document.getElementById('submitBtn');
-        
+
         // Hide all fields first
         cardFields.style.display = 'none';
         eftFields.style.display = 'none';
-        
+
         // Remove required from all fields
         cardFields.querySelectorAll('input').forEach(input => input.required = false);
         eftFields.querySelectorAll('input').forEach(input => input.required = false);
-        
+
         // Show and set required based on selection
-        if (this.value === 'card') {
+        if (this.value === 'payfast') {
+            // PayFast - card details will be entered on PayFast gateway
             cardFields.style.display = 'block';
-            cardFields.querySelectorAll('input').forEach(input => input.required = true);
-            submitBtn.innerHTML = '<i class="fas fa-lock"></i> Pay R<?php echo $planDetails['price']; ?>.00 - Subscribe Now';
+            cardFields.querySelectorAll('input').forEach(input => input.required = false);
+            submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Card via PayFast';
         } else if (this.value === 'eft') {
             eftFields.style.display = 'block';
             eftFields.querySelectorAll('input').forEach(input => input.required = true);
             submitBtn.innerHTML = '<i class="fas fa-university"></i> I Have Made the EFT Payment';
-        } else if (this.value === 'paypal') {
-            submitBtn.innerHTML = '<i class="fab fa-paypal"></i> Continue with PayPal';
         }
     });
 });
 
 function validatePayment() {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-    
-    if (paymentMethod === 'card') {
-        const cardNumber = document.getElementById('card_number').value;
-        const expiryDate = document.getElementById('expiry_date').value;
-        const cvv = document.getElementById('cvv').value;
 
-        if (cardNumber.replace(/\s/g, '').length < 15) {
-            alert('Please enter a valid card number');
-            return false;
-        }
-
-        if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
-            alert('Please enter a valid expiry date (MM/YY)');
-            return false;
-        }
-
-        if (cvv.length < 3) {
-            alert('Please enter a valid CVV');
-            return false;
-        }
-    } else if (paymentMethod === 'eft') {
+    if (paymentMethod === 'eft') {
         const eftReference = document.getElementById('eft_reference').value;
         const eftAmount = document.getElementById('eft_amount').value;
         const eftDate = document.getElementById('eft_date').value;
@@ -352,8 +338,8 @@ function validatePayment() {
             return false;
         }
     }
-    // PayPal requires no additional validation
-    
+    // PayFast requires no additional validation
+
     return true;
 }
 </script>

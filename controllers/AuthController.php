@@ -71,6 +71,7 @@ class AuthController {
 
         $error = '';
         $username = '';
+        $email = '';
         $phone = '';
         $otpMethod = 'sms'; // Default to SMS
         $step = $_GET['step'] ?? '1'; // Step 1: Register form, Step 2: OTP verification
@@ -79,6 +80,7 @@ class AuthController {
             if ($step === '1') {
                 // Step 1: Initial registration - send OTP
                 $username = $_POST['username'] ?? '';
+                $email = $_POST['email'] ?? '';
                 $phone = $_POST['phone'] ?? '';
                 $password = $_POST['password'] ?? '';
                 $passwordConfirm = $_POST['password_confirm'] ?? '';
@@ -118,6 +120,7 @@ class AuthController {
                                 // Store registration data in session for step 2
                                 $_SESSION['pending_registration'] = [
                                     'username' => $username,
+                                    'email' => $email,
                                     'phone' => $phone,
                                     'password' => $password,
                                     'otp_method' => $otpMethod
@@ -152,7 +155,7 @@ class AuthController {
                             $userId = $this->userModel->create(
                                 $pendingReg['username'],
                                 $pendingReg['password'],
-                                null,
+                                $pendingReg['email'] ?? null,
                                 $pendingReg['phone']
                             );
                             $this->studentModel->create($userId);
@@ -274,13 +277,14 @@ class AuthController {
      * Send OTP via user's preferred method (WhatsApp or SMS)
      */
     private function sendOtpViaPreferredMethod($phone, $otpCode, $purpose, $method) {
+        $message = "StudySmart: Your verification code for {$purpose} is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes.";
+        
         if ($method === 'whatsapp') {
             // Send via WhatsApp
-            $message = "StudySmart: Your verification code is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes. Do not share this code.";
-            return sendViaTwilio($phone, $message, true); // true = use WhatsApp
+            return sendViaTwilio($phone, $message, true);
         } else {
             // Send via SMS
-            return sendOtpSms($phone, $otpCode, $purpose);
+            return sendViaTwilio($phone, $message, false);
         }
     }
 
@@ -318,6 +322,145 @@ class AuthController {
         $this->sendOtpViaPreferredMethod($pendingReg['phone'], $otpCode, 'registration', $otpMethod);
 
         echo json_encode(['success' => true, 'message' => 'OTP resent successfully. Please check your phone.']);
+        exit;
+    }
+
+    /**
+     * Forgot Password - Multi-step process
+     */
+    public function forgotPassword() {
+        if (isLoggedIn()) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        $error = '';
+        $success = '';
+        $phone = '';
+        $step = $_GET['step'] ?? '1';
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($step === '1') {
+                // Step 1: Request password reset - send OTP
+                $phone = $_POST['phone'] ?? '';
+
+                if (empty($phone)) {
+                    $error = 'Please enter your phone number';
+                } else {
+                    // Check if phone number exists
+                    $user = $this->userModel->findByPhone($phone);
+                    if (!$user) {
+                        $error = 'No account found with this phone number';
+                    } else {
+                        try {
+                            // Generate and send OTP
+                            $otpCode = createOtp($phone, 'password_reset');
+                            $this->sendOtpViaPreferredMethod($phone, $otpCode, 'password_reset', 'sms');
+                            
+                            $success = 'Verification code sent to your phone';
+                            $step = '2';
+                        } catch (Exception $e) {
+                            $error = 'Failed to send verification code. Please try again.';
+                        }
+                    }
+                }
+            } elseif ($step === '2') {
+                // Step 2: Verify OTP
+                $phone = $_POST['phone'] ?? '';
+                $otpCode = $_POST['otp_code'] ?? '';
+
+                if (empty($phone) || empty($otpCode)) {
+                    $error = 'Please enter the verification code';
+                    $step = '2';
+                } else {
+                    $result = verifyOtp($phone, $otpCode, 'password_reset');
+
+                    if ($result['success']) {
+                        // OTP verified - proceed to password reset
+                        $step = '3';
+                    } else {
+                        $error = 'Invalid or expired verification code';
+                        incrementOtpAttempts($phone, $otpCode, 'password_reset');
+                        $step = '2';
+                    }
+                }
+            } elseif ($step === '3') {
+                // Step 3: Set new password
+                $phone = $_POST['phone'] ?? '';
+                $newPassword = $_POST['new_password'] ?? '';
+                $confirmPassword = $_POST['confirm_password'] ?? '';
+
+                if (empty($phone) || empty($newPassword)) {
+                    $error = 'Please fill in all fields';
+                    $step = '3';
+                } elseif (strlen($newPassword) < 8) {
+                    $error = 'Password must be at least 8 characters';
+                    $step = '3';
+                } elseif ($newPassword !== $confirmPassword) {
+                    $error = 'Passwords do not match';
+                    $step = '3';
+                } else {
+                    try {
+                        // Update password
+                        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                        $user = $this->userModel->findByPhone($phone);
+                        
+                        if ($user) {
+                            $this->userModel->update($user['id'], ['password' => $hashedPassword]);
+                            
+                            setFlashMessage('success', 'Password reset successfully! Please login with your new password.');
+                            header('Location: /login');
+                            exit;
+                        } else {
+                            $error = 'User not found';
+                            $step = '3';
+                        }
+                    } catch (Exception $e) {
+                        $error = 'Failed to reset password. Please try again.';
+                        $step = '3';
+                    }
+                }
+            }
+        }
+
+        include __DIR__ . '/../templates/auth/forgot_password.php';
+        exit;
+    }
+
+    /**
+     * Resend OTP for forgot password
+     */
+    public function resendOtpForgotPassword() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Invalid request']);
+            exit;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $phone = $input['phone'] ?? '';
+
+        if (empty($phone)) {
+            echo json_encode(['success' => false, 'message' => 'Phone number required']);
+            exit;
+        }
+
+        // Check cooldown
+        $canResend = canResendOtp($phone, 'password_reset');
+
+        if (!$canResend['can_resend']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Please wait ' . $canResend['wait_time'] . ' seconds before requesting a new code.',
+                'wait_time' => $canResend['wait_time']
+            ]);
+            exit;
+        }
+
+        // Generate and send new OTP
+        $otpCode = createOtp($phone, 'password_reset');
+        $this->sendOtpViaPreferredMethod($phone, $otpCode, 'password_reset', 'sms');
+
+        echo json_encode(['success' => true, 'message' => 'Verification code resent successfully.']);
         exit;
     }
 }

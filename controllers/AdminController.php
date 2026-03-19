@@ -980,8 +980,131 @@ class AdminController {
     public function updateOpenaiSettings() {
         // This would typically update API keys in a config file or environment
         // For now, we'll just show instructions
-        
+
         setFlashMessage('info', 'To add OpenAI credits, visit: <a href="https://platform.openai.com/account/billing" target="_blank">OpenAI Platform</a> and add credits to your account. Your API key is configured in the .env file.');
         header('Location: /admin/openai-settings');
+    }
+
+    /**
+     * Banking Settings - Manage EFT Banking Details
+     */
+    public function bankingSettings() {
+        $db = Database::getInstance()->getConnection();
+
+        // Get current banking details from settings table
+        $bankingDetails = $this->getBankingDetails();
+
+        $pageTitle = 'Banking Settings - StudySmart';
+        $currentPage = 'admin-banking';
+
+        include __DIR__ . '/../templates/pages/admin/banking_settings.php';
+    }
+
+    /**
+     * Update Banking Settings
+     */
+    public function updateBankingSettings() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/banking-settings');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Get and sanitize POST data
+        $bankingData = [
+            'bank_name' => $_POST['bank_name'] ?? '',
+            'account_type' => $_POST['account_type'] ?? '',
+            'account_number' => $_POST['account_number'] ?? '',
+            'branch_code' => $_POST['branch_code'] ?? '',
+            'account_holder' => $_POST['account_holder'] ?? '',
+            'reference_instruction' => $_POST['reference_instruction'] ?? '',
+            'email_address' => $_POST['email_address'] ?? '',
+            'activation_time' => $_POST['activation_time'] ?? '',
+        ];
+
+        // Validate required fields
+        if (empty($bankingData['bank_name']) || empty($bankingData['account_number']) || empty($bankingData['branch_code'])) {
+            setFlashMessage('error', 'Bank name, account number, and branch code are required.');
+            header('Location: /admin/banking-settings');
+            exit;
+        }
+
+        // Save banking details
+        $this->saveBankingDetails($bankingData);
+
+        setFlashMessage('success', 'Banking details updated successfully!');
+        header('Location: /admin/banking-settings');
+        exit;
+    }
+
+    /**
+     * Get banking details from settings table or file
+     */
+    private function getBankingDetails() {
+        $db = Database::getInstance()->getConnection();
+
+        // Default banking details
+        $defaults = [
+            'bank_name' => 'FNB',
+            'account_type' => 'Current Account',
+            'account_number' => '62123456789',
+            'branch_code' => '250655',
+            'account_holder' => 'StudySmart',
+            'reference_instruction' => 'Use your username and plan (e.g., john-basic)',
+            'email_address' => 'billing@studysmart.co.za',
+            'activation_time' => '24-48 hours',
+        ];
+
+        try {
+            // Check if settings table exists
+            $result = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")->fetch();
+            
+            if ($result) {
+                // Get stored settings
+                $storedSettings = $db->query("SELECT * FROM settings WHERE setting_key LIKE 'banking_%'")->fetchAll();
+                
+                foreach ($storedSettings as $setting) {
+                    $key = str_replace('banking_', '', $setting['setting_key']);
+                    if (!empty($setting['setting_value'])) {
+                        $defaults[$key] = $setting['setting_value'];
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // Table doesn't exist, use defaults
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * Save banking details to settings table
+     */
+    private function saveBankingDetails($data) {
+        $db = Database::getInstance()->getConnection();
+
+        try {
+            // Create settings table if it doesn't exist
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS settings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    setting_key TEXT UNIQUE NOT NULL,
+                    setting_value TEXT,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+
+            // Save each setting
+            foreach ($data as $key => $value) {
+                $db->prepare("
+                    INSERT OR REPLACE INTO settings (setting_key, setting_value, updated_at)
+                    VALUES ('banking_' || ?, ?, datetime('now'))
+                ")->execute([$key, $value]);
+            }
+        } catch (Exception $e) {
+            // Log error but don't fail
+            error_log('Failed to save banking settings: ' . $e->getMessage());
+        }
     }
 }

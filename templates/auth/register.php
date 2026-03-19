@@ -208,7 +208,13 @@ $step = $step ?? '1';
             <form method="post" action="/register" id="registerForm">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required placeholder="Choose a username">
+                    <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email <span style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email ?? ''); ?>" >
+                    
                 </div>
 
                 <div class="form-group">
@@ -223,13 +229,13 @@ $step = $step ?? '1';
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="8" placeholder="At least 8 characters">
+                    <input type="password" id="password" name="password" required minlength="8" >
                     <div class="help-text">Must be at least 8 characters</div>
                 </div>
 
                 <div class="form-group">
                     <label for="password_confirm">Confirm Password</label>
-                    <input type="password" id="password_confirm" name="password_confirm" required placeholder="Re-enter password">
+                    <input type="password" id="password_confirm" name="password_confirm" >
                 </div>
 
                 <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); width: 100%; padding: 14px; font-size: 16px; margin-top: 10px;">
