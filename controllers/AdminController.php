@@ -33,7 +33,7 @@ class AdminController {
      */
     public function index() {
         $db = Database::getInstance()->getConnection();
-        
+
         // Get statistics
         $stats = [
             'total_users' => $db->query("SELECT COUNT(*) FROM users")->fetchColumn(),
@@ -42,7 +42,27 @@ class AdminController {
             'total_report_cards' => $db->query("SELECT COUNT(*) FROM report_cards")->fetchColumn(),
             'monthly_revenue' => $db->query("SELECT COALESCE(SUM(price), 0) FROM subscriptions WHERE status = 'active' AND DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn(),
             'new_users_this_month' => $db->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE('now', '-30 days')")->fetchColumn(),
+
+            // OpenAI Usage Statistics (requires openai_usage_logs table - run /add_openai_usage_table.php first)
+            'total_tokens_used' => 0,
+            'tokens_this_month' => 0,
+            'total_api_calls' => 0,
+            'api_calls_this_month' => 0,
         ];
+
+        // Calculate estimated cost only if table exists
+        try {
+            $stats['total_tokens_used'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs")->fetchColumn();
+            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['total_api_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs")->fetchColumn();
+            $stats['api_calls_this_month'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['estimated_cost'] = $stats['total_tokens_used'] * 0.0000006;
+            $stats['estimated_cost_month'] = $stats['tokens_this_month'] * 0.0000006;
+        } catch (Exception $e) {
+            // Table doesn't exist yet - use defaults
+            $stats['estimated_cost'] = 0;
+            $stats['estimated_cost_month'] = 0;
+        }
         
         // Recent users
         $recentUsers = $db->query("
@@ -914,5 +934,54 @@ class AdminController {
 
         setFlashMessage('success', "User '{$userData['username']}' and all associated data deleted successfully");
         header('Location: /admin/users');
+    }
+
+    /**
+     * OpenAI Settings - Manage API keys and credits
+     */
+    public function openaiSettings() {
+        $db = Database::getInstance()->getConnection();
+        
+        // Get usage statistics
+        $stats = [
+            'total_tokens_used' => 0,
+            'tokens_this_month' => 0,
+            'total_api_calls' => 0,
+            'estimated_cost' => 0,
+        ];
+        
+        try {
+            $stats['total_tokens_used'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs")->fetchColumn();
+            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['total_api_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs")->fetchColumn();
+            $stats['estimated_cost'] = $stats['total_tokens_used'] * 0.0000006;
+        } catch (Exception $e) {
+            // Table doesn't exist
+        }
+        
+        // Get recent usage
+        $recentUsage = $db->query("
+            SELECT o.*, u.username
+            FROM openai_usage_logs o
+            LEFT JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+            LIMIT 20
+        ")->fetchAll();
+        
+        $pageTitle = 'OpenAI Settings - StudySmart';
+        $currentPage = 'admin-openai';
+        
+        include __DIR__ . '/../templates/pages/admin/openai_settings.php';
+    }
+
+    /**
+     * Update OpenAI Settings
+     */
+    public function updateOpenaiSettings() {
+        // This would typically update API keys in a config file or environment
+        // For now, we'll just show instructions
+        
+        setFlashMessage('info', 'To add OpenAI credits, visit: <a href="https://platform.openai.com/account/billing" target="_blank">OpenAI Platform</a> and add credits to your account. Your API key is configured in the .env file.');
+        header('Location: /admin/openai-settings');
     }
 }

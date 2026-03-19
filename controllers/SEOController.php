@@ -398,14 +398,35 @@ class SEOController {
      * Get default system prompt for AI
      */
     private function getDefaultSystemPrompt() {
-        return "You are an expert South African CAPS curriculum educator. Create detailed, accurate memorandum answers and study materials for Grade 12 students. Use clear explanations, show all working steps, and include common mistakes to avoid. Format content in HTML with proper headings, lists, and emphasis on key points.";
+        return "You are an expert South African CAPS curriculum educator. Create detailed, accurate memorandum answers and study materials for Grade 12 students.
+
+FORMAT REQUIREMENTS:
+1. For each question: State the full question, then provide the answer, then show step-by-step working
+2. For mathematics: Show ALL calculation steps with explanations
+3. For diagrams: Create ASCII art representations with labels
+4. Use clear headings, bullet points, and numbered lists
+5. Include common mistakes and tips for remembering key concepts
+
+TONE: Educational, encouraging, and suitable for high school students.";
     }
 
     /**
      * Get default user prompt template
      */
     private function getDefaultUserPrompt() {
-        return "Create a comprehensive memorandum/study guide for {subject} {grade_level} covering {topic}. Include:\n1. Clear question and answer format\n2. Step-by-step solutions\n3. Marks allocation\n4. Common mistakes students make\n5. Tips for remembering key concepts\n\nTarget keyword: {target_keyword}\nCurriculum: {curriculum} ({country})";
+        return "Create a comprehensive memorandum/study guide for {subject} {grade_level} covering {topic}.
+
+For EACH question or concept, include:
+1. The complete question/text
+2. Final Answer
+3. Step-by-step solution/explanation showing how to reach the answer
+4. For diagrams: ASCII art representation with labels
+5. Marks allocation (if applicable)
+6. Common mistakes students make
+7. Tips for remembering key concepts
+
+Target keyword: {target_keyword}
+Curriculum: {curriculum} ({country})";
     }
 
     /**

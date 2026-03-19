@@ -55,6 +55,11 @@ $router->get('/test-gd', function() {
     }
 });
 
+// Add OpenAI usage table
+$router->get('/add-openai-usage-table', function() {
+    require __DIR__ . '/../add_openai_usage_table.php';
+});
+
 // Test scan conversion directly
 $router->get('/test-scan-direct', function() {
     require __DIR__ . '/../test-scan-direct.php';
@@ -413,6 +418,8 @@ $router->post('/admin/scripts/delete', 'AdminController@deleteScript');
 $router->get('/admin/report-cards', 'AdminController@reportCards');
 $router->post('/admin/report-cards/delete', 'AdminController@deleteReportCard');
 $router->get('/admin/topics', 'AdminController@topicsMastered');
+$router->get('/admin/openai-settings', 'AdminController@openaiSettings');
+$router->post('/admin/openai-settings/update', 'AdminController@updateOpenaiSettings');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');

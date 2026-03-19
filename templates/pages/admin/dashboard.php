@@ -19,7 +19,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
             <i class="fas fa-arrow-up"></i> <?php echo $stats['new_users_this_month']; ?> new this month
         </div>
     </div>
-    
+
     <div class="stat-card">
         <div class="icon green">
             <i class="fas fa-crown"></i>
@@ -27,7 +27,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
         <div class="value"><?php echo number_format($stats['total_subscriptions']); ?></div>
         <div class="label">Active Subscriptions</div>
     </div>
-    
+
     <div class="stat-card">
         <div class="icon purple">
             <i class="fas fa-file-alt"></i>
@@ -35,7 +35,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
         <div class="value"><?php echo number_format($stats['total_scripts']); ?></div>
         <div class="label">Scripts Uploaded</div>
     </div>
-    
+
     <div class="stat-card">
         <div class="icon orange">
             <i class="fas fa-file-upload"></i>
@@ -43,7 +43,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
         <div class="value"><?php echo number_format($stats['total_report_cards']); ?></div>
         <div class="label">Report Cards</div>
     </div>
-    
+
     <div class="stat-card">
         <div class="icon pink">
             <i class="fas fa-coins"></i>
@@ -51,13 +51,58 @@ include __DIR__ . '/../../layouts/admin_header.php';
         <div class="value">R<?php echo number_format($stats['monthly_revenue'], 2); ?></div>
         <div class="label">Monthly Revenue</div>
     </div>
-    
+
     <div class="stat-card">
         <div class="icon yellow">
             <i class="fas fa-user-plus"></i>
         </div>
         <div class="value"><?php echo $stats['new_users_this_month']; ?></div>
         <div class="label">New Users (30 days)</div>
+    </div>
+
+    <!-- OpenAI Usage Stats -->
+    <div class="stat-card">
+        <div class="icon" style="background: linear-gradient(135deg, #10a37f, #1a7f64);">
+            <i class="fas fa-brain"></i>
+        </div>
+        <div class="value"><?php echo number_format($stats['total_tokens_used']); ?></div>
+        <div class="label">Total Tokens Used</div>
+        <div class="change positive">
+            <i class="fas fa-arrow-up"></i> <?php echo number_format($stats['tokens_this_month']); ?> this month
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="value"><?php echo number_format($stats['total_api_calls']); ?></div>
+        <div class="label">AI API Calls</div>
+        <div class="change positive">
+            <i class="fas fa-arrow-up"></i> <?php echo number_format($stats['api_calls_this_month']); ?> this month
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon" style="background: linear-gradient(135deg, #6b7280, #4b5563);">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="value">$<?php echo number_format($stats['estimated_cost'], 4); ?></div>
+        <div class="label">Est. API Cost (Total)</div>
+        <div class="change">
+            $<?php echo number_format($stats['estimated_cost_month'], 4); ?> this month
+        </div>
+    </div>
+
+    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="window.location.href='/admin/openai-settings'">
+        <div class="icon" style="background: linear-gradient(135deg, #10a37f, #1a7f64);">
+            <i class="fas fa-plus-circle"></i>
+        </div>
+        <div class="value" style="font-size: 18px;">Add Credits</div>
+        <div class="label">OpenAI API Tokens</div>
+        <div class="change positive" style="font-size: 12px;">
+            <i class="fas fa-arrow-right"></i> Click to add more
+        </div>
     </div>
 </div>
 

@@ -46,13 +46,18 @@ class AIHelper {
 
         if ($response) {
             $result = json_decode($response, true);
-            
+
             // Check for API errors
             if (isset($result['error'])) {
                 error_log("OpenAI API Error: " . json_encode($result['error']));
                 return null;
             }
-            
+
+            // Track token usage
+            if (isset($result['usage'])) {
+                $this->logTokenUsage($result['usage']);
+            }
+
             return $result['choices'][0]['message']['content'] ?? null;
         }
 
@@ -64,6 +69,38 @@ class AIHelper {
         }
 
         return null;
+    }
+
+    /**
+     * Log token usage to database
+     */
+    private function logTokenUsage($usage) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Get current user if logged in
+            $userId = null;
+            if (function_exists('getCurrentUser')) {
+                $user = getCurrentUser();
+                if ($user && isset($user['id'])) {
+                    $userId = $user['id'];
+                }
+            }
+            
+            $stmt = $db->prepare("
+                INSERT INTO openai_usage_logs (user_id, prompt_tokens, completion_tokens, total_tokens, created_at)
+                VALUES (?, ?, ?, ?, datetime('now'))
+            ");
+            $stmt->execute([
+                $userId,
+                $usage['prompt_tokens'] ?? 0,
+                $usage['completion_tokens'] ?? 0,
+                $usage['total_tokens'] ?? 0
+            ]);
+        } catch (Exception $e) {
+            // Silently fail - don't break functionality for logging
+            error_log("Failed to log OpenAI usage: " . $e->getMessage());
+        }
     }
 
     /**
@@ -254,7 +291,7 @@ class AIHelper {
         }
 
         // Validate content is not binary/corrupted
-        if (empty($content) || 
+        if (empty($content) ||
             strpos($content, '%PDF-') !== false ||
             strpos($content, '/Type /Catalog') !== false ||
             preg_match('/[^\x20-\x7E\x0A\x0D]{50,}/', $content)) {
@@ -264,18 +301,85 @@ class AIHelper {
 
         $topicsStr = implode(', ', $topics);
         $messages = [
-            ['role' => 'system', 'content' => 'You are an educational assistant that creates concise memorandums summarizing educational content. Do NOT use markdown formatting (no **, ##, **, or other markdown symbols). Write in plain text only. Use simple formatting with clear headings and bullet points without special characters.'],
-            ['role' => 'user', 'content' => "Create a concise memorandum summarizing this educational content focusing on these key topics: {$topicsStr}. Content: " . substr($content, 0, 4000)]
+            ['role' => 'system', 'content' => 'You are an expert educational assistant that creates detailed memorandum answers for exam papers and assignments. Follow these formatting rules STRICTLY:
+
+1. ONE CORRECT ANSWER ONLY:
+   - Provide ONLY ONE final answer per question
+   - Do NOT give conflicting or multiple different answers
+   - If you make a calculation error, correct it before showing the final answer
+   - The answer stated at the top must match the answer at the end
+
+2. COMPLETE COVERAGE:
+   - Answer EVERY question in the content (do not skip any)
+   - If the content has questions 5.1 through 5.5, answer ALL of them
+   - Check that you have covered all sub-questions before finishing
+
+3. STRUCTURE FOR EACH QUESTION:
+   Question [number]: [Full question text]
+   
+   Answer: [ONE clear final answer only]
+   
+   Solution/Explanation:
+   - Show ALL steps clearly
+   - Explain the formula or method used
+   - Include all calculations
+   - Verify the final answer matches what you stated above
+
+4. FOR MATHEMATICAL PROBLEMS:
+   - Write the formula first
+   - Substitute values step-by-step
+   - Show each calculation clearly
+   - State the final answer with units if applicable
+   - DOUBLE-CHECK your calculations before finalizing
+
+5. FOR THEORY QUESTIONS:
+   - Provide clear, complete explanations
+   - Use bullet points for key points
+   - Include examples where helpful
+
+6. FOR DIAGRAMS/DRAWINGS:
+   - Create ASCII art representations when needed
+   - Label all parts clearly
+   - Explain what each part represents
+
+7. FORMATTING:
+   - Do NOT use markdown (no **, ##, etc.)
+   - Use plain text with clear spacing between sections
+   - Use blank lines to separate different questions
+   - Keep formatting clean and consistent
+
+8. QUALITY CHECK BEFORE FINALIZING:
+   - Verify all questions are answered
+   - Verify each answer is consistent (no contradictions)
+   - Verify calculations are correct
+   - Verify the answer matches the solution steps
+
+TONE: Educational, clear, and suitable for high school students.'],
+            ['role' => 'user', 'content' => "Create a comprehensive memorandum for this educational content. The key topics are: {$topicsStr}.
+
+CRITICAL REQUIREMENTS:
+1. Answer EVERY question in the content - do not skip any sub-questions
+2. Provide ONLY ONE correct answer per question (no conflicting answers)
+3. For each question show:
+   - The complete question text
+   - ONE final answer (clearly stated)
+   - Complete step-by-step solution showing how to reach that answer
+4. For diagrams: Create ASCII art representations with labels
+5. Verify all calculations are correct and consistent
+
+IMPORTANT: Before finishing, check that you have answered ALL questions (e.g., if questions go up to 5.5, make sure you answer 5.1, 5.2, 5.3, 5.4, AND 5.5).
+
+Content to process: " . substr($content, 0, 4000)]
         ];
 
-        $response = $this->makeRequest($messages, 300, 0.4);
+        $response = $this->makeRequest($messages, 700, 0.2);
 
-        // Remove any remaining markdown formatting
+        // Clean up any remaining markdown formatting
         if ($response) {
             $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
             $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
             $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
-            $response = str_replace(['**', '__', '_'], '', $response); // Remove any remaining markdown chars
+            $response = str_replace(['**', '__', '```'], '', $response); // Remove any remaining markdown chars
         }
 
         return $response ?: "Memorandum for topics: " . implode(', ', array_slice($topics, 0, 5));
