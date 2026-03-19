@@ -101,11 +101,33 @@ include __DIR__ . '/../layouts/header.php';
 <?php endif; ?>
 
 <div class="scan-container" style="max-width: 800px; margin: 0 auto;">
-    <!-- Upload Area -->
-    <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
-        <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+    <!-- Upload Method Selection -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <!-- Take Photo Now -->
+        <div id="take-photo-btn" style="border: 2px solid #667eea; border-radius: 12px; padding: 30px; text-align: center; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); cursor: pointer; transition: all 0.3s ease;"
+             onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 20px rgba(102, 126, 234, 0.3)'"
+             onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+            <input type="file" id="camera-input" accept="image/*" capture="environment" multiple style="display: none;">
+            <i class="fas fa-camera" style="font-size: 48px; color: #667eea; margin-bottom: 15px;"></i>
+            <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 18px;">Take Photo Now</h3>
+            <p style="color: #64748b; font-size: 13px; margin: 0;">Use your camera to capture images</p>
+        </div>
+
+        <!-- Upload from Device -->
+        <div id="upload-device-btn" style="border: 2px solid #22c55e; border-radius: 12px; padding: 30px; text-align: center; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); cursor: pointer; transition: all 0.3s ease;"
+             onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 20px rgba(34, 197, 94, 0.3)'"
+             onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+            <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+            <i class="fas fa-upload" style="font-size: 48px; color: #22c55e; margin-bottom: 15px;"></i>
+            <h3 style="margin: 0 0 10px 0; color: #1e293b; font-size: 18px;">Upload from Device</h3>
+            <p style="color: #64748b; font-size: 13px; margin: 0;">Choose existing images from your device</p>
+        </div>
+    </div>
+
+    <!-- Upload Area (shown after selection) -->
+    <div class="upload-area" id="upload-area" style="display: none; border: 3px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
         <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #667eea; margin-bottom: 20px;"></i>
-        <h3 style="margin-bottom: 10px; color: #1e293b;">Drop images here or click to upload</h3>
+        <h3 style="margin-bottom: 10px; color: #1e293b;">Drop more images here or click to add more</h3>
         <p style="color: #64748b; font-size: 14px;">Supports: JPG, PNG, GIF, WEBP (Multiple images allowed)</p>
     </div>
 
@@ -200,7 +222,10 @@ include __DIR__ . '/../layouts/header.php';
 
 <script>
 const uploadArea = document.getElementById('upload-area');
-const imageInput = document.getElementById('image-input');
+const cameraInput = document.getElementById('camera-input');
+const fileInput = document.getElementById('file-input');
+const takePhotoBtn = document.getElementById('take-photo-btn');
+const uploadDeviceBtn = document.getElementById('upload-device-btn');
 const previewSection = document.getElementById('preview-section');
 const imagePreviews = document.getElementById('image-previews');
 const imageCount = document.getElementById('image-count');
@@ -223,9 +248,39 @@ let currentScanId = null;
 
 let selectedImages = [];
 
-// Click to upload
+// Take Photo Now - Click to open camera
+takePhotoBtn.addEventListener('click', () => {
+    cameraInput.click();
+});
+
+// Upload from Device - Click to open file picker
+uploadDeviceBtn.addEventListener('click', () => {
+    fileInput.click();
+});
+
+// Camera input change (take photo)
+cameraInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+    handleFiles(files);
+    cameraInput.value = ''; // Reset to allow same file selection
+});
+
+// File input change (upload from device)
+fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+    handleFiles(files);
+    fileInput.value = ''; // Reset to allow same file selection
+});
+
+// Click to upload more (after initial selection)
 uploadArea.addEventListener('click', () => {
-    imageInput.click();
+    // Show a prompt to choose method
+    const useCamera = confirm('Click OK to take a photo with camera, or Cancel to upload from device');
+    if (useCamera) {
+        cameraInput.click();
+    } else {
+        fileInput.click();
+    }
 });
 
 // Drag and drop
@@ -244,21 +299,14 @@ uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.style.borderColor = '#cbd5e1';
     uploadArea.style.background = '#f8fafc';
-    
+
     const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
     handleFiles(files);
 });
 
-// File input change
-imageInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
-    handleFiles(files);
-    imageInput.value = ''; // Reset to allow same file selection
-});
-
 function handleFiles(files) {
     if (files.length === 0) return;
-    
+
     selectedImages = [...selectedImages, ...files];
     updatePreviews();
 }
@@ -675,6 +723,34 @@ async function deleteSavedPdf(id) {
     .scan-container,
     #saved-pdfs-section {
         padding: 0 15px;
+    }
+
+    /* Upload Method Selection - Stack vertically on mobile */
+    .scan-container > div:first-child {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+
+    #take-photo-btn,
+    #upload-device-btn {
+        padding: 20px 15px !important;
+    }
+
+    #take-photo-btn i,
+    #upload-device-btn i {
+        font-size: 36px !important;
+        margin-bottom: 10px !important;
+    }
+
+    #take-photo-btn h3,
+    #upload-device-btn h3 {
+        font-size: 16px !important;
+        margin-bottom: 8px !important;
+    }
+
+    #take-photo-btn p,
+    #upload-device-btn p {
+        font-size: 12px !important;
     }
 
     .upload-area {

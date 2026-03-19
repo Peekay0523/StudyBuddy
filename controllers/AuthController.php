@@ -72,6 +72,7 @@ class AuthController {
         $error = '';
         $username = '';
         $phone = '';
+        $otpMethod = 'sms'; // Default to SMS
         $step = $_GET['step'] ?? '1'; // Step 1: Register form, Step 2: OTP verification
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -81,6 +82,7 @@ class AuthController {
                 $phone = $_POST['phone'] ?? '';
                 $password = $_POST['password'] ?? '';
                 $passwordConfirm = $_POST['password_confirm'] ?? '';
+                $otpMethod = $_POST['otp_method'] ?? 'sms'; // Default to SMS
 
                 if (empty($username) || empty($password) || empty($phone)) {
                     $error = 'Please fill in all fields';
@@ -101,15 +103,26 @@ class AuthController {
                             } else {
                                 // Generate and send OTP
                                 $otpCode = createOtp($phone, 'registration');
-                                sendOtpSms($phone, $otpCode, 'registration');
                                 
+                                // Send via user's preferred method
+                                $sendSuccess = $this->sendOtpViaPreferredMethod($phone, $otpCode, 'registration', $otpMethod);
+                                
+                                if (!$sendSuccess && $otpMethod === 'whatsapp' && defined('FALLBACK_TO_SMS') && FALLBACK_TO_SMS) {
+                                    // Fallback to SMS if WhatsApp fails
+                                    $sendSuccess = sendViaTwilio($phone, "StudySmart: Your verification code is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes.", false);
+                                    if ($sendSuccess) {
+                                        $otpMethod = 'sms'; // Switch to SMS
+                                    }
+                                }
+
                                 // Store registration data in session for step 2
                                 $_SESSION['pending_registration'] = [
                                     'username' => $username,
                                     'phone' => $phone,
-                                    'password' => $password
+                                    'password' => $password,
+                                    'otp_method' => $otpMethod
                                 ];
-                                
+
                                 // Redirect to OTP verification step
                                 header('Location: /register?step=2');
                                 exit;
@@ -228,42 +241,6 @@ class AuthController {
     }
 
     /**
-     * Resend OTP code
-     */
-    public function resendOtp() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /register');
-            exit;
-        }
-
-        $pendingReg = $_SESSION['pending_registration'] ?? null;
-        
-        if (!$pendingReg) {
-            echo json_encode(['success' => false, 'message' => 'Registration session expired. Please start again.']);
-            exit;
-        }
-
-        // Check cooldown
-        $canResend = canResendOtp($pendingReg['phone'], 'registration');
-        
-        if (!$canResend['can_resend']) {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Please wait ' . $canResend['wait_time'] . ' seconds before requesting a new OTP.',
-                'wait_time' => $canResend['wait_time']
-            ]);
-            exit;
-        }
-
-        // Generate and send new OTP
-        $otpCode = createOtp($pendingReg['phone'], 'registration');
-        sendOtpSms($pendingReg['phone'], $otpCode, 'registration');
-
-        echo json_encode(['success' => true, 'message' => 'OTP resent successfully. Please check your phone.']);
-        exit;
-    }
-
-    /**
      * Check if phone number already exists (AJAX endpoint)
      */
     public function checkPhone() {
@@ -273,7 +250,7 @@ class AuthController {
         }
 
         $phone = $_POST['phone'] ?? '';
-        
+
         if (empty($phone)) {
             echo json_encode(['exists' => false, 'message' => '']);
             exit;
@@ -281,15 +258,66 @@ class AuthController {
 
         // Check if phone number exists
         $existingUser = $this->userModel->findByPhone($phone);
-        
+
         if ($existingUser) {
             echo json_encode([
-                'exists' => true, 
+                'exists' => true,
                 'message' => 'This phone number is already registered. Please use a different number or login.'
             ]);
         } else {
             echo json_encode(['exists' => false, 'message' => '']);
         }
+        exit;
+    }
+
+    /**
+     * Send OTP via user's preferred method (WhatsApp or SMS)
+     */
+    private function sendOtpViaPreferredMethod($phone, $otpCode, $purpose, $method) {
+        if ($method === 'whatsapp') {
+            // Send via WhatsApp
+            $message = "StudySmart: Your verification code is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes. Do not share this code.";
+            return sendViaTwilio($phone, $message, true); // true = use WhatsApp
+        } else {
+            // Send via SMS
+            return sendOtpSms($phone, $otpCode, $purpose);
+        }
+    }
+
+    /**
+     * Resend OTP via original method
+     */
+    public function resendOtp() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /register');
+            exit;
+        }
+
+        $pendingReg = $_SESSION['pending_registration'] ?? null;
+
+        if (!$pendingReg) {
+            echo json_encode(['success' => false, 'message' => 'Registration session expired. Please start again.']);
+            exit;
+        }
+
+        // Check cooldown
+        $canResend = canResendOtp($pendingReg['phone'], 'registration');
+
+        if (!$canResend['can_resend']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Please wait ' . $canResend['wait_time'] . ' seconds before requesting a new OTP.',
+                'wait_time' => $canResend['wait_time']
+            ]);
+            exit;
+        }
+
+        // Generate and send new OTP via original method
+        $otpMethod = $pendingReg['otp_method'] ?? 'sms';
+        $otpCode = createOtp($pendingReg['phone'], 'registration');
+        $this->sendOtpViaPreferredMethod($pendingReg['phone'], $otpCode, 'registration', $otpMethod);
+
+        echo json_encode(['success' => true, 'message' => 'OTP resent successfully. Please check your phone.']);
         exit;
     }
 }

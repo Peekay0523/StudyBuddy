@@ -3,6 +3,11 @@
  * OTP (One-Time Password) Configuration and Helper Functions
  */
 
+// Prevent multiple definitions
+if (defined('OTP_LENGTH')) {
+    return;
+}
+
 require_once __DIR__ . '/database.php';
 
 // OTP Settings
@@ -13,22 +18,22 @@ define('OTP_RESEND_COOLDOWN_SECONDS', 60);
 
 // SMS/WhatsApp Service Configuration
 // Get these from: https://console.twilio.com/
-define('TWILIO_ACCOUNT_SID', getenv('TWILIO_ACCOUNT_SID') ?: 'YOUR_TWILIO_SID');
-define('TWILIO_AUTH_TOKEN', getenv('TWILIO_AUTH_TOKEN') ?: 'YOUR_TWILIO_TOKEN');
-define('TWILIO_PHONE_NUMBER', getenv('TWILIO_PHONE_NUMBER') ?: '+1234567890'); // Your Twilio number
-define('TWILIO_WHATSAPP_NUMBER', getenv('TWILIO_WHATSAPP_NUMBER') ?: 'whatsapp:+1234567890'); // WhatsApp-enabled number
-define('SMS_SERVICE', 'twilio'); // Options: 'twilio', 'africastalking', 'clicksend'
+if (!defined('TWILIO_ACCOUNT_SID')) define('TWILIO_ACCOUNT_SID', getenv('TWILIO_ACCOUNT_SID') ?: 'YOUR_TWILIO_SID');
+if (!defined('TWILIO_AUTH_TOKEN')) define('TWILIO_AUTH_TOKEN', getenv('TWILIO_AUTH_TOKEN') ?: 'YOUR_TWILIO_TOKEN');
+if (!defined('TWILIO_PHONE_NUMBER')) define('TWILIO_PHONE_NUMBER', getenv('TWILIO_PHONE_NUMBER') ?: '+1234567890'); // Your Twilio number
+if (!defined('TWILIO_WHATSAPP_NUMBER')) define('TWILIO_WHATSAPP_NUMBER', getenv('TWILIO_WHATSAPP_NUMBER') ?: 'whatsapp:+1234567890'); // WhatsApp-enabled number
+if (!defined('SMS_SERVICE')) define('SMS_SERVICE', 'twilio'); // Options: 'twilio', 'africastalking', 'clicksend'
 
 // Alternative: Africa's Talking (Popular in Africa)
 // Get from: https://africastalking.com/
-define('AT_USERNAME', getenv('AT_USERNAME') ?: 'sandbox');
-define('AT_API_KEY', getenv('AT_API_KEY') ?: 'YOUR_AT_API_KEY');
-define('AT_SHORTCODE', getenv('AT_SHORTCODE') ?: 'YOUR_AT_SHORTCODE');
+if (!defined('AT_USERNAME')) define('AT_USERNAME', getenv('AT_USERNAME') ?: 'sandbox');
+if (!defined('AT_API_KEY')) define('AT_API_KEY', getenv('AT_API_KEY') ?: 'YOUR_AT_API_KEY');
+if (!defined('AT_SHORTCODE')) define('AT_SHORTCODE', getenv('AT_SHORTCODE') ?: 'YOUR_AT_SHORTCODE');
 
 // Alternative: ClickSend (Global SMS)
 // Get from: https://www.clicksend.com/
-define('CLICKSEND_USERNAME', getenv('CLICKSEND_USERNAME') ?: 'YOUR_CLICKSEND_USERNAME');
-define('CLICKSEND_API_KEY', getenv('CLICKSEND_API_KEY') ?: 'YOUR_CLICKSEND_KEY');
+if (!defined('CLICKSEND_USERNAME')) define('CLICKSEND_USERNAME', getenv('CLICKSEND_USERNAME') ?: 'YOUR_CLICKSEND_USERNAME');
+if (!defined('CLICKSEND_API_KEY')) define('CLICKSEND_API_KEY', getenv('CLICKSEND_API_KEY') ?: 'YOUR_CLICKSEND_KEY');
 
 /**
  * Create OTP table if it doesn't exist

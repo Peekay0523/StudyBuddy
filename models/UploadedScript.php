@@ -27,7 +27,15 @@ class UploadedScript {
     }
     
     public function findByStudentId($studentId) {
-        $stmt = $this->db->prepare("SELECT * FROM uploaded_scripts WHERE student_id = ? ORDER BY uploaded_at DESC");
+        $stmt = $this->db->prepare("
+            SELECT 
+                us.*,
+                CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as has_memorandum
+            FROM uploaded_scripts us
+            LEFT JOIN memorandums m ON us.id = m.script_id
+            WHERE us.student_id = ?
+            ORDER BY us.uploaded_at DESC
+        ");
         $stmt->execute([$studentId]);
         return $stmt->fetchAll();
     }

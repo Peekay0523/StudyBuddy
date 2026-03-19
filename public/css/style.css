@@ -527,6 +527,159 @@ body {
     opacity: 0.9;
 }
 
+.btn-secondary {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    min-height: 48px;
+    min-width: 44px;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.btn-back {
+    display: inline-block;
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    color: white;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+}
+
+.btn-back:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #1f2937;
+}
+
+.modal-body {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.modal-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.btn-download-format {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-download-format:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-download-pdf {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-download-pdf:hover {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-download-docx {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.btn-download-docx:hover {
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.modal-format-grid {
+    display: grid;
+    gap: 15px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
 /* Auth Pages */
 .auth-container {
     display: flex;
@@ -841,6 +994,19 @@ body {
     opacity: 0.9;
 }
 
+.btn-sm-secondary {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+    color: white;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.btn-sm-secondary:hover {
+    opacity: 0.9;
+}
+
 .btn-sm-danger {
     background: linear-gradient(135deg, #dc2626, #ef4444);
     color: white;
@@ -883,15 +1049,13 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 20px;
 }
 
 .memo-header h3 {
     color: #1f2937;
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     gap: 10px;

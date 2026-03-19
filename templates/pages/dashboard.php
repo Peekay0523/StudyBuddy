@@ -4,52 +4,94 @@ $currentPage = 'dashboard';
 include __DIR__ . '/../layouts/header.php';
 ?>
 
-<!-- Subscription Plan Card -->
-<div style="background: linear-gradient(135deg, <?php echo $planBadge === 'premium' ? '#fbbf24 0%, #f59e0b 100%' : ($planBadge === 'trial' ? '#10b981 0%, #059669 100%' : ($planBadge === 'basic' ? '#3b82f6 0%, #2563eb 100%' : '#6b7280 0%, #4b5563 100%')); ?>); color: white; padding: 25px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+<!-- Subscription Plan Card - Clickable -->
+<div id="plan-info-card" style="background: linear-gradient(135deg, <?php echo $planBadge === 'premium' ? '#fbbf24 0%, #f59e0b 100%' : ($planBadge === 'trial' ? '#10b981 0%, #059669 100%' : ($planBadge === 'basic' ? '#3b82f6 0%, #2563eb 100%' : '#6b7280 0%, #4b5563 100%')); ?>); color: white; padding: 20px 25px; border-radius: 16px; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.3s ease; display: inline-block;"
+     onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 14px 50px rgba(0,0,0,0.2)'"
+     onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 10px 40px rgba(0,0,0,0.15)'"
+     onclick="showPlanDetailsModal()">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-crown" style="font-size: 28px;"></i>
         <div>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <i class="fas fa-crown" style="font-size: 28px;"></i>
-                <h2 style="margin: 0; font-size: 24px;"><?php echo htmlspecialchars($planName); ?> Plan</h2>
-                <?php if ($planBadge === 'trial'): ?>
-                    <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">FREE TRIAL</span>
-                <?php endif; ?>
-            </div>
-            <p style="margin: 0; opacity: 0.9; font-size: 14px;">
-                <?php if ($trialEnds): ?>
-                    <i class="fas fa-clock"></i> Trial ends: <?php echo date('M d, Y', strtotime($trialEnds)); ?>
-                    <br><small>After trial, you'll be moved to Free plan. <a href="/subscription" style="color: white; text-decoration: underline;">Upgrade now</a></small>
-                <?php elseif ($planBadge !== 'free'): ?>
-                    <i class="fas fa-check-circle"></i> Active subscription
-                    <br><small><a href="/subscription" style="color: white; text-decoration: underline;">Manage subscription</a></small>
-                <?php else: ?>
-                    <i class="fas fa-info-circle"></i> Free plan with limited features
-                    <br><small><a href="/subscription" style="color: white; text-decoration: underline;">Upgrade to unlock more features</a></small>
-                <?php endif; ?>
-            </p>
+            <h2 style="margin: 0; font-size: 20px;"><?php echo htmlspecialchars($planName); ?> Plan</h2>
+            <?php if ($planBadge === 'trial'): ?>
+                <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 11px;">FREE TRIAL</span>
+            <?php endif; ?>
         </div>
-        <div>
-            <a href="/subscription" style="background: white; color: <?php echo $planBadge === 'premium' ? '#f59e0b' : ($planBadge === 'trial' ? '#059669' : ($planBadge === 'basic' ? '#2563eb' : '#4b5563')); ?>; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
-                <i class="fas fa-arrow-right"></i> <?php echo $planBadge === 'free' ? 'Upgrade Now' : 'Manage Plan'; ?>
-            </a>
-        </div>
+        <i class="fas fa-chevron-right" style="margin-left: auto; opacity: 0.8;"></i>
     </div>
-    
-    <?php if (!empty($planFeatures)): ?>
-    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
-        <h4 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-check-circle"></i> Your Plan Features:</h4>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-            <?php foreach ($planFeatures as $feature): ?>
-                <div style="font-size: 13px; opacity: 0.9;">
-                    <i class="fas fa-check" style="margin-right: 6px;"></i><?php echo htmlspecialchars($feature); ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
 </div>
 
-<div class="badge">✨ AI-Powered Learning</div>
+<!-- Plan Details Modal -->
+<div id="plan-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 500px; width: 90%; position: relative; max-height: 80vh; overflow-y: auto;">
+        <button onclick="closePlanDetailsModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+            &times;
+        </button>
+
+        <div style="background: linear-gradient(135deg, <?php echo $planBadge === 'premium' ? '#fbbf24 0%, #f59e0b 100%' : ($planBadge === 'trial' ? '#10b981 0%, #059669 100%' : ($planBadge === 'basic' ? '#3b82f6 0%, #2563eb 100%' : '#6b7280 0%, #4b5563 100%')); ?>); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fas fa-crown" style="font-size: 24px;"></i>
+                <h3 style="margin: 0; font-size: 20px;"><?php echo htmlspecialchars($planName); ?> Plan</h3>
+                <?php if ($planBadge === 'trial'): ?>
+                    <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 16px; font-size: 11px;">FREE TRIAL</span>
+                <?php endif; ?>
+            </div>
+            <?php if ($trialEnds): ?>
+                <p style="margin: 0; opacity: 0.9; font-size: 13px;">
+                    <i class="fas fa-clock"></i> Trial ends: <?php echo date('M d, Y', strtotime($trialEnds)); ?>
+                    <br><small>After trial, you'll be moved to Free plan. Upgrade now!</small>
+                </p>
+            <?php endif; ?>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <a href="/subscription" class="btn-primary" style="display: block; text-align: center; text-decoration: none;">
+                <i class="fas fa-cog"></i> Manage Plan
+            </a>
+        </div>
+
+        <?php if (!empty($planFeatures)): ?>
+        <div>
+            <h4 style="margin: 0 0 15px 0; font-size: 16px; color: #1e293b;">
+                <i class="fas fa-check-circle" style="color: #10b981;"></i> Your Plan Features:
+            </h4>
+            <div style="display: grid; gap: 10px;">
+                <?php foreach ($planFeatures as $feature): ?>
+                    <div style="font-size: 14px; color: #64748b; padding: 10px; background: #f8fafc; border-radius: 8px;">
+                        <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i><?php echo htmlspecialchars($feature); ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script>
+function showPlanDetailsModal() {
+    document.getElementById('plan-details-modal').style.display = 'flex';
+}
+
+function closePlanDetailsModal() {
+    document.getElementById('plan-details-modal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('plan-details-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePlanDetailsModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePlanDetailsModal();
+    }
+});
+</script>
+
+
 
 <!-- Main Header with Invite Friends - Inline Layout -->
 <div class="dashboard-header-grid" style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin-bottom: 30px;">

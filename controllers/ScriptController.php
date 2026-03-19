@@ -279,6 +279,12 @@ class ScriptController {
 
         $memorandum = $this->memorandumModel->findByScriptId($scriptId);
 
+        if (!$memorandum) {
+            setFlashMessage('error', 'No memorandum found for this script. Please generate one first.');
+            header('Location: /upload-script');
+            exit;
+        }
+
         include __DIR__ . '/../templates/pages/view_memorandum.php';
     }
 
@@ -424,34 +430,305 @@ class ScriptController {
     }
 
     public function downloadMemorandum($scriptId) {
+        // Debug logging
+        error_log("Download request for script ID: $scriptId");
+        error_log("Format: " . ($_GET['format'] ?? 'not set'));
+        
+        // Start output buffering to prevent any whitespace issues
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        ob_start();
+        
         requireLogin();
 
         $student = getCurrentStudent();
+        error_log("Current student ID: " . ($student['id'] ?? 'NOT FOUND'));
+        
         $script = $this->scriptModel->findById($scriptId);
+        error_log("Script found: " . ($script ? 'YES' : 'NO'));
 
         if (!$script || $script['student_id'] != $student['id']) {
+            error_log("Script not found or student mismatch");
             header('Location: /dashboard');
             exit;
         }
 
         $memorandum = $this->memorandumModel->findByScriptId($scriptId);
+        error_log("Memorandum found: " . ($memorandum ? 'YES' : 'NO'));
 
         if (!$memorandum) {
+            error_log("Memorandum not found for script ID: $scriptId");
             header('Location: /dashboard');
             exit;
         }
 
-        // Generate PDF using TCPDF or similar library
-        // For now, create a simple text file
-        $fileName = 'memorandum_' . $script['id'] . '_' . uniqid() . '.txt';
-        $filePath = UPLOAD_DIR_SCRIPTS . $fileName;
+        // Get format from query parameter (default to pdf)
+        $format = $_GET['format'] ?? 'pdf';
+        $format = strtolower($format);
+        error_log("Format selected: $format");
 
-        file_put_contents($filePath, $memorandum['content']);
+        // Clean the title for filename
+        $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $script['title']);
 
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-        readfile($filePath);
+        if ($format === 'docx') {
+            error_log("Calling downloadMemorandumAsDocx");
+            $this->downloadMemorandumAsDocx($memorandum, $safeTitle);
+        } else {
+            error_log("Calling downloadMemorandumAsPdf");
+            $this->downloadMemorandumAsPdf($memorandum, $safeTitle);
+        }
+
+        ob_end_flush();
         exit;
+    }
+
+    private function downloadMemorandumAsPdf($memorandum, $safeTitle) {
+        // Get the script data for additional info
+        $script = $this->scriptModel->findById($memorandum['script_id']);
+
+        // Create HTML content for PDF
+        $htmlContent = $this->getMemorandumHtml($memorandum, $script);
+
+        // Use TCPDF or Dompdf if available, otherwise create a simple PDF
+        if (class_exists('\TCPDF')) {
+            // Use TCPDF
+            $pdf = new \TCPDF();
+            $pdf->SetCreator('StudySmart');
+            $pdf->SetAuthor('StudySmart AI');
+            $pdf->SetTitle('Memorandum - ' . $script['title']);
+            $pdf->AddPage();
+            $pdf->writeHTML($htmlContent);
+
+            $fileName = 'memorandum_' . $safeTitle . '.pdf';
+            $pdf->Output($fileName, 'D');
+        } elseif (class_exists('\Dompdf\Dompdf')) {
+            // Use Dompdf
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($htmlContent);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $fileName = 'memorandum_' . $safeTitle . '.pdf';
+            $dompdf->stream($fileName);
+        } else {
+            // Fallback: Download as HTML file (can be opened in browser and printed to PDF)
+            $fileName = 'memorandum_' . $safeTitle . '.html';
+
+            // Clear any existing buffers
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            header('Content-Type: text/html; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            header('Cache-Control: max-age=0');
+            header('Content-Length: ' . strlen($htmlContent));
+
+            echo $htmlContent;
+        }
+    }
+
+    private function downloadMemorandumAsDocx($memorandum, $safeTitle) {
+        // Get the script data for additional info
+        $script = $this->scriptModel->findById($memorandum['script_id']);
+
+        // Create DOCX file using PHPWord if available
+        if (class_exists('\PhpOffice\PhpWord\PhpWord')) {
+            $phpWord = new \PhpOffice\PhpWord\PhpWord();
+            $section = $phpWord->addSection();
+
+            // Add title
+            $section->addText('Memorandum', ['size' => 16, 'bold' => true]);
+            $section->addTextBreak(1);
+
+            // Add script info
+            if ($script) {
+                $section->addText('Subject: ' . ($script['subject'] ?? 'N/A') .
+                                 ' | Grade Level: ' . ($script['grade_level'] ?? 'N/A'),
+                                 ['size' => 10, 'color' => '666666']);
+                $section->addTextBreak(2);
+            }
+
+            // Add content with proper formatting
+            $content = $memorandum['content'];
+            $lines = explode("\n", $content);
+
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+                if (empty($trimmedLine)) {
+                    $section->addTextBreak(1);
+                } elseif (strpos($trimmedLine, '# ') === 0) {
+                    $section->addText(substr($trimmedLine, 2), ['size' => 14, 'bold' => true]);
+                } elseif (strpos($trimmedLine, '## ') === 0) {
+                    $section->addText(substr($trimmedLine, 3), ['size' => 12, 'bold' => true]);
+                } elseif (strpos($trimmedLine, '- ') === 0 || strpos($trimmedLine, '* ') === 0) {
+                    $section->addListItem(substr($trimmedLine, 2), ['size' => 11]);
+                } else {
+                    $section->addText($trimmedLine, ['size' => 11]);
+                }
+            }
+
+            $fileName = 'memorandum_' . $safeTitle . '.docx';
+            $filePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $fileName;
+
+            $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($filePath);
+
+            // Clear any existing buffers
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            header('Content-Length: ' . filesize($filePath));
+            readfile($filePath);
+            @unlink($filePath);
+        } else {
+            // Fallback: Create simple HTML document that opens in Word
+            $content = $memorandum['content'];
+            $lines = explode("\n", $content);
+            $formattedContent = '';
+            
+            foreach ($lines as $line) {
+                $trimmedLine = trim($line);
+                if (empty($trimmedLine)) {
+                    $formattedContent .= '<br>';
+                } elseif (strpos($trimmedLine, '# ') === 0) {
+                    $formattedContent .= '<h2>' . htmlspecialchars(substr($trimmedLine, 2)) . '</h2>';
+                } elseif (strpos($trimmedLine, '## ') === 0) {
+                    $formattedContent .= '<h3>' . htmlspecialchars(substr($trimmedLine, 3)) . '</h3>';
+                } elseif (strpos($trimmedLine, '- ') === 0 || strpos($trimmedLine, '* ') === 0) {
+                    $formattedContent .= '<li>' . htmlspecialchars(substr($trimmedLine, 2)) . '</li>';
+                } else {
+                    $formattedContent .= '<p>' . htmlspecialchars($trimmedLine) . '</p>';
+                }
+            }
+            
+            $formattedContent = preg_replace('/(<li>.*<\/li>)/s', '<ul>$1</ul>', $formattedContent);
+            $formattedContent = str_replace('</ul><ul>', '', $formattedContent);
+            
+            $subject = htmlspecialchars($script['subject'] ?? 'N/A');
+            $gradeLevel = htmlspecialchars($script['grade_level'] ?? 'N/A');
+            
+            $htmlContent = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Memorandum - {$script['title']}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        h2 { font-size: 18px; margin-top: 20px; }
+        h3 { font-size: 16px; margin-top: 15px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        .meta { color: #666; font-size: 14px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Memorandum</h1>
+    <p class="meta"><strong>Subject:</strong> $subject | <strong>Grade Level:</strong> $gradeLevel</p>
+    $formattedContent
+</body>
+</html>
+HTML;
+
+            $fileName = 'memorandum_' . $safeTitle . '.doc';
+
+            // Clear any existing buffers
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            header('Content-Type: application/msword');
+            header('Content-Disposition: attachment; filename="' . $fileName . '"');
+            header('Cache-Control: max-age=0');
+            header('Content-Length: ' . strlen($htmlContent));
+            
+            echo $htmlContent;
+        }
+    }
+
+    private function getMemorandumHtml($memorandum, $script = null) {
+        $content = $memorandum['content'];
+        
+        // Convert newlines to paragraphs and handle formatting
+        $lines = explode("\n", $content);
+        $formattedContent = '';
+        
+        foreach ($lines as $line) {
+            $trimmedLine = trim($line);
+            if (empty($trimmedLine)) {
+                $formattedContent .= '<br>';
+            } elseif (strpos($trimmedLine, '# ') === 0) {
+                // Heading level 1
+                $formattedContent .= '<h2>' . htmlspecialchars(substr($trimmedLine, 2)) . '</h2>';
+            } elseif (strpos($trimmedLine, '## ') === 0) {
+                // Heading level 2
+                $formattedContent .= '<h3>' . htmlspecialchars(substr($trimmedLine, 3)) . '</h3>';
+            } elseif (strpos($trimmedLine, '- ') === 0 || strpos($trimmedLine, '* ') === 0) {
+                // Bullet point
+                $formattedContent .= '<li>' . htmlspecialchars(substr($trimmedLine, 2)) . '</li>';
+            } else {
+                // Regular paragraph
+                $formattedContent .= '<p>' . htmlspecialchars($trimmedLine) . '</p>';
+            }
+        }
+        
+        // Wrap bullet points in unordered list
+        $formattedContent = preg_replace('/(<li>.*<\/li>)/s', '<ul>$1</ul>', $formattedContent);
+        $formattedContent = str_replace('</ul><ul>', '', $formattedContent);
+
+        $scriptInfo = '';
+        if ($script) {
+            $scriptInfo = '<p><strong>Subject:</strong> ' . htmlspecialchars($script['subject'] ?? 'N/A') . 
+                         ' | <strong>Grade Level:</strong> ' . htmlspecialchars($script['grade_level'] ?? 'N/A') . '</p>';
+        }
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; color: #333; }
+        h1 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; font-size: 24px; }
+        h2 { color: #1f2937; font-size: 18px; margin-top: 20px; }
+        h3 { color: #1f2937; font-size: 16px; margin-top: 15px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+        br { line-height: 1.6; }
+        .meta { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Memorandum</h1>
+    $scriptInfo
+    $formattedContent
+</body>
+</html>
+HTML;
+    }
+
+    private function createSimplePdf($memorandum) {
+        // Basic PDF structure (minimal valid PDF)
+        $content = $memorandum['content'];
+        $escapeContent = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $content);
+        
+        $pdf = "%PDF-1.4\n";
+        $pdf .= "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+        $pdf .= "2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n";
+        $pdf .= "3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n";
+        $pdf .= "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
+        $pdf .= "5 0 obj\n<< /Length " . strlen($escapeContent) . " >>\nstream\nBT /F1 12 Tf 50 750 Td (" . $escapeContent . ") Tj ET\nendstream\nendobj\n";
+        $pdf .= "xref\n0 6\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000214 00000 n\n0000000281 00000 n\n";
+        $pdf .= "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" . (strlen($pdf) + 50) . "\n%%EOF";
+        
+        return $pdf;
     }
 
     /**

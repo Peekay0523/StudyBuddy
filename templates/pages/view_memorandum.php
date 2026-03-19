@@ -1,11 +1,15 @@
 <?php
 $pageTitle = 'View Memorandum - StudySmart';
 $currentPage = 'scripts';
+$scriptId = $script['id'];
+$scriptTitle = addslashes($script['title']);
 $extraScripts = <<<EOT
 <script>
 let synthesis = window.speechSynthesis;
 let isSpeaking = false;
 let currentUtterance = null;
+const SCRIPT_ID = $scriptId;
+const SCRIPT_TITLE = "$scriptTitle";
 
 function preprocessMathForSpeech(text) {
     // Replace mathematical symbols with spoken words
@@ -18,26 +22,26 @@ function preprocessMathForSpeech(text) {
     // Replace division symbols
     processed = processed.replace(/\s*÷\s*/g, " divided by ");
     processed = processed.replace(/\s*\//g, " divided by ");
-    
+
     // Replace multiplication symbols
     processed = processed.replace(/\s*×\s*/g, " times ");
     processed = processed.replace(/\s*\*/g, " times ");
     processed = processed.replace(/\s*·\s*/g, " times ");
-    
+
     // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
     processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "\$1 plus \$2");
     processed = processed.replace(/(\d)\s*-\s*(\d)/g, "\$1 minus \$2");
     processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "\$1 plus \$2");
     processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "\$1 minus \$2");
-    
+
     // Replace equals
     processed = processed.replace(/\s*=\s*/g, " equals ");
-    
+
     // Replace inequality symbols
     processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
     processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
     processed = processed.replace(/\s*≠\s*/g, " not equal to ");
-    
+
     // Remove parentheses silently (don't announce them for regular text)
     processed = processed.split("(").join("");
     processed = processed.split(")").join("");
@@ -45,44 +49,44 @@ function preprocessMathForSpeech(text) {
     // Remove square brackets silently
     processed = processed.split("[").join("");
     processed = processed.split("]").join("");
-    
+
     // Replace exponents
     processed = processed.replace(/\^(\d+)/g, " to the power of \$1 ");
-    
+
     // Replace square root
     processed = processed.replace(/√/g, " square root of ");
-    
+
     // Replace pi
     processed = processed.replace(/π/g, " pi ");
-    
+
     // Replace percentage
     processed = processed.replace(/%/g, " percent ");
-    
+
     // Replace degree symbol
     processed = processed.replace(/°/g, " degrees ");
-    
+
     // Replace angle symbol
     processed = processed.replace(/∠/g, " angle ");
-    
+
     // Replace therefore symbol
     processed = processed.replace(/∴/g, " therefore ");
-    
+
     // Replace because symbol
     processed = processed.replace(/∵/g, " because ");
-    
+
     // Replace infinity
     processed = processed.replace(/∞/g, " infinity ");
-    
+
     // Replace less than and greater than (only in math context with numbers)
     processed = processed.replace(/(\d)\s*</g, "\$1 less than ");
     processed = processed.replace(/>/g, " greater than ");
-    
+
     // Replace "m =" with "m equals" for gradient context
     processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "\$1 equals ");
-    
+
     // Clean up multiple spaces
     processed = processed.replace(/\s+/g, " ").trim();
-    
+
     return processed;
 }
 
@@ -167,6 +171,43 @@ window.addEventListener("beforeunload", () => {
         synthesis.cancel();
     }
 });
+
+// Download memorandum with format selection
+function downloadMemorandum(format) {
+    const scriptId = SCRIPT_ID;
+    const scriptTitle = SCRIPT_TITLE;
+
+    // Show format selection modal
+    const modal = document.getElementById("download-format-modal");
+    modal.style.display = "flex";
+
+    // Set up download buttons
+    document.getElementById("download-pdf-btn").onclick = function() {
+        window.open("/download-memorandum/" + scriptId + "?format=pdf", "_blank");
+        modal.style.display = "none";
+    };
+
+    document.getElementById("download-docx-btn").onclick = function() {
+        window.open("/download-memorandum/" + scriptId + "?format=docx", "_blank");
+        modal.style.display = "none";
+    };
+}
+
+function closeDownloadModal() {
+    document.getElementById("download-format-modal").style.display = "none";
+}
+
+// Close modal when clicking outside
+document.addEventListener("DOMContentLoaded", function() {
+    const modal = document.getElementById("download-format-modal");
+    if (modal) {
+        modal.addEventListener("click", function(e) {
+            if (e.target === modal) {
+                closeDownloadModal();
+            }
+        });
+    }
+});
 </script>
 EOT;
 include __DIR__ . '/../layouts/header.php';
@@ -175,18 +216,23 @@ include __DIR__ . '/../layouts/header.php';
 <h1 class="title">Memorandum</h1>
 <p class="subtitle">AI-generated summary for: <?php echo htmlspecialchars($script['title']); ?></p>
 
-<a href="/dashboard" class="btn-primary" style="text-decoration: none; display: inline-block; margin-bottom: 20px;">
+<a href="/dashboard" class="btn-back">
     <i class="fas fa-arrow-left"></i> Back to Dashboard
 </a>
 
 <div class="feature-card" style="max-width: 800px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin: 0;">
+    <div class="memo-header">
+        <h3>
             <i class="fas fa-file-alt"></i> <?php echo htmlspecialchars($script['title']); ?>
         </h3>
-        <button id="speech-btn" class="btn-primary" onclick="toggleSpeech()">
-            <i class="fas fa-volume-high" id="speech-icon"></i> Recite Memorandum
-        </button>
+        <div class="memo-actions">
+            <button onclick="downloadMemorandum()" class="btn-secondary">
+                <i class="fas fa-download"></i> Download
+            </button>
+            <button id="speech-btn" class="btn-primary" onclick="toggleSpeech()">
+                <i class="fas fa-volume-high" id="speech-icon"></i> Recite Memorandum
+            </button>
+        </div>
     </div>
 
     <div style="margin-bottom: 20px;">
@@ -226,6 +272,39 @@ include __DIR__ . '/../layouts/header.php';
     <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-book"></i> Memorandum Content</h4>
     <div id="memo-content" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
         <?php echo htmlspecialchars($memorandum['content'] ?? 'No memorandum available.'); ?>
+    </div>
+</div>
+
+<!-- Download Format Selection Modal -->
+<div id="download-format-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>
+                <i class="fas fa-download" style="color: #667eea;"></i> Download Memorandum
+            </h3>
+            <button onclick="closeDownloadModal()" class="modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="color: #6b7280; margin-bottom: 20px;">Choose your preferred format:</p>
+            <div class="modal-format-grid">
+                <button id="download-pdf-btn" class="btn-download-format btn-download-pdf">
+                    <i class="fas fa-file-pdf"></i> PDF Format
+                </button>
+                <button id="download-docx-btn" class="btn-download-format btn-download-docx">
+                    <i class="fas fa-file-word"></i> Word Format
+                </button>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 15px;">
+                <i class="fas fa-info-circle"></i> PDF downloads as HTML (open in browser, then print to PDF)
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDownloadModal()" class="btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
     </div>
 </div>
 

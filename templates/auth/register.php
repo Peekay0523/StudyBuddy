@@ -218,6 +218,9 @@ $step = $step ?? '1';
                     <div id="phone-validation-message" class="validation-message" style="display: none;"></div>
                 </div>
 
+                <!-- OTP method is now SMS by default, no selection shown to user -->
+                <input type="hidden" name="otp_method" value="sms">
+
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" required minlength="8" placeholder="At least 8 characters">
@@ -245,7 +248,9 @@ $step = $step ?? '1';
             ?>
 
             <h2><i class="fas fa-shield-halved" style="color: #16a34a;"></i> Verify Your Phone</h2>
-            <p class="auth-subtitle">Enter the 6-digit code sent to your phone</p>
+            <p class="auth-subtitle">
+                Enter the 6-digit code sent to your phone via SMS
+            </p>
 
             <?php if ($error): ?>
                 <div class="alert alert-error">
@@ -255,8 +260,11 @@ $step = $step ?? '1';
             <?php endif; ?>
 
             <div class="phone-display">
-                <i class="fas fa-mobile-screen"></i>
+                <i class="fas fa-comment-sms" style="color: #3b82f6;"></i>
                 <span><?php echo htmlspecialchars($pendingReg['phone']); ?></span>
+                <span style="margin-left: 10px; padding: 4px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                    SMS
+                </span>
                 <a href="/register" style="margin-left: auto; color: #16a34a; text-decoration: none; font-size: 12px;">
                     <i class="fas fa-edit"></i> Change
                 </a>
@@ -281,7 +289,7 @@ $step = $step ?? '1';
             <div class="resend-container">
                 <p style="color: #6b7280; font-size: 14px; margin: 0;">Didn't receive the code?</p>
                 <button type="button" id="resendBtn" class="resend-btn" onclick="resendOtp()">
-                    <i class="fas fa-redo"></i> Resend OTP
+                    <i class="fas fa-redo"></i> Resend via SMS
                 </button>
                 <div id="resendTimer" class="resend-timer" style="display: none;">
                     <i class="fas fa-clock"></i> Resend available in <span id="timerCount">60</span>s
@@ -290,7 +298,7 @@ $step = $step ?? '1';
 
             <div class="alert alert-info" style="margin-top: 20px;">
                 <i class="fas fa-info-circle"></i>
-                <span><strong>Development Mode:</strong> Check server error log for OTP code, or check your browser console.</span>
+                <span><strong>Development Mode:</strong> Check server error log for OTP code, or check your phone.</span>
             </div>
 
         <?php endif; ?>
@@ -453,7 +461,7 @@ function showNotification(message, type) {
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
         ${message}
     `;
-    
+
     const existingAlert = document.querySelector('.alert');
     if (existingAlert) {
         existingAlert.replaceWith(alert);
@@ -467,9 +475,6 @@ function showNotification(message, type) {
 }
 </script>
 <?php endif; ?>
-
-</body>
-</html>
 
 <script>
 // Real-time phone number validation
@@ -573,3 +578,6 @@ document.getElementById('registerForm')?.addEventListener('submit', function(e) 
     }
 });
 </script>
+
+</body>
+</html>

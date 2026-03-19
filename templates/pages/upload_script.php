@@ -128,10 +128,15 @@ if (clearBtn && fileInput && previewSection && uploadArea) {
 }
 
 async function generateMemorandum(scriptId) {
-    const btn = document.getElementById("gen-memo-btn-" + scriptId);
-    const resultDiv = document.getElementById("memo-result-" + scriptId);
+    console.log('generateMemorandum called with scriptId:', scriptId);
+    
+    const btn = document.querySelector(`.gen-memo-btn[data-script-id="${scriptId}"]`);
+    const resultDiv = document.getElementById(`memo-result-${scriptId}`);
 
-    if (!btn || !resultDiv) return;
+    if (!btn || !resultDiv) {
+        console.error('Button or result div not found for script:', scriptId);
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Generating...";
@@ -141,41 +146,98 @@ async function generateMemorandum(scriptId) {
         const formData = new FormData();
         formData.append("script_id", scriptId);
 
+        console.log('Sending request to /api/generate-memorandum...');
+
         const response = await fetch("/api/generate-memorandum", {
             method: "POST",
             body: formData
         });
 
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`Server responded with status ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (data.success) {
             resultDiv.innerHTML = `
-                <div class="memorandum-card">
-                    <div class="memo-header">
-                        <h3><i class="fas fa-file-alt"></i> Generated Memorandum</h3>
-                        <div class="memo-actions">
-                            <button onclick="viewMemorandum(${scriptId})" class="btn-icon btn-view" title="View">
+                <div class="memorandum-card" style="margin-top: 15px; padding: 20px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                    <div class="memo-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; color: #0369a1; font-size: 16px;"><i class="fas fa-file-alt"></i> Generated Memorandum</h3>
+                        <div class="memo-actions" style="display: flex; gap: 8px;">
+                            <button data-action="view-memorandum" data-script-id="${scriptId}" class="btn-view-memo" title="View" style="background: #0ea5e9; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button onclick="downloadMemorandum(${scriptId})" class="btn-icon btn-download" title="Download PDF">
+                            <button data-action="download-memorandum" data-script-id="${scriptId}" class="btn-download-memo" title="Download PDF" style="background: #0ea5e9; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
                                 <i class="fas fa-download"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="memo-content">
-                        <p>${data.memorandum.replace(new RegExp('\\n', 'g'), "<br>")}</p>
+                    <div class="memo-content" style="background: white; padding: 15px; border-radius: 6px; max-height: 400px; overflow-y: auto;">
+                        <p style="margin: 0; line-height: 1.6;">${data.memorandum.replace(new RegExp('\\n', 'g'), "<br>")}</p>
                     </div>
                 </div>
             `;
-            btn.innerHTML = "<i class=\"fas fa-redo\"></i> Regenerate";
-            btn.disabled = false;
+            
+            // Attach event listeners to view and download buttons
+            const viewBtn = resultDiv.querySelector('.btn-view-memo');
+            const downloadBtn = resultDiv.querySelector('.btn-download-memo');
+            
+            if (viewBtn) {
+                viewBtn.addEventListener('click', function() {
+                    viewMemorandum(scriptId);
+                });
+            }
+            
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function() {
+                    showDownloadFormatModal(scriptId);
+                });
+            }
+
+            // Change button to "View Memorandum" to prevent overuse of AI
+            btn.innerHTML = "<i class=\"fas fa-eye\"></i> View Memorandum";
+            btn.classList.remove('btn-sm-primary');
+            btn.classList.add('btn-sm-secondary');
+            btn.onclick = function() {
+                viewMemorandum(scriptId);
+            };
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-error">Error: ${data.error || "Failed to generate memorandum"}</div>`;
+            resultDiv.innerHTML = `<div class="alert alert-error" style="margin-top: 15px; padding: 12px; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">Error: ${data.error || "Failed to generate memorandum"}</div>`;
             btn.disabled = false;
         }
     } catch (error) {
-        resultDiv.innerHTML = `<div class="alert alert-error">Error: Failed to connect to server</div>`;
+        console.error('Error generating memorandum:', error);
+        resultDiv.innerHTML = `<div class="alert alert-error" style="margin-top: 15px; padding: 12px; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">Error: Failed to connect to server. ${error.message}</div>`;
         btn.disabled = false;
+    }
+}
+
+function showDownloadFormatModal(scriptId) {
+    const modal = document.getElementById('download-format-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        
+        // Set up download buttons
+        document.getElementById('download-pdf-btn').onclick = function() {
+            window.location.href = '/download-memorandum/' + scriptId + '?format=pdf';
+            modal.style.display = 'none';
+        };
+        
+        document.getElementById('download-docx-btn').onclick = function() {
+            window.location.href = '/download-memorandum/' + scriptId + '?format=docx';
+            modal.style.display = 'none';
+        };
+    }
+}
+
+function closeDownloadFormatModal() {
+    const modal = document.getElementById('download-format-modal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
@@ -195,36 +257,72 @@ async function loadUploadedScripts() {
         const response = await fetch("/api/get-user-scripts");
         const data = await response.json();
 
+        console.log('Loaded scripts:', data);
+
         if (data.scripts && data.scripts.length > 0) {
             const scriptsList = document.getElementById("scripts-list");
             if (scriptsList) {
-                scriptsList.innerHTML = data.scripts.map(script => `
-                    <div class="script-item">
-                        <div class="script-info">
-                            <h4>${script.title}</h4>
-                            <p class="script-meta">
-                                <span class="badge blue">${script.subject || 'No subject'}</span>
-                                <span class="badge orange">Grade ${script.grade_level || '-'}</span>
-                                <span class="badge green">${new Date(script.uploaded_at).toLocaleDateString()}</span>
-                            </p>
+                scriptsList.innerHTML = data.scripts.map(script => {
+                    const hasMemorandum = script.has_memorandum == 1;
+                    const buttonHtml = hasMemorandum
+                        ? `<button data-script-id="${script.id}" class="view-memo-btn btn-sm btn-sm-secondary" style="cursor: pointer;">
+                            <i class="fas fa-eye"></i> View Memorandum
+                           </button>`
+                        : `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-primary">
+                            <i class="fas fa-magic"></i> Generate Memorandum
+                           </button>`;
+                    
+                    return `
+                        <div class="script-item">
+                            <div class="script-info">
+                                <h4>${script.title}</h4>
+                                <p class="script-meta">
+                                    <span class="badge blue">${script.subject || 'No subject'}</span>
+                                    <span class="badge orange">Grade ${script.grade_level || '-'}</span>
+                                    <span class="badge green">${new Date(script.uploaded_at).toLocaleDateString()}</span>
+                                </p>
+                            </div>
+                            <div class="script-actions">
+                                ${buttonHtml}
+                                <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
+                                    <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                            <div id="memo-result-${script.id}" class="memo-result"></div>
                         </div>
-                        <div class="script-actions">
-                            <button id="gen-memo-btn-${script.id}" onclick="generateMemorandum(${script.id})" class="btn-primary btn-sm">
-                                <i class="fas fa-magic"></i> Generate Memorandum
-                            </button>
-                            <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
-                                <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </div>
-                        <div id="memo-result-${script.id}" class="memo-result"></div>
-                    </div>
-                `).join("");
+                    `;
+                }).join("");
+
+                // Attach event listeners to generate memorandum buttons
+                document.querySelectorAll('.gen-memo-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const scriptId = this.getAttribute('data-script-id');
+                        generateMemorandum(scriptId);
+                    });
+                });
+
+                // Attach event listeners to view memorandum buttons
+                document.querySelectorAll('.view-memo-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const scriptId = this.getAttribute('data-script-id');
+                        viewMemorandum(scriptId);
+                    });
+                });
+            }
+        } else {
+            const scriptsList = document.getElementById("scripts-list");
+            if (scriptsList) {
+                scriptsList.innerHTML = '<p class="no-scripts">No scripts uploaded yet. Upload your first script above.</p>';
             }
         }
     } catch (error) {
         console.error("Failed to load scripts:", error);
+        const scriptsList = document.getElementById("scripts-list");
+        if (scriptsList) {
+            scriptsList.innerHTML = '<p class="error">Failed to load scripts. Please refresh the page.</p>';
+        }
     }
 }
 });
@@ -367,7 +465,14 @@ if (form) {
         </div>
         <div id="no-scans" style="display: none; text-align: center; padding: 40px; color: #6b7280;">
             <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
-            <p>No saved scans yet. <a href="/scan" style="color: #667eea;">Create one first</a></p>
+            <p><strong>No saved scans yet.</strong></p>
+            <p style="font-size: 13px; margin-top: 10px;">
+                To use a scan here, you need to save it first:<br>
+                1. Go to <a href="/scan" style="color: #667eea; font-weight: 500;">Scan Documents</a><br>
+                2. Upload your document images<br>
+                3. Click "Save as PDF" and give it a name<br>
+                4. Then come back here to select it
+            </p>
         </div>
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center;">
             <button id="close-scans-modal-bottom" class="btn-secondary" style="padding: 10px 30px;">
@@ -417,10 +522,12 @@ async function loadScans() {
         const response = await fetch('/api/scan-saved-list');
         const data = await response.json();
 
-        if (data.success && data.files.length > 0) {
+        console.log('Scans API response:', data);
+
+        if (data.success && data.files && data.files.length > 0) {
             noScans.style.display = 'none';
-            scansList.innerHTML = data.files.map(file => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'" onclick="selectScan('${file.name}', '${file.url}')">
+            scansList.innerHTML = data.files.map((file, index) => `
+                <div class="scan-item" data-filename="${escapeHtml(file.name)}" data-fileurl="${escapeHtml(file.url)}" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s;">
                     <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
                         <i class="fas fa-file-pdf" style="font-size: 32px; color: #dc2626;"></i>
                         <div>
@@ -431,17 +538,48 @@ async function loadScans() {
                     <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
                 </div>
             `).join('');
+
+            // Add click handlers to all scan items
+            document.querySelectorAll('.scan-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const filename = this.getAttribute('data-filename');
+                    const url = this.getAttribute('data-fileurl');
+                    selectScan(filename, url);
+                });
+
+                // Add hover effects
+                item.addEventListener('mouseenter', function() {
+                    this.style.background = '#eff6ff';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.background = '#f8fafc';
+                });
+            });
         } else {
             noScans.style.display = 'block';
             scansList.innerHTML = '';
+            // Show helpful message about saving scans first
+            noScans.innerHTML = `
+                <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                <p><strong>No saved scans found.</strong></p>
+                <p style="font-size: 13px; margin-top: 10px;">
+                    To use a scan here, you need to save it first:<br>
+                    1. Go to <a href="/scan" style="color: #667eea; font-weight: 500;">Scan Documents</a><br>
+                    2. Upload your document images<br>
+                    3. Click "Save as PDF" and give it a name<br>
+                    4. Then come back here to select it
+                </p>
+            `;
         }
     } catch (error) {
         console.error('Error loading scans:', error);
-        scansList.innerHTML = '<p style="text-align: center; color: #dc2626;">Error loading scans</p>';
+        scansList.innerHTML = '<p style="text-align: center; color: #dc2626;">Error loading scans. Please refresh the page.</p>';
     }
 }
 
 function selectScan(filename, url) {
+    console.log('selectScan called with:', filename, url);
+
     // Create a hidden input to store the selected scan
     let hiddenInput = document.getElementById('selected_scan_file');
     if (!hiddenInput) {
@@ -454,12 +592,22 @@ function selectScan(filename, url) {
     hiddenInput.value = filename;
 
     // Update preview
-    document.getElementById('file-name').textContent = filename;
-    document.getElementById('file-size').textContent = 'From saved scans';
-    document.getElementById('preview-section').style.display = 'block';
-    document.getElementById('upload-area').style.display = 'none';
+    const fileNameEl = document.getElementById('file-name');
+    const fileSizeEl = document.getElementById('file-size');
+    const previewSection = document.getElementById('preview-section');
+    const uploadArea = document.getElementById('upload-area');
 
-    scansModalOverlay.style.display = 'none';
+    if (fileNameEl && fileSizeEl && previewSection && uploadArea) {
+        fileNameEl.textContent = filename;
+        fileSizeEl.textContent = 'From saved scans';
+        previewSection.style.display = 'block';
+        uploadArea.style.display = 'none';
+
+        scansModalOverlay.style.display = 'none';
+        console.log('Scan selected successfully:', filename);
+    } else {
+        console.error('Preview elements not found');
+    }
 }
 
 function escapeHtml(text) {
@@ -467,7 +615,47 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Close download format modal when clicking outside
+const downloadModal = document.getElementById('download-format-modal');
+if (downloadModal) {
+    downloadModal.addEventListener('click', function(e) {
+        if (e.target === downloadModal) {
+            closeDownloadFormatModal();
+        }
+    });
+}
 });
 </script>
+
+<!-- Download Format Selection Modal -->
+<div id="download-format-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;">
+            <h3 style="margin: 0; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-download" style="color: #667eea;"></i> Download Memorandum
+            </h3>
+            <button onclick="closeDownloadFormatModal()" style="background: none; border: none; font-size: 24px; color: #6b7280; cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div style="text-align: center; padding: 20px 0;">
+            <p style="color: #6b7280; margin-bottom: 20px;">Choose your preferred format:</p>
+            <div style="display: grid; gap: 15px; max-width: 300px; margin: 0 auto;">
+                <button id="download-pdf-btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <i class="fas fa-file-pdf"></i> PDF Format
+                </button>
+                <button id="download-docx-btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 30px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(40,167,69,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <i class="fas fa-file-word"></i> DOCX Format
+                </button>
+            </div>
+        </div>
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <button onclick="closeDownloadFormatModal()" class="btn-secondary" style="padding: 10px 30px; cursor: pointer;">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </div>
+</div>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

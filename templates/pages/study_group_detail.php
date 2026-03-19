@@ -113,6 +113,11 @@ include __DIR__ . '/../layouts/header.php';
     .chat-btn:hover {
         transform: scale(1.05);
     }
+    .chat-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
     .send-btn {
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
@@ -141,9 +146,12 @@ include __DIR__ . '/../layouts/header.php';
         align-items: center;
         gap: 10px;
         min-width: 200px;
+        max-width: 100%;
     }
     .voice-note audio {
         height: 35px;
+        max-width: 100%;
+        width: 100%;
     }
     .scripts-section {
         background: white;
@@ -325,10 +333,20 @@ include __DIR__ . '/../layouts/header.php';
         .chat-btn {
             width: 40px;
             height: 40px;
+            flex-shrink: 0;
         }
 
         .voice-note audio {
             height: 32px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Voice message bubble adjustments */
+        .chat-message.own .voice-note,
+        .chat-message.other .voice-note {
+            min-width: 150px;
+            max-width: 100%;
         }
 
         /* Tabs mobile */
@@ -441,14 +459,25 @@ include __DIR__ . '/../layouts/header.php';
         .chat-btn {
             width: 36px;
             height: 36px;
+            flex-shrink: 0;
         }
 
         .voice-note {
-            min-width: 150px;
+            min-width: 120px;
+            max-width: 100%;
         }
 
         .voice-note audio {
             height: 28px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Voice message bubble adjustments for extra small screens */
+        .chat-message.own .voice-note,
+        .chat-message.other .voice-note {
+            min-width: 100px;
+            max-width: 100%;
         }
 
         /* Tabs */
@@ -882,30 +911,35 @@ include __DIR__ . '/../layouts/header.php';
     // Chat form submission
     document.getElementById('chatForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         const messageInput = document.getElementById('messageInput');
         const messageType = document.getElementById('messageType');
         const voiceFile = document.getElementById('voiceFile');
         const message = messageInput.value.trim();
-        
+        const sendBtn = document.querySelector('.send-btn');
+
         if (!message && messageType.value !== 'voice') return;
-        
+
+        // Disable send button and show loading state
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
         const formData = new FormData();
         formData.append('message', message);
         formData.append('message_type', messageType.value);
-        
+
         if (voiceFile.files[0]) {
             formData.append('voice_file', voiceFile.files[0]);
         }
-        
+
         try {
             const response = await fetch('/study-group/<?php echo $group['id']; ?>/send-message', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 addMessage(result.message);
                 messageInput.value = '';
@@ -918,20 +952,25 @@ include __DIR__ . '/../layouts/header.php';
         } catch (error) {
             alert('Failed to send message');
             console.error(error);
+        } finally {
+            // Re-enable send button
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
         }
     });
 
     // Voice recording
     document.getElementById('voiceBtn').addEventListener('click', async function() {
         const voiceBtn = this;
-        
+        const sendBtn = document.querySelector('.send-btn');
+
         if (!isRecording) {
             // Start recording
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-                
+
                 mediaRecorder.ondataavailable = event => {
                     if (event.data.size > 0) {
                         audioChunks.push(event.data);
@@ -946,7 +985,7 @@ include __DIR__ . '/../layouts/header.php';
                         isRecording = false;
                         return;
                     }
-                    
+
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     const voiceFile = document.getElementById('voiceFile');
 
@@ -962,12 +1001,22 @@ include __DIR__ . '/../layouts/header.php';
 
                     // Set message type to voice and submit
                     document.getElementById('messageType').value = 'voice';
+                    
+                    // Show sending state
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    isRecording = false;
+                    
+                    // Disable send button during upload
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    
                     document.getElementById('chatForm').dispatchEvent(new Event('submit'));
 
                     // Stop all tracks
                     stream.getTracks().forEach(track => track.stop());
                 };
-                
+
                 mediaRecorder.onerror = (event) => {
                     console.error('MediaRecorder error:', event.error);
                     alert('Recording error: ' + event.error);

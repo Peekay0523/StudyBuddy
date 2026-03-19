@@ -68,14 +68,13 @@ include __DIR__ . '/../layouts/header.php';
         <?php else: ?>
             <div class="study-buddies-list">
                 <?php foreach ($studyBuddies as $buddy): ?>
-                    <div class="buddy-item" style="background: white; border: 1px solid #86efac; border-radius: 10px; padding: 15px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(34, 197, 94, 0.1);">
+                    <div class="buddy-item" style="background: white; border: 1px solid #86efac; border-radius: 10px; padding: 15px 20px 18px 20px; margin-bottom: 21px; display: flex; align-items: center; gap: 20px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(34, 197, 94, 0.1);">
                         <!-- Avatar & Name -->
                         <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 200px;">
-                            <div style="position: relative; flex-shrink: 0;">
+                            <div style="flex-shrink: 0; display: flex; align-items: center;">
                                 <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 18px;">
                                     <?php echo strtoupper(substr($buddy['username'], 0, 1)); ?>
                                 </div>
-                                <span style="position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: <?php echo $buddy['is_online'] ? '#22c55e' : '#ef4444'; ?>; border: 2px solid white; border-radius: 50%;" title="<?php echo $buddy['is_online'] ? 'Online now' : 'Offline'; ?>"></span>
                             </div>
                             <div style="min-width: 0;">
                                 <h3 style="margin: 0; font-size: 16px; color: #1e293b; font-weight: 600;">
@@ -101,11 +100,11 @@ include __DIR__ . '/../layouts/header.php';
 
                         <!-- Actions -->
                         <div style="display: flex; gap: 10px; flex-shrink: 0;">
-                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" class="btn-primary" style="text-align: center; padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3); transition: all 0.3s ease;">
-                                <i class="fas fa-envelope"></i> Ask for Help
+                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" style="color: #0ea5e9; font-size: 18px; transition: all 0.2s ease;" title="Ask for Help" onmouseover="this.style.color='#0284c7';this.style.transform='scale(1.1)'" onmouseout="this.style.color='#0ea5e9';this.style.transform='scale(1)'">
+                                <i class="fas fa-envelope"></i>
                             </a>
-                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" class="btn-secondary" style="padding: 8px 16px; font-size: 13px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 10px rgba(100, 116, 139, 0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 6px rgba(100, 116, 139, 0.3)'" onclick="this.blur()">
-                                <i class="fas fa-user-plus"></i> Invite
+                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" style="color: #64748b; font-size: 18px; background: none; border: none; cursor: pointer; transition: all 0.2s ease;" title="Invite" onmouseover="this.style.color='#475569';this.style.transform='scale(1.1)'" onmouseout="this.style.color='#64748b';this.style.transform='scale(1)'">
+                                <i class="fas fa-user-plus"></i>
                             </button>
                         </div>
                     </div>
@@ -172,60 +171,96 @@ include __DIR__ . '/../layouts/header.php';
 
     .buddy-item {
         padding: 12px 15px !important;
+        gap: 15px !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        margin-bottom: 21px !important;
+    }
+
+    /* Name and status on mobile */
+    .buddy-item > div:first-child {
+        min-width: auto !important;
+        flex: 0 0 auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
         gap: 12px !important;
-        flex-wrap: wrap;
     }
 
-    /* Reduce avatar size on mobile */
     .buddy-item > div:first-child > div:first-child {
-        width: 35px !important;
-        height: 35px !important;
-        font-size: 14px !important;
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        font-size: 16px !important;
+        flex-shrink: 0 !important;
     }
 
-    /* Smaller text on mobile */
-    .buddy-item h3 {
-        font-size: 14px !important;
+    .buddy-item > div:first-child > div:last-child {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+        min-width: 80px !important;
     }
 
-    .buddy-item p {
+    .buddy-item > div:first-child > div:last-child h3 {
+        font-size: 14px !important;
+        margin: 0 !important;
+        line-height: 1.3 !important;
+    }
+
+    .buddy-item > div:first-child > div:last-child p {
         font-size: 11px !important;
+        margin: 0 !important;
+        line-height: 1.3 !important;
     }
 
-    /* Compact stats on mobile */
+    /* Stats on mobile */
     .buddy-item > div:nth-child(2) {
-        width: 100%;
-        order: 3;
-        justify-content: center;
-        gap: 20px !important;
-        margin-top: 8px;
+        width: auto !important;
+        order: 3 !important;
+        justify-content: flex-start !important;
+        gap: 18px !important;
+        margin-top: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        margin-left: 14px !important;
     }
 
     .buddy-item > div:nth-child(2) > div {
-        text-align: center;
+        text-align: left !important;
+        display: inline-block !important;
     }
 
     .buddy-item > div:nth-child(2) > div > div:first-child {
-        font-size: 16px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
     }
 
     .buddy-item > div:nth-child(2) > div > div:last-child {
         font-size: 10px !important;
+        text-transform: lowercase !important;
     }
 
-    /* Stack actions on mobile */
+    /* Keep actions horizontal on mobile */
     .buddy-item > div:last-child {
-        width: 100%;
-        order: 4;
-        margin-top: 8px;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 15px !important;
+        margin-left: auto !important;
     }
 
-    /* Smaller buttons on mobile */
+    /* Icon buttons on mobile */
     .buddy-item > div:last-child a,
     .buddy-item > div:last-child button {
-        padding: 8px 14px !important;
-        font-size: 12px !important;
-        flex: 1;
+        padding: 0 !important;
+        font-size: 18px !important;
+        min-width: auto !important;
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     /* Page title and subtitle */
@@ -260,44 +295,70 @@ include __DIR__ . '/../layouts/header.php';
 @media (max-width: 480px) {
     .buddy-item {
         padding: 10px 12px !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
+        margin-bottom: 21px !important;
+    }
+
+    /* Avatar and name row layout */
+    .buddy-item > div:first-child {
+        min-width: auto !important;
+        flex-direction: row !important;
         gap: 10px !important;
+        align-items: center !important;
     }
 
-    /* Avatar */
     .buddy-item > div:first-child > div:first-child {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 13px !important;
-    }
-
-    /* Name and status */
-    .buddy-item h3 {
-        font-size: 13px !important;
-    }
-
-    .buddy-item p {
-        font-size: 10px !important;
-    }
-
-    /* Stats */
-    .buddy-item > div:nth-child(2) > div > div:first-child {
+        width: 35px !important;
+        height: 35px !important;
+        min-width: 35px !important;
+        min-height: 35px !important;
         font-size: 14px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .buddy-item > div:first-child > div:last-child {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 3px !important;
+        min-width: 70px !important;
+    }
+
+    .buddy-item > div:first-child > div:last-child h3 {
+        font-size: 13px !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    .buddy-item > div:first-child > div:last-child p {
+        font-size: 10px !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Stats inline */
+    .buddy-item > div:nth-child(2) {
+        gap: 15px !important;
+        margin-left: 12px !important;
+    }
+
+    .buddy-item > div:nth-child(2) > div > div:first-child {
+        font-size: 13px !important;
     }
 
     .buddy-item > div:nth-child(2) > div > div:last-child {
         font-size: 9px !important;
     }
 
-    /* Buttons stack vertically on very small screens */
+    /* Actions inline */
     .buddy-item > div:last-child {
-        flex-direction: column;
-        gap: 8px !important;
+        gap: 12px !important;
     }
 
     .buddy-item > div:last-child a,
     .buddy-item > div:last-child button {
-        width: 100%;
-        text-align: center;
+        font-size: 16px !important;
     }
 
     /* Feature cards */

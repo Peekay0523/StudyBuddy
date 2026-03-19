@@ -420,6 +420,105 @@ $router->post('/api/generate-memorandum', 'ScriptController@generateMemorandum')
 $router->get('/download-memorandum/{id}', 'ScriptController@downloadMemorandum');
 $router->post('/delete-script/{id}', 'ScriptController@deleteScript');
 
+// Test download directly
+$router->get('/test-download/{id}', function($scriptId) {
+    // Clear any output buffers
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    ob_start();
+    
+    require_once __DIR__ . '/../config/config.php';
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../models/Memorandum.php';
+    require_once __DIR__ . '/../models/UploadedScript.php';
+    
+    $db = Database::getInstance()->getConnection();
+    
+    // Use uploaded_scripts table (correct table)
+    $stmt = $db->prepare("SELECT * FROM uploaded_scripts WHERE id = ?");
+    $stmt->execute([$scriptId]);
+    $script = $stmt->fetch();
+    
+    if (!$script) {
+        echo "Script not found (ID: $scriptId)";
+        exit;
+    }
+    
+    $stmt = $db->prepare("SELECT * FROM memorandums WHERE script_id = ?");
+    $stmt->execute([$scriptId]);
+    $memorandum = $stmt->fetch();
+    
+    if (!$memorandum) {
+        echo "Memorandum not found for script ID: $scriptId";
+        exit;
+    }
+    
+    $content = $memorandum['content'];
+    $lines = explode("\n", $content);
+    $formattedContent = '';
+    
+    foreach ($lines as $line) {
+        $trimmedLine = trim($line);
+        if (empty($trimmedLine)) {
+            $formattedContent .= '<br>';
+        } elseif (strpos($trimmedLine, '# ') === 0) {
+            $formattedContent .= '<h2>' . htmlspecialchars(substr($trimmedLine, 2)) . '</h2>';
+        } elseif (strpos($trimmedLine, '## ') === 0) {
+            $formattedContent .= '<h3>' . htmlspecialchars(substr($trimmedLine, 3)) . '</h3>';
+        } elseif (strpos($trimmedLine, '- ') === 0 || strpos($trimmedLine, '* ') === 0) {
+            $formattedContent .= '<li>' . htmlspecialchars(substr($trimmedLine, 2)) . '</li>';
+        } else {
+            $formattedContent .= '<p>' . htmlspecialchars($trimmedLine) . '</p>';
+        }
+    }
+    
+    $formattedContent = preg_replace('/(<li>.*<\/li>)/s', '<ul>$1</ul>', $formattedContent);
+    $formattedContent = str_replace('</ul><ul>', '', $formattedContent);
+    
+    $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $script['title']);
+    $fileName = 'memorandum_' . $safeTitle . '.html';
+    
+    $subject = htmlspecialchars($script['subject'] ?? 'N/A');
+    $gradeLevel = htmlspecialchars($script['grade_level'] ?? 'N/A');
+    
+    $htmlContent = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Memorandum - {$script['title']}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; color: #333; }
+        h1 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; font-size: 24px; }
+        h2 { color: #1f2937; font-size: 18px; margin-top: 20px; }
+        h3 { color: #1f2937; font-size: 16px; margin-top: 15px; }
+        p { margin: 10px 0; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+        .meta { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Memorandum</h1>
+    <p class="meta"><strong>Subject:</strong> $subject | <strong>Grade:</strong> $gradeLevel</p>
+    $formattedContent
+</body>
+</html>
+HTML;
+    
+    // Clear buffers and send download
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    header('Content-Type: text/html; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $fileName . '"');
+    header('Content-Length: ' . strlen($htmlContent));
+    echo $htmlContent;
+    exit;
+});
+
 // Report Cards API endpoints
 $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCards');
 $router->post('/delete-report-card/{id}', 'ReportCardController@deleteReportCard');
