@@ -9,18 +9,24 @@ require_once __DIR__ . '/../models/UploadedScript.php';
 require_once __DIR__ . '/../models/StudyPlan.php';
 require_once __DIR__ . '/../models/ReportCard.php';
 require_once __DIR__ . '/../models/UserActivity.php';
+require_once __DIR__ . '/../models/BursaryApplication.php';
+require_once __DIR__ . '/../models/InstitutionApplication.php';
 
 class DashboardController {
     private $scriptModel;
     private $studyPlanModel;
     private $reportCardModel;
     private $userActivityModel;
+    private $bursaryApplicationModel;
+    private $institutionApplicationModel;
 
     public function __construct() {
         $this->scriptModel = new UploadedScript();
         $this->studyPlanModel = new StudyPlan();
         $this->reportCardModel = new ReportCard();
         $this->userActivityModel = new UserActivity();
+        $this->bursaryApplicationModel = new BursaryApplication();
+        $this->institutionApplicationModel = new InstitutionApplication();
     }
     
     public function index() {
@@ -114,6 +120,14 @@ class DashboardController {
         $loginStreak = $loginStreak ?? 0;
         $loginStreakPoints = $loginStreakPoints ?? 0;
         $nextRewardAt = 3 - ($loginStreak % 3);
+
+        // Get bursary applications
+        $bursaryApplications = $this->bursaryApplicationModel->findByStudentId($student['id']);
+        $bursaryApplicationsCount = $this->bursaryApplicationModel->countByStudent($student['id']);
+
+        // Get institution applications
+        $institutionApplications = $this->institutionApplicationModel->findByStudentId($student['id']);
+        $institutionApplicationsCount = $this->institutionApplicationModel->countByStudent($student['id']);
 
         include __DIR__ . '/../templates/pages/dashboard.php';
     }

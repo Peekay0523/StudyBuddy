@@ -52,6 +52,100 @@ $extraHead = <<<'SCRIPT'
     font-size: 1rem;
     font-weight: 500;
 }
+
+/* Bursaries Section */
+.bursaries-list-container {
+    display: grid;
+    gap: 20px;
+}
+
+.bursary-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bursary-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.bursary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.bursary-header h4 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bursary-deadline {
+    font-size: 13px;
+    color: #6b7280;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bursary-deadline.urgent {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.bursary-provider {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bursary-details {
+    margin-bottom: 15px;
+}
+
+.bursary-details p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.bursary-details strong {
+    color: #1f2937;
+}
+
+.bursary-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.no-bursaries {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
 </style>
 SCRIPT;
 
@@ -197,9 +291,119 @@ async function loadUploadedReportCards() {
     }
 }
 
+async function loadAvailableBursaries() {
+    try {
+        const response = await fetch("/api/get-available-bursaries");
+        const data = await response.json();
+
+        const bursariesList = document.getElementById("bursaries-list");
+        if (bursariesList) {
+            if (data.success && data.bursaries && data.bursaries.length > 0) {
+                bursariesList.innerHTML = data.bursaries.map(bursary => `
+                    <div class="bursary-item">
+                        <div class="bursary-header">
+                            <h4><i class="fas fa-scholarship"></i> ${escapeHtml(bursary.name)}</h4>
+                            <span class="bursary-deadline ${bursary.days_left < 30 ? 'urgent' : ''}">
+                                <i class="fas fa-calendar-alt"></i> 
+                                ${new Date(bursary.deadline).toLocaleDateString()} 
+                                (${bursary.days_left} days left)
+                            </span>
+                        </div>
+                        <div class="bursary-provider">
+                            <i class="fas fa-building"></i> ${escapeHtml(bursary.provider)}
+                        </div>
+                        <div class="bursary-details">
+                            <p><strong>Eligibility:</strong> ${escapeHtml(bursary.eligibility)}</p>
+                            ${bursary.covers ? `<p><strong>Covers:</strong> ${escapeHtml(bursary.covers)}</p>` : ''}
+                            ${bursary.required_subjects && bursary.required_subjects.length > 0 ? `
+                                <p><strong>Required Subjects:</strong> 
+                                    <span class="badge blue">${bursary.required_subjects.join('</span> <span class="badge blue">')}</span>
+                                </p>
+                            ` : ''}
+                            <p><strong>Grade Range:</strong> ${bursary.min_grade_average}% - ${bursary.max_grade_average}%</p>
+                            ${bursary.contact ? `<p><strong>Contact:</strong> ${escapeHtml(bursary.contact)}</p>` : ''}
+                        </div>
+                        <div class="bursary-actions">
+                            ${bursary.apply_url ? `
+                                <a href="${escapeHtml(bursary.apply_url)}" target="_blank" class="btn-primary btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-external-link-alt"></i> Apply Now
+                                </a>
+                            ` : ''}
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(bursary.name + ' application')}" target="_blank" class="btn-secondary btn-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-search"></i> Search
+                            </a>
+                            <button type="button" onclick="markBursaryAsApplied('${escapeHtml(bursary.name)}', '${escapeHtml(bursary.provider)}')" class="btn-applied-mark" style="padding: 8px 16px; font-size: 13px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-check-circle"></i> Mark Applied
+                            </button>
+                        </div>
+                    </div>
+                `).join("");
+            } else {
+                bursariesList.innerHTML = `
+                    <div class="no-bursaries">
+                        <i class="fas fa-inbox" style="font-size: 48px; color: #cbd5e1; margin-bottom: 15px; display: block;"></i>
+                        <p style="color: #6b7280; margin: 0;">No bursaries available at the moment. Check back later!</p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load bursaries:", error);
+        const bursariesList = document.getElementById("bursaries-list");
+        if (bursariesList) {
+            bursariesList.innerHTML = '<p class="error">Failed to load bursaries. Please try again later.</p>';
+        }
+    }
+}
+
+// Mark bursary as applied
+async function markBursaryAsApplied(bursaryName, bursaryProvider) {
+    if (!confirm(`Mark "${bursaryName}" as applied? This will add it to your applications on the dashboard.`)) {
+        return;
+    }
+
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const response = await fetch('/api/mark-bursary-applied', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'bursary_name': bursaryName,
+                'bursary_provider': bursaryProvider
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✓ Bursary marked as applied! Check your dashboard to track your application.');
+            button.innerHTML = '<i class="fas fa-check"></i> Applied';
+            button.disabled = true;
+            button.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            button.style.cursor = 'not-allowed';
+        } else {
+            alert('Error: ' + (result.error || 'Failed to mark as applied'));
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     initUploadHandlers();
     loadUploadedReportCards();
+    loadAvailableBursaries();
 });
 </script>
 SCRIPT;
@@ -285,6 +489,13 @@ include __DIR__ . '/../layouts/header.php';
         <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>
         <div id="report-cards-list" class="report-cards-list">
             <p class="loading">Loading report cards...</p>
+        </div>
+    </div>
+
+    <div class="report-cards-section" style="margin-top: 40px;">
+        <h2 class="section-title"><i class="fas fa-scholarship"></i> New Bursaries Available for You</h2>
+        <div id="bursaries-list" class="bursaries-list-container">
+            <p class="loading"><i class="fas fa-spinner fa-spin"></i> Loading bursaries...</p>
         </div>
     </div>
 </div>

@@ -699,24 +699,33 @@ class AdminController {
 
         $db = Database::getInstance()->getConnection();
 
-        // Get file path before deleting
-        $script = $db->prepare("SELECT file_path FROM uploaded_scripts WHERE id = ?");
+        // Get file paths before deleting
+        $script = $db->prepare("SELECT file_path, memorandum_file_path FROM uploaded_scripts WHERE id = ?");
         $script->execute([$scriptId]);
         $scriptData = $script->fetch();
 
-        // Delete file if exists
+        // Delete script file if exists
         if ($scriptData && !empty($scriptData['file_path']) && file_exists(UPLOAD_DIR_SCRIPTS . $scriptData['file_path'])) {
             unlink(UPLOAD_DIR_SCRIPTS . $scriptData['file_path']);
         }
 
-        // Delete memorandum if exists
-        $memo = $db->prepare("SELECT file_path FROM memorandums WHERE script_id = ?");
-        $memo->execute([$scriptId]);
-        $memoData = $memo->fetch();
+        // Delete memorandum file if exists (for shared scripts)
+        if ($scriptData && !empty($scriptData['memorandum_file_path']) && file_exists(UPLOAD_DIR_SCRIPTS . $scriptData['memorandum_file_path'])) {
+            unlink(UPLOAD_DIR_SCRIPTS . $scriptData['memorandum_file_path']);
+        }
 
-        if ($memoData && !empty($memoData['file_path']) && file_exists(UPLOAD_DIR_SCRIPTS . $memoData['file_path'])) {
-            unlink(UPLOAD_DIR_SCRIPTS . $memoData['file_path']);
-            $db->prepare("DELETE FROM memorandums WHERE script_id = ?")->execute([$scriptId]);
+        // Delete memorandum from memorandums table if exists (for student scripts)
+        try {
+            $memo = $db->prepare("SELECT content FROM memorandums WHERE script_id = ?");
+            $memo->execute([$scriptId]);
+            $memoData = $memo->fetch();
+
+            if ($memoData) {
+                $db->prepare("DELETE FROM memorandums WHERE script_id = ?")->execute([$scriptId]);
+            }
+        } catch (PDOException $e) {
+            // Memorandums table might not exist or have different structure
+            // Continue with deletion
         }
 
         // Delete script record from uploaded_scripts table
@@ -724,6 +733,105 @@ class AdminController {
 
         setFlashMessage('success', 'Script deleted successfully');
         header('Location: /admin/scripts');
+    }
+
+    /**
+     * Upload shared script (admin)
+     */
+    public function uploadSharedScript() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/scripts');
+            exit;
+        }
+
+        $error = '';
+
+        // Handle file upload
+        if (isset($_FILES['script_file']) && $_FILES['script_file']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['script_file'];
+            $title = $_POST['title'] ?? $file['name'];
+            $subject = $_POST['subject'] ?? '';
+            $gradeLevel = $_POST['grade_level'] ?? '';
+            $year = $_POST['year'] ?? null;
+            $paper = $_POST['paper'] ?? null;
+
+            // Validate file type
+            $allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+            $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            
+            if (!in_array($file['type'], $allowedTypes) && !in_array($fileExt, ['pdf', 'docx', 'txt'])) {
+                $error = 'Invalid script file type. Please upload PDF, DOCX, or TXT files.';
+            }
+
+            // Validate file size (10MB)
+            if ($file['size'] > 10 * 1024 * 1024) {
+                $error = 'Script file size must be less than 10MB.';
+            }
+
+            // Validate year
+            if (empty($year) || !in_array($year, range(2020, 2026))) {
+                $error = 'Please select a valid year (2020-2026).';
+            }
+
+            // Validate paper
+            if (empty($paper) || !in_array($paper, ['1', '2', '3'])) {
+                $error = 'Please select a valid paper type.';
+            }
+
+            if (empty($error)) {
+                // Generate unique filename
+                $newFileName = 'shared_script_' . time() . '_' . basename($file['name']);
+                $destPath = UPLOAD_DIR_SCRIPTS . $newFileName;
+
+                // Ensure directory exists
+                if (!is_dir(UPLOAD_DIR_SCRIPTS)) {
+                    mkdir(UPLOAD_DIR_SCRIPTS, 0755, true);
+                }
+
+                // Move uploaded file
+                if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                    $memorandumFilePath = null;
+
+                    // Handle memorandum upload if provided
+                    if (isset($_FILES['memorandum_file']) && $_FILES['memorandum_file']['error'] === UPLOAD_ERR_OK) {
+                        $memoFile = $_FILES['memorandum_file'];
+                        $memoExt = strtolower(pathinfo($memoFile['name'], PATHINFO_EXTENSION));
+                        
+                        if (in_array($memoFile['type'], $allowedTypes) || in_array($memoExt, ['pdf', 'docx', 'txt'])) {
+                            if ($memoFile['size'] <= 10 * 1024 * 1024) {
+                                $memoFileName = 'shared_memo_' . time() . '_' . basename($memoFile['name']);
+                                $memoDestPath = UPLOAD_DIR_SCRIPTS . $memoFileName;
+                                
+                                if (move_uploaded_file($memoFile['tmp_name'], $memoDestPath)) {
+                                    $memorandumFilePath = $memoFileName;
+                                }
+                            }
+                        }
+                    }
+
+                    // Insert into database with is_shared = 1
+                    $db = Database::getInstance()->getConnection();
+                    $stmt = $db->prepare("
+                        INSERT INTO uploaded_scripts (student_id, title, subject, grade_level, year, paper, file_path, is_shared, memorandum_file_path)
+                        VALUES (1, ?, ?, ?, ?, ?, ?, 1, ?)
+                    ");
+                    $stmt->execute([$title, $subject, $gradeLevel, $year, $paper, $newFileName, $memorandumFilePath]);
+
+                    setFlashMessage('success', 'Shared script uploaded successfully!' . ($memorandumFilePath ? ' Memorandum included.' : ''));
+                    header('Location: /admin/scripts');
+                    exit;
+                } else {
+                    $error = 'Failed to upload file. Please try again.';
+                }
+            }
+        } else {
+            $error = 'No file uploaded or upload error occurred.';
+        }
+
+        // If we reach here, there was an error - reload the page with error
+        setFlashMessage('error', $error);
+        header('Location: /admin/scripts');
+        exit;
     }
 
     /**
@@ -1106,5 +1214,285 @@ class AdminController {
             // Log error but don't fail
             error_log('Failed to save banking settings: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Bursaries Management - List all bursaries
+     */
+    public function bursaries() {
+        $db = Database::getInstance()->getConnection();
+
+        // Auto-deactivate expired bursaries
+        $db->exec("UPDATE bursaries SET is_active = 0, updated_at = datetime('now') WHERE is_active = 1 AND deadline < date('now')");
+
+        // Get filter from query string
+        $filter = $_GET['filter'] ?? 'all'; // all, active, inactive, expired
+
+        if ($filter === 'active') {
+            $bursaries = $db->query("SELECT * FROM bursaries WHERE is_active = 1 ORDER BY deadline ASC")->fetchAll();
+        } elseif ($filter === 'inactive') {
+            $bursaries = $db->query("SELECT * FROM bursaries WHERE is_active = 0 ORDER BY updated_at DESC")->fetchAll();
+        } elseif ($filter === 'expired') {
+            $bursaries = $db->query("SELECT * FROM bursaries WHERE deadline < date('now') ORDER BY deadline DESC")->fetchAll();
+        } else {
+            $bursaries = $db->query("SELECT * FROM bursaries ORDER BY is_active DESC, deadline ASC")->fetchAll();
+        }
+
+        $pageTitle = 'Manage Bursaries - Admin - StudySmart';
+        $currentPage = 'admin-bursaries';
+
+        include __DIR__ . '/../templates/pages/admin/bursaries.php';
+    }
+
+    /**
+     * Add new bursary - Show form
+     */
+    public function addBursary() {
+        $pageTitle = 'Add New Bursary - Admin - StudySmart';
+        $currentPage = 'admin-bursaries';
+        $bursary = null;
+        $isEdit = false;
+
+        include __DIR__ . '/../templates/pages/admin/bursaries_add_edit.php';
+    }
+
+    /**
+     * Create new bursary
+     */
+    public function createBursary() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Get and validate POST data
+        $name = trim($_POST['name'] ?? '');
+        $provider = trim($_POST['provider'] ?? '');
+        $eligibility = trim($_POST['eligibility'] ?? '');
+        $covers = trim($_POST['covers'] ?? '');
+        $deadline = trim($_POST['deadline'] ?? '');
+        $contact = trim($_POST['contact'] ?? '');
+        $applyUrl = trim($_POST['apply_url'] ?? '');
+        $minGradeAverage = floatval($_POST['min_grade_average'] ?? 0);
+        $maxGradeAverage = floatval($_POST['max_grade_average'] ?? 100);
+        $requiredSubjects = $_POST['required_subjects'] ?? [];
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validate required fields
+        if (empty($name) || empty($provider) || empty($eligibility) || empty($deadline)) {
+            setFlashMessage('error', 'Name, provider, eligibility, and deadline are required.');
+            header('Location: /admin/bursaries/add');
+            exit;
+        }
+
+        // Validate deadline format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline)) {
+            setFlashMessage('error', 'Deadline must be in YYYY-MM-DD format.');
+            header('Location: /admin/bursaries/add');
+            exit;
+        }
+
+        // Insert bursary
+        $stmt = $db->prepare("
+            INSERT INTO bursaries (name, provider, eligibility, covers, deadline, contact, apply_url, 
+                                   min_grade_average, max_grade_average, required_subjects, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $stmt->execute([
+            $name,
+            $provider,
+            $eligibility,
+            $covers,
+            $deadline,
+            $contact,
+            $applyUrl,
+            $minGradeAverage,
+            $maxGradeAverage,
+            json_encode($requiredSubjects),
+            $isActive
+        ]);
+
+        setFlashMessage('success', 'Bursary added successfully!');
+        header('Location: /admin/bursaries');
+    }
+
+    /**
+     * Edit bursary - Show form
+     */
+    public function editBursary($bursaryId) {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("SELECT * FROM bursaries WHERE id = ?");
+        $stmt->execute([$bursaryId]);
+        $bursary = $stmt->fetch();
+
+        if (!$bursary) {
+            setFlashMessage('error', 'Bursary not found');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        // Decode required subjects
+        $bursary['required_subjects'] = json_decode($bursary['required_subjects'] ?? '[]', true) ?? [];
+
+        $pageTitle = 'Edit Bursary - Admin - StudySmart';
+        $currentPage = 'admin-bursaries';
+        $isEdit = true;
+
+        include __DIR__ . '/../templates/pages/admin/bursaries_add_edit.php';
+    }
+
+    /**
+     * Update bursary
+     */
+    public function updateBursary($bursaryId) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Check if bursary exists
+        $stmt = $db->prepare("SELECT * FROM bursaries WHERE id = ?");
+        $stmt->execute([$bursaryId]);
+        $bursary = $stmt->fetch();
+
+        if (!$bursary) {
+            setFlashMessage('error', 'Bursary not found');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        // Get and validate POST data
+        $name = trim($_POST['name'] ?? '');
+        $provider = trim($_POST['provider'] ?? '');
+        $eligibility = trim($_POST['eligibility'] ?? '');
+        $covers = trim($_POST['covers'] ?? '');
+        $deadline = trim($_POST['deadline'] ?? '');
+        $contact = trim($_POST['contact'] ?? '');
+        $applyUrl = trim($_POST['apply_url'] ?? '');
+        $minGradeAverage = floatval($_POST['min_grade_average'] ?? 0);
+        $maxGradeAverage = floatval($_POST['max_grade_average'] ?? 100);
+        $requiredSubjects = $_POST['required_subjects'] ?? [];
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validate required fields
+        if (empty($name) || empty($provider) || empty($eligibility) || empty($deadline)) {
+            setFlashMessage('error', 'Name, provider, eligibility, and deadline are required.');
+            header("Location: /admin/bursaries/edit/{$bursaryId}");
+            exit;
+        }
+
+        // Validate deadline format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline)) {
+            setFlashMessage('error', 'Deadline must be in YYYY-MM-DD format.');
+            header("Location: /admin/bursaries/edit/{$bursaryId}");
+            exit;
+        }
+
+        // Update bursary
+        $stmt = $db->prepare("
+            UPDATE bursaries 
+            SET name = ?, provider = ?, eligibility = ?, covers = ?, deadline = ?, 
+                contact = ?, apply_url = ?, min_grade_average = ?, max_grade_average = ?, 
+                required_subjects = ?, is_active = ?, updated_at = datetime('now')
+            WHERE id = ?
+        ");
+
+        $stmt->execute([
+            $name,
+            $provider,
+            $eligibility,
+            $covers,
+            $deadline,
+            $contact,
+            $applyUrl,
+            $minGradeAverage,
+            $maxGradeAverage,
+            json_encode($requiredSubjects),
+            $isActive,
+            $bursaryId
+        ]);
+
+        setFlashMessage('success', 'Bursary updated successfully!');
+        header('Location: /admin/bursaries');
+    }
+
+    /**
+     * Delete bursary
+     */
+    public function deleteBursary() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $bursaryId = $_POST['bursary_id'] ?? null;
+        if (!$bursaryId) {
+            setFlashMessage('error', 'Invalid bursary');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Check if bursary exists
+        $stmt = $db->prepare("SELECT * FROM bursaries WHERE id = ?");
+        $stmt->execute([$bursaryId]);
+        $bursary = $stmt->fetch();
+
+        if (!$bursary) {
+            setFlashMessage('error', 'Bursary not found');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        // Delete bursary
+        $db->prepare("DELETE FROM bursaries WHERE id = ?")->execute([$bursaryId]);
+
+        setFlashMessage('success', 'Bursary deleted successfully');
+        header('Location: /admin/bursaries');
+    }
+
+    /**
+     * Toggle bursary active status
+     */
+    public function toggleBursaryStatus() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $bursaryId = $_POST['bursary_id'] ?? null;
+        if (!$bursaryId) {
+            setFlashMessage('error', 'Invalid bursary');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Get current status
+        $stmt = $db->prepare("SELECT is_active FROM bursaries WHERE id = ?");
+        $stmt->execute([$bursaryId]);
+        $bursary = $stmt->fetch();
+
+        if (!$bursary) {
+            setFlashMessage('error', 'Bursary not found');
+            header('Location: /admin/bursaries');
+            exit;
+        }
+
+        // Toggle status
+        $newStatus = $bursary['is_active'] ? 0 : 1;
+        $db->prepare("UPDATE bursaries SET is_active = ?, updated_at = datetime('now') WHERE id = ?")
+           ->execute([$newStatus, $bursaryId]);
+
+        setFlashMessage('success', 'Bursary status updated');
+        header('Location: /admin/bursaries');
     }
 }

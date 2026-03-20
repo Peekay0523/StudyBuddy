@@ -60,6 +60,11 @@ $router->get('/add-openai-usage-table', function() {
     require __DIR__ . '/../add_openai_usage_table.php';
 });
 
+// Add Bursaries table
+$router->get('/add-bursaries-table', function() {
+    require __DIR__ . '/../add_bursaries_table.php';
+});
+
 // Test scan conversion directly
 $router->get('/test-scan-direct', function() {
     require __DIR__ . '/../test-scan-direct.php';
@@ -139,6 +144,8 @@ $router->get('/admin/seo/delete-resource/{id}', 'SEOController@adminDeleteResour
 // Scripts
 $router->get('/upload-script', 'ScriptController@upload');
 $router->post('/upload-script', 'ScriptController@upload');
+$router->get('/browse-scripts/{grade}', 'ScriptController@browseScripts');
+$router->get('/api/browse-scripts/{grade}', 'ScriptController@getBrowseScripts');
 
 // View and Download Script files
 $router->get('/view-script/{id}', function($scriptId) {
@@ -216,6 +223,15 @@ $router->post('/reprocess-report-card/{id}', function($recId) {
     $controller->reprocessReportCard($recId);
 });
 $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCards');
+$router->get('/api/get-available-bursaries', 'ReportCardController@getAvailableBursaries');
+$router->post('/api/mark-bursary-applied', 'ReportCardController@markBursaryAsApplied');
+$router->post('/api/mark-institution-applied', 'ReportCardController@markInstitutionAsApplied');
+$router->get('/api/get-bursary-applications', 'ReportCardController@getBursaryApplications');
+$router->get('/api/get-institution-applications', 'ReportCardController@getInstitutionApplications');
+$router->post('/api/add-bursary-application', 'ReportCardController@addBursaryApplication');
+$router->post('/api/add-institution-application', 'ReportCardController@addInstitutionApplication');
+$router->post('/api/delete-bursary-application', 'ReportCardController@deleteBursaryApplication');
+$router->post('/api/delete-institution-application', 'ReportCardController@deleteInstitutionApplication');
 
 // AI Chat
 $router->get('/ai-chat', 'AIChatController@index');
@@ -425,6 +441,7 @@ $router->post('/admin/subscriptions/delete', 'AdminController@deleteSubscription
 $router->get('/admin/subscriptions/download-proof/{id}', 'AdminController@downloadProof');
 $router->get('/admin/scripts', 'AdminController@scripts');
 $router->post('/admin/scripts/delete', 'AdminController@deleteScript');
+$router->post('/admin/scripts/upload-shared', 'AdminController@uploadSharedScript');
 $router->get('/admin/report-cards', 'AdminController@reportCards');
 $router->post('/admin/report-cards/delete', 'AdminController@deleteReportCard');
 $router->get('/admin/topics', 'AdminController@topicsMastered');
@@ -432,6 +449,15 @@ $router->get('/admin/openai-settings', 'AdminController@openaiSettings');
 $router->post('/admin/openai-settings/update', 'AdminController@updateOpenaiSettings');
 $router->get('/admin/banking-settings', 'AdminController@bankingSettings');
 $router->post('/admin/banking-settings/update', 'AdminController@updateBankingSettings');
+
+// Bursaries Management
+$router->get('/admin/bursaries', 'AdminController@bursaries');
+$router->get('/admin/bursaries/add', 'AdminController@addBursary');
+$router->post('/admin/bursaries/create', 'AdminController@createBursary');
+$router->get('/admin/bursaries/edit/{id}', 'AdminController@editBursary');
+$router->post('/admin/bursaries/update/{id}', 'AdminController@updateBursary');
+$router->post('/admin/bursaries/delete', 'AdminController@deleteBursary');
+$router->post('/admin/bursaries/toggle-status', 'AdminController@toggleBursaryStatus');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');

@@ -91,8 +91,6 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
-
-
 <!-- Main Header with Invite Friends - Inline Layout -->
 <div class="dashboard-header-grid" style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin-bottom: 30px;">
     <!-- Left: Study Smart Heading -->
@@ -105,17 +103,17 @@ document.addEventListener('keydown', function(e) {
             and discover your ideal career path.
         </p>
     </div>
-    
+
     <!-- Right: Invite Friends Card -->
     <div class="dashboard-invite-card" style="flex-shrink: 0;">
         <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15); min-width: 320px;">
             <div style="display: flex; align-items: flex-start; gap: 15px;">
-                
+
                 <div style="flex: 1; min-width: 0;">
                     <h3 style="margin: 0 0 8px 0; color: #0369a1; font-size: 16px; line-height: 1.3;">
                         </i> Invite Friends to StudySmart
                     </h3>
-                    
+
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <button onclick="document.getElementById('inviteFriendsModal').style.display='flex'" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; padding: 8px 16px; font-size: 13px;">
                             <i class="fas fa-envelope"></i> Invite Friends
@@ -165,6 +163,23 @@ document.addEventListener('keydown', function(e) {
     </div>
 </section>
 
+<!-- Applications Section -->
+<h2 class="section-title">My Applications</h2>
+
+<section class="stats">
+    <!-- Institution Applications Card -->
+    <div class="card blue" style="cursor: pointer;" onclick="toggleApplicationsModal('institution')">
+        <p><i class="fas fa-university"></i> Institution Applications</p>
+        <h2><?php echo $institutionApplicationsCount ?? 0; ?></h2>
+    </div>
+
+    <!-- Bursary Applications Card -->
+    <div class="card green" style="cursor: pointer;" onclick="toggleApplicationsModal('bursary')">
+        <p><i class="fas fa-graduation-cap"></i> Bursary Applications</p>
+        <h2><?php echo $bursaryApplicationsCount ?? 0; ?></h2>
+    </div>
+</section>
+
 <!-- Activity Score Card -->
 <section style="margin: 30px 0;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
@@ -182,7 +197,7 @@ document.addEventListener('keydown', function(e) {
                     <i class="fas fa-chart-line"></i> Keep learning to increase your score!
                 </p>
             </div>
-            
+
             <div style="flex: 1; min-width: 250px;">
                 <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -199,7 +214,7 @@ document.addEventListener('keydown', function(e) {
                 </div>
             </div>
         </div>
-        
+
         <!-- Score Breakdown -->
         <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
             <h4 style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-calculator"></i> Score Breakdown:</h4>
@@ -313,6 +328,46 @@ document.addEventListener('keydown', function(e) {
     </div>
 </div>
 
+<!-- Bursary Applications Modal -->
+<div id="bursaryApplicationsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
+        <button onclick="document.getElementById('bursaryApplicationsModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 style="margin-bottom: 20px; color: #1e293b;">
+            <i class="fas fa-graduation-cap" style="color: #10b981;"></i> My Bursary Applications
+        </h2>
+        <div id="bursaryApplicationsList">
+            <p style="text-align: center; color: #6b7280;">Loading...</p>
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="document.getElementById('bursaryApplicationsModal').style.display='none'" style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Institution Applications Modal -->
+<div id="institutionApplicationsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
+        <button onclick="document.getElementById('institutionApplicationsModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 style="margin-bottom: 20px; color: #1e293b;">
+            <i class="fas fa-university" style="color: #3b82f6;"></i> My Institution Applications
+        </h2>
+        <div id="institutionApplicationsList">
+            <p style="text-align: center; color: #6b7280;">Loading...</p>
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="document.getElementById('institutionApplicationsModal').style.display='none'" style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Close modal when clicking outside
     window.onclick = function(event) {
@@ -320,6 +375,142 @@ document.addEventListener('keydown', function(e) {
         if (event.target == modal) {
             modal.style.display = 'none';
         }
+        var bursaryModal = document.getElementById('bursaryApplicationsModal');
+        if (event.target == bursaryModal) {
+            bursaryModal.style.display = 'none';
+        }
+        var institutionModal = document.getElementById('institutionApplicationsModal');
+        if (event.target == institutionModal) {
+            institutionModal.style.display = 'none';
+        }
+    }
+
+    // Toggle applications modal
+    function toggleApplicationsModal(type) {
+        if (type === 'bursary') {
+            document.getElementById('bursaryApplicationsModal').style.display = 'flex';
+            loadBursaryApplications();
+        } else if (type === 'institution') {
+            document.getElementById('institutionApplicationsModal').style.display = 'flex';
+            loadInstitutionApplications();
+        }
+    }
+
+    // Load bursary applications
+    async function loadBursaryApplications() {
+        try {
+            const response = await fetch('/api/get-bursary-applications');
+            const data = await response.json();
+            const container = document.getElementById('bursaryApplicationsList');
+            if (container) {
+                if (data.applications && data.applications.length > 0) {
+                    container.innerHTML = data.applications.map(app => `
+                        <div style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #10b981;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 5px 0; color: #1f2937;">${escapeHtml(app.bursary_name)}</h4>
+                                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;"><i class="fas fa-building"></i> ${escapeHtml(app.bursary_provider)}</p>
+                                    <span class="badge ${app.application_status === 'approved' ? 'green' : (app.application_status === 'submitted' ? 'blue' : 'yellow')}">${app.application_status}</span>
+                                    ${app.deadline ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #6b7280;"><i class="fas fa-calendar"></i> Deadline: ${new Date(app.deadline).toLocaleDateString()}</p>` : ''}
+                                </div>
+                                <button onclick="deleteBursaryApplication(${app.id})" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No bursary applications yet.</p>';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading bursary applications:', error);
+        }
+    }
+
+    // Load institution applications
+    async function loadInstitutionApplications() {
+        try {
+            const response = await fetch('/api/get-institution-applications');
+            const data = await response.json();
+            const container = document.getElementById('institutionApplicationsList');
+            if (container) {
+                if (data.applications && data.applications.length > 0) {
+                    container.innerHTML = data.applications.map(app => `
+                        <div style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3b82f6;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <h4 style="margin: 0 0 5px 0; color: #1f2937;">${escapeHtml(app.institution_name)}</h4>
+                                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;"><i class="fas fa-graduation-cap"></i> ${app.course_name || 'Not specified'} • ${app.institution_type}</p>
+                                    <span class="badge ${app.application_status === 'accepted' ? 'green' : (app.application_status === 'submitted' ? 'blue' : 'yellow')}">${app.application_status}</span>
+                                    ${app.deadline ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #6b7280;"><i class="fas fa-calendar"></i> Deadline: ${new Date(app.deadline).toLocaleDateString()}</p>` : ''}
+                                </div>
+                                <button onclick="deleteInstitutionApplication(${app.id})" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No institution applications yet.</p>';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading institution applications:', error);
+        }
+    }
+
+    // Delete bursary application
+    async function deleteBursaryApplication(id) {
+        if (!confirm('Are you sure you want to delete this bursary application?')) return;
+        try {
+            const response = await fetch('/api/delete-bursary-application', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'id': id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                loadBursaryApplications();
+                // Refresh page to update counts
+                setTimeout(() => location.reload(), 500);
+            } else {
+                alert('Error: ' + (result.error || 'Failed to delete'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    // Delete institution application
+    async function deleteInstitutionApplication(id) {
+        if (!confirm('Are you sure you want to delete this institution application?')) return;
+        try {
+            const response = await fetch('/api/delete-institution-application', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'id': id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                loadInstitutionApplications();
+                // Refresh page to update counts
+                setTimeout(() => location.reload(), 500);
+            } else {
+                alert('Error: ' + (result.error || 'Failed to delete'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 </script>
 

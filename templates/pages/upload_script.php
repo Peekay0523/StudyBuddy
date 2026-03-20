@@ -378,8 +378,9 @@ include __DIR__ . '/../layouts/header.php';
     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
 <?php endif; ?>
 
-<div class="upload-container">
-    <div class="auth-box" style="max-width: 600px;">
+<div class="upload-container" style="display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start;">
+    <!-- Left Column: Upload Form -->
+    <div class="auth-box" style="max-width: 100%;">
         <form method="post" action="/upload-script" enctype="multipart/form-data" id="upload-script-form">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
@@ -435,13 +436,70 @@ include __DIR__ . '/../layouts/header.php';
         </form>
     </div>
 
-    <div class="scripts-section">
-        <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Scripts</h2>
-        <div id="scripts-list" class="scripts-list">
-            <p class="loading">Loading scripts...</p>
+    <!-- Right Column: Browse Scripts by Grade Card -->
+    <div class="browse-grade-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: sticky; top: 20px;">
+        <h3 style="margin: 0 0 10px 0; color: #1f2937; display: flex; align-items: center; gap: 10px; font-size: 18px;">
+            <i class="fas fa-graduation-cap" style="color: #667eea;"></i> Browse Scripts by Grade
+        </h3>
+        <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Select your grade to view available scripts and study materials uploaded by your school.</p>
+        <div class="grade-links" style="display: grid; gap: 10px;">
+            <a href="/browse-scripts/8" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; border-radius: 8px; color: #0369a1; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100)';this.style.borderColor='#7dd3fc';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100)';this.style.borderColor='#bae6fd';this.style.transform='translateX(0)'">
+                <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 8</span>
+                <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
+            </a>
+            <a href="/browse-scripts/9" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 8px; color: #15803d; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #dcfce7 0%, #86efac 100)';this.style.borderColor='#4ade80';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100)';this.style.borderColor='#86efac';this.style.transform='translateX(0)'">
+                <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 9</span>
+                <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
+            </a>
+            <a href="/browse-scripts/10" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); border: 2px solid #fde047; border-radius: 8px; color: #a16207; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #fef08a 0%, #fde047 100)';this.style.borderColor='#facc15';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #fef9c3 0%, #fef08a 100)';this.style.borderColor='#fde047';this.style.transform='translateX(0)'">
+                <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 10</span>
+                <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
+            </a>
+            <a href="/browse-scripts/11" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); border: 2px solid #fb923c; border-radius: 8px; color: #c2410c; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #fdba74 0%, #fb923c 100)';this.style.borderColor='#fb7185';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #fed7aa 0%, #fdba74 100)';this.style.borderColor='#fb923c';this.style.transform='translateX(0)'">
+                <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 11</span>
+                <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
+            </a>
+            <a href="/browse-scripts/12" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); border: 2px solid #c4b5fd; border-radius: 8px; color: #6d28d9; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100)';this.style.borderColor='#a78bfa';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100)';this.style.borderColor='#c4b5fd';this.style.transform='translateX(0)'">
+                <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 12</span>
+                <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
+            </a>
         </div>
     </div>
 </div>
+
+<!-- Your Uploaded Scripts Section (Full Width Below) -->
+<div class="scripts-section" style="margin-top: 40px;">
+    <h2 class="section-title" style="font-size: 24px; margin-bottom: 20px; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-file-alt"></i> Your Uploaded Scripts
+    </h2>
+    <div id="scripts-list" class="scripts-list">
+        <p class="loading">Loading scripts...</p>
+    </div>
+</div>
+
+<style>
+/* Responsive layout for upload page */
+@media (max-width: 1024px) {
+    .upload-container {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .browse-grade-card {
+        position: static !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .browse-grade-card {
+        padding: 20px !important;
+    }
+    
+    .grade-link-btn {
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+    }
+}
+</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

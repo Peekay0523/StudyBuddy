@@ -910,7 +910,14 @@ HTML;
         $student = getCurrentStudent();
         $script = $this->scriptModel->findById($scriptId);
 
-        if (!$script || $script['student_id'] != $student['id']) {
+        // Check if script exists and is either owned by student OR is a shared script
+        if (!$script) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Allow access if: student owns the script OR script is shared (is_shared = 1)
+        if ($script['student_id'] != $student['id'] && empty($script['is_shared'])) {
             header('Location: /dashboard');
             exit;
         }
@@ -953,7 +960,14 @@ HTML;
         $student = getCurrentStudent();
         $script = $this->scriptModel->findById($scriptId);
 
-        if (!$script || $script['student_id'] != $student['id']) {
+        // Check if script exists and is either owned by student OR is a shared script
+        if (!$script) {
+            header('Location: /dashboard');
+            exit;
+        }
+
+        // Allow access if: student owns the script OR script is shared (is_shared = 1)
+        if ($script['student_id'] != $student['id'] && empty($script['is_shared'])) {
             header('Location: /dashboard');
             exit;
         }
@@ -969,6 +983,62 @@ HTML;
         header('Content-Disposition: attachment; filename="' . $script['file_path'] . '"');
         header('Content-Length: ' . filesize($filePath));
         readfile($filePath);
+        exit;
+    }
+
+    /**
+     * Browse scripts by grade (admin-uploaded scripts)
+     */
+    public function browseScripts($grade) {
+        requireLogin();
+        
+        $student = getCurrentStudent();
+        
+        // Validate grade
+        if (!in_array($grade, ['8', '9', '10', '11', '12'])) {
+            header('Location: /dashboard');
+            exit;
+        }
+        
+        // Get all scripts for this grade (admin-uploaded, shared with all)
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM uploaded_scripts WHERE grade_level = ? AND is_shared = 1 ORDER BY subject, uploaded_at DESC");
+        $stmt->execute([$grade]);
+        $scripts = $stmt->fetchAll();
+        
+        // Get distinct subjects for filtering
+        $subjectsStmt = $db->prepare("SELECT DISTINCT subject FROM uploaded_scripts WHERE grade_level = ? AND is_shared = 1 ORDER BY subject");
+        $subjectsStmt->execute([$grade]);
+        $subjects = $subjectsStmt->fetchAll();
+        
+        $pageTitle = "Grade $grade Scripts - StudySmart";
+        include __DIR__ . '/../templates/pages/browse_scripts.php';
+    }
+
+    /**
+     * API endpoint to get scripts by grade
+     */
+    public function getBrowseScripts($grade) {
+        header('Content-Type: application/json');
+        requireLogin();
+        
+        // Validate grade
+        if (!in_array($grade, ['8', '9', '10', '11', '12'])) {
+            echo json_encode(['success' => false, 'error' => 'Invalid grade']);
+            exit;
+        }
+        
+        // Get all scripts for this grade (admin-uploaded, shared with all)
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM uploaded_scripts WHERE grade_level = ? AND is_shared = 1 ORDER BY subject, uploaded_at DESC");
+        $stmt->execute([$grade]);
+        $scripts = $stmt->fetchAll();
+        
+        echo json_encode([
+            'success' => true,
+            'scripts' => $scripts,
+            'grade' => $grade
+        ]);
         exit;
     }
 }

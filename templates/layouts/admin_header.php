@@ -426,6 +426,9 @@
             <a href="/admin/report-cards" class="<?php echo ($currentPage ?? '') === 'admin-report-cards' ? 'active' : ''; ?>">
                 <i class="fas fa-file-upload"></i> Report Cards
             </a>
+            <a href="/admin/bursaries" class="<?php echo ($currentPage ?? '') === 'admin-bursaries' ? 'active' : ''; ?>">
+                <i class="fas fa-scholarship"></i> Bursaries
+            </a>
             <a href="/admin/topics" class="<?php echo ($currentPage ?? '') === 'admin-topics' ? 'active' : ''; ?>">
                 <i class="fas fa-brain"></i> Topics Mastered
             </a>

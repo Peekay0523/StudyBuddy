@@ -9,6 +9,8 @@ require_once __DIR__ . '/../models/ReportCard.php';
 require_once __DIR__ . '/../models/CareerRecommendation.php';
 require_once __DIR__ . '/../models/Student.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/BursaryApplication.php';
+require_once __DIR__ . '/../models/InstitutionApplication.php';
 require_once __DIR__ . '/../helpers/FileHelper.php';
 require_once __DIR__ . '/../helpers/AIHelper.php';
 
@@ -663,6 +665,369 @@ Return ONLY the JSON, no other text.'
         } catch (Exception $e) {
             error_log("OpenAI Vision OCR error: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Get available bursaries for students
+     */
+    public function getAvailableBursaries() {
+        header('Content-Type: application/json');
+
+        $db = Database::getInstance()->getConnection();
+
+        try {
+            // Get active bursaries that haven't expired
+            $bursaries = $db->query("
+                SELECT * FROM bursaries
+                WHERE is_active = 1
+                AND deadline >= date('now')
+                ORDER BY deadline ASC
+            ")->fetchAll();
+
+            // Format bursaries
+            $formattedBursaries = [];
+            foreach ($bursaries as $bursary) {
+                $deadline = new DateTime($bursary['deadline']);
+                $today = new DateTime();
+                $daysLeft = $today->diff($deadline)->days;
+
+                $formattedBursaries[] = [
+                    'id' => $bursary['id'],
+                    'name' => $bursary['name'],
+                    'provider' => $bursary['provider'],
+                    'eligibility' => $bursary['eligibility'],
+                    'covers' => $bursary['covers'],
+                    'deadline' => $bursary['deadline'],
+                    'days_left' => $daysLeft,
+                    'contact' => $bursary['contact'],
+                    'apply_url' => $bursary['apply_url'],
+                    'min_grade_average' => $bursary['min_grade_average'],
+                    'max_grade_average' => $bursary['max_grade_average'],
+                    'required_subjects' => json_decode($bursary['required_subjects'] ?? '[]', true) ?? []
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'bursaries' => $formattedBursaries,
+                'count' => count($formattedBursaries)
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to load bursaries',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Mark a bursary as applied
+     */
+    public function markBursaryAsApplied() {
+        header('Content-Type: application/json');
+
+        // Check if logged in
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Please log in to continue']);
+            exit;
+        }
+
+        $user = $_SESSION['user'] ?? null;
+        if (!$user || $user['role'] !== 'student') {
+            echo json_encode(['success' => false, 'error' => 'Access denied. Students only.']);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $student = getCurrentStudent();
+        if (!$student) {
+            echo json_encode(['success' => false, 'error' => 'Student profile not found. Please log in again.']);
+            exit;
+        }
+
+        $bursaryName = $_POST['bursary_name'] ?? '';
+        $bursaryProvider = $_POST['bursary_provider'] ?? '';
+
+        if (empty($bursaryName) || empty($bursaryProvider)) {
+            echo json_encode(['success' => false, 'error' => 'Bursary name and provider are required']);
+            exit;
+        }
+
+        try {
+            $bursaryApplicationModel = new BursaryApplication();
+
+            // Check if already applied
+            $existingApplications = $bursaryApplicationModel->findByStudentId($student['id']);
+            foreach ($existingApplications as $app) {
+                if ($app['bursary_name'] === $bursaryName && $app['bursary_provider'] === $bursaryProvider) {
+                    echo json_encode(['success' => false, 'error' => 'You have already marked this bursary as applied']);
+                    exit;
+                }
+            }
+
+            // Create application record
+            $bursaryApplicationModel->create(
+                $student['id'],
+                $bursaryName,
+                $bursaryProvider,
+                null,
+                'submitted',
+                null,
+                'Marked as applied from career recommendations'
+            );
+
+            echo json_encode(['success' => true, 'message' => 'Bursary marked as applied']);
+        } catch (Exception $e) {
+            error_log('Mark bursary applied error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Failed to mark bursary as applied: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Mark an institution as applied
+     */
+    public function markInstitutionAsApplied() {
+        header('Content-Type: application/json');
+
+        // Check if logged in
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Please log in to continue']);
+            exit;
+        }
+
+        $user = $_SESSION['user'] ?? null;
+        if (!$user || $user['role'] !== 'student') {
+            echo json_encode(['success' => false, 'error' => 'Access denied. Students only.']);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $student = getCurrentStudent();
+        if (!$student) {
+            echo json_encode(['success' => false, 'error' => 'Student profile not found. Please log in again.']);
+            exit;
+        }
+
+        $institutionName = $_POST['institution_name'] ?? '';
+        $institutionType = $_POST['institution_type'] ?? 'university';
+
+        if (empty($institutionName)) {
+            echo json_encode(['success' => false, 'error' => 'Institution name is required']);
+            exit;
+        }
+
+        try {
+            $institutionApplicationModel = new InstitutionApplication();
+
+            // Check if already applied
+            $existingApplications = $institutionApplicationModel->findByStudentId($student['id']);
+            foreach ($existingApplications as $app) {
+                if ($app['institution_name'] === $institutionName) {
+                    echo json_encode(['success' => false, 'error' => 'You have already marked this institution as applied']);
+                    exit;
+                }
+            }
+
+            // Create application record
+            $institutionApplicationModel->create(
+                $student['id'],
+                $institutionName,
+                null,
+                $institutionType,
+                'submitted',
+                null,
+                'Marked as applied from career recommendations'
+            );
+
+            echo json_encode(['success' => true, 'message' => 'Institution marked as applied']);
+        } catch (Exception $e) {
+            error_log('Mark institution applied error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Failed to mark institution as applied: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Get user's bursary applications
+     */
+    public function getBursaryApplications() {
+        requireStudent();
+
+        header('Content-Type: application/json');
+
+        $student = getCurrentStudent();
+        $bursaryApplicationModel = new BursaryApplication();
+
+        try {
+            $applications = $bursaryApplicationModel->findByStudentId($student['id']);
+            echo json_encode(['success' => true, 'applications' => $applications]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Failed to load applications']);
+        }
+    }
+
+    /**
+     * Get user's institution applications
+     */
+    public function getInstitutionApplications() {
+        requireStudent();
+
+        header('Content-Type: application/json');
+
+        $student = getCurrentStudent();
+        $institutionApplicationModel = new InstitutionApplication();
+
+        try {
+            $applications = $institutionApplicationModel->findByStudentId($student['id']);
+            echo json_encode(['success' => true, 'applications' => $applications]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Failed to load applications']);
+        }
+    }
+
+    /**
+     * Add bursary application
+     */
+    public function addBursaryApplication() {
+        requireStudent();
+
+        $student = getCurrentStudent();
+        $bursaryName = $_POST['bursary_name'] ?? '';
+        $bursaryProvider = $_POST['bursary_provider'] ?? '';
+        $deadline = $_POST['deadline'] ?? null;
+        $notes = $_POST['notes'] ?? null;
+
+        if (empty($bursaryName) || empty($bursaryProvider)) {
+            setFlashMessage('error', 'Bursary name and provider are required');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        try {
+            $bursaryApplicationModel = new BursaryApplication();
+            $bursaryApplicationModel->create(
+                $student['id'],
+                $bursaryName,
+                $bursaryProvider,
+                null,
+                'pending',
+                $deadline,
+                $notes
+            );
+            setFlashMessage('success', 'Bursary application added successfully');
+        } catch (Exception $e) {
+            setFlashMessage('error', 'Failed to add bursary application');
+        }
+
+        header('Location: /dashboard');
+        exit;
+    }
+
+    /**
+     * Add institution application
+     */
+    public function addInstitutionApplication() {
+        requireStudent();
+
+        $student = getCurrentStudent();
+        $institutionName = $_POST['institution_name'] ?? '';
+        $institutionType = $_POST['institution_type'] ?? 'university';
+        $courseName = $_POST['course_name'] ?? null;
+        $deadline = $_POST['deadline'] ?? null;
+        $notes = $_POST['notes'] ?? null;
+
+        if (empty($institutionName)) {
+            setFlashMessage('error', 'Institution name is required');
+            header('Location: /dashboard');
+            exit;
+        }
+
+        try {
+            $institutionApplicationModel = new InstitutionApplication();
+            $institutionApplicationModel->create(
+                $student['id'],
+                $institutionName,
+                $courseName,
+                $institutionType,
+                'pending',
+                $deadline,
+                $notes
+            );
+            setFlashMessage('success', 'Institution application added successfully');
+        } catch (Exception $e) {
+            setFlashMessage('error', 'Failed to add institution application');
+        }
+
+        header('Location: /dashboard');
+        exit;
+    }
+
+    /**
+     * Delete bursary application
+     */
+    public function deleteBursaryApplication() {
+        requireStudent();
+
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $student = getCurrentStudent();
+        $id = $_POST['id'] ?? null;
+
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'Application ID is required']);
+            exit;
+        }
+
+        try {
+            $bursaryApplicationModel = new BursaryApplication();
+            $bursaryApplicationModel->delete($id, $student['id']);
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Failed to delete application']);
+        }
+    }
+
+    /**
+     * Delete institution application
+     */
+    public function deleteInstitutionApplication() {
+        requireStudent();
+
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $student = getCurrentStudent();
+        $id = $_POST['id'] ?? null;
+
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'Application ID is required']);
+            exit;
+        }
+
+        try {
+            $institutionApplicationModel = new InstitutionApplication();
+            $institutionApplicationModel->delete($id, $student['id']);
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Failed to delete application']);
         }
     }
 }

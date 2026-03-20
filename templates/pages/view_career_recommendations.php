@@ -501,6 +501,9 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                 <a href="https://www.google.com/search?q=<?php echo urlencode($bursary['name'] . ' application'); ?>" target="_blank" class="btn-search">
                                     <i class="fas fa-search"></i> Search
                                 </a>
+                                <button type="button" onclick="markBursaryAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($bursary['name']); ?>', '<?php echo htmlspecialchars($bursary['provider']); ?>')" class="btn-applied">
+                                    <i class="fas fa-check-circle"></i> Mark Applied
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -539,6 +542,9 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                         <a href="<?php echo htmlspecialchars($inst['website']); ?>" target="_blank" class="btn-visit">
                             <i class="fas fa-external-link-alt"></i> Visit Website
                         </a>
+                        <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($inst['name']); ?>', '<?php echo htmlspecialchars($inst['type']); ?>')" class="btn-applied">
+                            <i class="fas fa-check-circle"></i> Mark Applied
+                        </button>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -844,7 +850,132 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     justify-content: center;
     flex-wrap: wrap;
 }
+
+/* Mark as Applied Button */
+.btn-applied {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    text-decoration: none;
+    width: 100px;
+    margin-top: 10px;
+}
+
+.btn-applied:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-applied:active {
+    transform: translateY(0);
+}
+
+.btn-applied.applied {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    cursor: not-allowed;
+}
+
+.btn-applied.applied:hover {
+    transform: none;
+    box-shadow: none;
+}
 </style>
+
+<script>
+// Mark bursary as applied
+async function markBursaryAsApplied(reportCardId, bursaryName, bursaryProvider) {
+    if (!confirm(`Mark "${bursaryName}" as applied? This will add it to your applications on the dashboard.`)) {
+        return;
+    }
+
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const response = await fetch('/api/mark-bursary-applied', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'bursary_name': bursaryName,
+                'bursary_provider': bursaryProvider
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✓ Bursary marked as applied! Check your dashboard to track your application.');
+            button.classList.add('applied');
+            button.innerHTML = '<i class="fas fa-check"></i> Applied';
+        } else {
+            alert('Error: ' + (result.error || 'Failed to mark as applied'));
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+
+// Mark institution as applied
+async function markInstitutionAsApplied(reportCardId, institutionName, institutionType) {
+    if (!confirm(`Mark "${institutionName}" as applied? This will add it to your applications on the dashboard.`)) {
+        return;
+    }
+
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const response = await fetch('/api/mark-institution-applied', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'institution_name': institutionName,
+                'institution_type': institutionType
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✓ Institution marked as applied! Check your dashboard to track your application.');
+            button.classList.add('applied');
+            button.innerHTML = '<i class="fas fa-check"></i> Applied';
+        } else {
+            alert('Error: ' + (result.error || 'Failed to mark as applied'));
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+</script>
 
 <?php endif; ?>
 
