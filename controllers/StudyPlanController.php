@@ -281,4 +281,50 @@ class StudyPlanController {
             echo json_encode(['error' => 'Failed to mark study plan as complete']);
         }
     }
+
+    /**
+     * Mark a study plan as viewed (when user views the plan)
+     */
+    public function markAsViewed($planId) {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $student = getCurrentStudent();
+        $studyPlan = $this->studyPlanModel->findById($planId);
+
+        if (!$studyPlan || $studyPlan['student_id'] != $student['id']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Study plan not found']);
+            return;
+        }
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if is_completed column exists
+            $columns = $db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN);
+            $hasIsCompleted = in_array('is_completed', $columns);
+
+            if ($hasIsCompleted) {
+                // Mark the study plan as completed (is_completed = 1)
+                // This will remove it from the notification count
+                $stmt = $db->prepare("
+                    UPDATE study_plans
+                    SET is_completed = 1
+                    WHERE id = ? AND student_id = ? AND (is_completed = 0 OR is_completed IS NULL)
+                ");
+                $stmt->execute([$planId, $student['id']]);
+            }
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark study plan as viewed']);
+        }
+    }
 }

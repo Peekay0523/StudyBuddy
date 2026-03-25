@@ -189,6 +189,11 @@ $router->post('/study-plan/complete/{id}', function($planId) {
     $controller = new StudyPlanController();
     $controller->complete($planId);
 });
+$router->post('/study-plan/{id}/mark-viewed', function($planId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->markAsViewed($planId);
+});
 
 // Report Cards
 $router->get('/upload-report-card', 'ReportCardController@upload');

@@ -19,9 +19,9 @@ include __DIR__ . '/../layouts/header.php';
     <div style="margin-bottom: 20px;">
         <strong>Created:</strong> <?php echo date('M d, Y', strtotime($studyPlan['created_at'])); ?> |
         <strong>Status:</strong>
-        <span style="color: <?php echo isset($studyPlan['is_completed']) && $studyPlan['is_completed'] ? '#16a34a' : '#f59e0b'; ?>; font-weight: 600;">
-            <i class="fas fa-<?php echo isset($studyPlan['is_completed']) && $studyPlan['is_completed'] ? 'check-circle' : 'clock'; ?>"></i>
-            <?php echo isset($studyPlan['is_completed']) && $studyPlan['is_completed'] ? 'Completed' : (isset($studyPlan['is_completed']) && !$studyPlan['is_completed'] ? 'In Progress' : 'Active'); ?>
+        <span style="color: <?php echo $isCompleted ? '#16a34a' : '#f59e0b'; ?>; font-weight: 600;">
+            <i class="fas fa-<?php echo $isCompleted ? 'check-circle' : 'clock'; ?>"></i>
+            <?php echo $isCompleted ? 'Completed' : 'In Progress'; ?>
         </span>
     </div>
 
@@ -32,11 +32,14 @@ include __DIR__ . '/../layouts/header.php';
         <button id="stopReciteBtn" onclick="stopRecitation()" class="btn-secondary" style="cursor: pointer; display: none;">
             <i class="fas fa-stop"></i> Stop Recitation
         </button>
-        <?php if (isset($studyPlan['is_completed']) && !$studyPlan['is_completed']): ?>
+        <?php 
+        $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
+        if (!$isCompleted): 
+        ?>
             <button onclick="markStudyPlanComplete()" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #059669);">
                 <i class="fas fa-check-circle"></i> Mark as Complete
             </button>
-        <?php elseif (isset($studyPlan['is_completed']) && $studyPlan['is_completed']): ?>
+        <?php else: ?>
             <span style="background: linear-gradient(135deg, #16a34a, #059669); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-check-circle"></i> Completed
             </span>
@@ -76,6 +79,23 @@ include __DIR__ . '/../layouts/header.php';
 let isReciting = false;
 let synthesis = null;
 let availableVoices = [];
+
+// Mark study plan as viewed when page loads (removes notification)
+async function markStudyPlanAsViewed() {
+    try {
+        await fetch('/study-plan/<?php echo $studyPlan['id']; ?>/mark-viewed', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    } catch (error) {
+        console.error('Error marking study plan as viewed:', error);
+    }
+}
+
+// Mark study plan as viewed when page loads
+markStudyPlanAsViewed();
 
 // Preprocess mathematical symbols for speech
 function preprocessMathForSpeech(text) {
