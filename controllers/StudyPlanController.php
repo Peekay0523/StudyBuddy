@@ -250,4 +250,35 @@ class StudyPlanController {
         $this->studyReminderModel->delete($reminderId);
         echo json_encode(['success' => true]);
     }
+
+    /**
+     * Mark a study plan as complete
+     */
+    public function complete($planId) {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $student = getCurrentStudent();
+        $studyPlan = $this->studyPlanModel->findById($planId);
+
+        if (!$studyPlan || $studyPlan['student_id'] != $student['id']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Study plan not found']);
+            return;
+        }
+
+        $result = $this->studyPlanModel->markComplete($planId);
+
+        if ($result) {
+            echo json_encode(['success' => true]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark study plan as complete']);
+        }
+    }
 }

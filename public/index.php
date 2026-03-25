@@ -39,8 +39,8 @@ require_once __DIR__ . '/../router.php';
 $router = new Router();
 
 // Define routes
-$router->get('/', 'HomeController@index');
-$router->get('/home', 'HomeController@index');
+$router->get('/', 'HomeController@landing');
+$router->get('/home', 'HomeController@landing');
 
 // Test GD library
 $router->get('/test-gd', function() {
@@ -117,30 +117,6 @@ $router->get('/logout', 'AuthController@logout');
 $router->get('/dashboard', 'DashboardController@index');
 $router->get('/dashboard/login-streak-info', 'DashboardController@getLoginStreakInfo');
 
-// SEO Pages - Long-tail content
-$router->get('/seo', 'SEOController@index');
-$router->get('/seo/search', 'SEOController@search');
-$router->get('/seo/sitemap.xml', 'SEOController@sitemap');
-$router->get('/seo/{subject}/{grade}', 'SEOController@browse');
-$router->get('/seo/{slug}', 'SEOController@show');
-$router->get('/seo/{slug}/pdf', 'SEOController@downloadPdf');
-
-// SEO Resources - Download
-$router->get('/seo-resource/download/{id}', 'SEOController@downloadResource');
-
-// Admin - SEO Management
-$router->get('/admin/seo/pages', 'SEOController@adminList');
-$router->get('/admin/seo/add', 'SEOController@adminAdd');
-$router->post('/admin/seo/create', 'SEOController@adminCreate');
-$router->get('/admin/seo/generate', 'SEOController@generate');
-$router->post('/admin/seo/generate', 'SEOController@generate');
-$router->get('/admin/seo/edit/{id}', 'SEOController@adminEdit');
-$router->post('/admin/seo/update/{id}', 'SEOController@adminUpdate');
-$router->get('/admin/seo/delete/{id}', 'SEOController@adminDelete');
-$router->get('/admin/seo/toggle-publish/{id}', 'SEOController@adminTogglePublish');
-$router->post('/admin/seo/upload-resource/{id}', 'SEOController@adminUploadResource');
-$router->get('/admin/seo/delete-resource/{id}', 'SEOController@adminDeleteResource');
-
 // Scripts
 $router->get('/upload-script', 'ScriptController@upload');
 $router->post('/upload-script', 'ScriptController@upload');
@@ -208,6 +184,11 @@ $router->post('/study-plan/reminder-delete/{id}', function($reminderId) {
     $controller = new StudyPlanController();
     $controller->deleteReminder($reminderId);
 });
+$router->post('/study-plan/complete/{id}', function($planId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->complete($planId);
+});
 
 // Report Cards
 $router->get('/upload-report-card', 'ReportCardController@upload');
@@ -254,6 +235,11 @@ $router->post('/study-group/send-invite', 'StudyGroupController@sendInvite');
 $router->get('/study-group/accept-invite/{token}', 'StudyGroupController@acceptInvite');
 $router->get('/invites', 'StudyGroupController@viewInvites');
 $router->post('/study-group/cancel-invite/{id}', 'StudyGroupController@cancelInvite');
+$router->post('/study-group/{id}/mark-viewed', function($groupId) {
+    require_once __DIR__ . '/../controllers/StudyGroupController.php';
+    $controller = new StudyGroupController();
+    $controller->markMessagesAsViewed($groupId);
+});
 
 // Serve voice recordings from database (MUST be before /send-message and /get-messages)
 $router->get('/study-group/{groupId}/voice/{messageId}', function($groupId, $messageId) {
@@ -349,12 +335,12 @@ $router->post('/subscription/subscribe', 'SubscriptionController@subscribe');
 $router->post('/subscription/cancel', 'SubscriptionController@cancel');
 $router->post('/subscription/downgrade', 'SubscriptionController@downgrade');
 
-// PayFast Payment Gateway
-$router->get('/subscription/payfast/return', 'SubscriptionController@payfastReturn');
-$router->post('/subscription/payfast/return', 'SubscriptionController@payfastReturn');
-$router->get('/subscription/payfast/cancel', 'SubscriptionController@payfastCancel');
-$router->post('/subscription/payfast/cancel', 'SubscriptionController@payfastCancel');
-$router->post('/subscription/payfast/notify', 'SubscriptionController@payfastNotify');
+// BobPay Payment Gateway
+$router->get('/subscription/bobpay/return', 'SubscriptionController@bobpayReturn');
+$router->post('/subscription/bobpay/return', 'SubscriptionController@bobpayReturn');
+$router->get('/subscription/bobpay/cancel', 'SubscriptionController@bobpayCancel');
+$router->post('/subscription/bobpay/cancel', 'SubscriptionController@bobpayCancel');
+$router->post('/subscription/bobpay/webhook', 'SubscriptionController@bobpayWebhook');
 
 // Scan to PDF
 $router->get('/scan', 'ScanController@index');
@@ -458,6 +444,11 @@ $router->get('/admin/bursaries/edit/{id}', 'AdminController@editBursary');
 $router->post('/admin/bursaries/update/{id}', 'AdminController@updateBursary');
 $router->post('/admin/bursaries/delete', 'AdminController@deleteBursary');
 $router->post('/admin/bursaries/toggle-status', 'AdminController@toggleBursaryStatus');
+
+// Admin - BobPay Payment Management
+$router->get('/admin/bobpay', 'AdminController@bobpayPayments');
+$router->post('/admin/bobpay/refund', 'AdminController@bobpayRefund');
+$router->get('/admin/bobpay/payment/{id}', 'AdminController@bobpayPaymentDetails');
 
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');

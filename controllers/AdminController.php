@@ -178,7 +178,7 @@ class AdminController {
         $db = Database::getInstance()->getConnection();
 
         // Get filter from query string
-        $filter = $_GET['filter'] ?? 'all'; // all, pending_eft, active, trial, expired, cancelled
+        $filter = $_GET['filter'] ?? 'all'; // all, pending_eft, active, trial, expired, cancelled, bobpay, card
 
         // Build query based on filter
         if ($filter === 'all') {
@@ -186,17 +186,28 @@ class AdminController {
                 SELECT s.*, u.username, u.email, u.phone
                 FROM subscriptions s
                 JOIN users u ON s.user_id = u.id
-                ORDER BY 
-                    CASE s.status 
-                        WHEN 'pending_eft' THEN 1 
-                        WHEN 'trial' THEN 2 
-                        WHEN 'active' THEN 3 
-                        WHEN 'expired' THEN 4 
-                        WHEN 'cancelled' THEN 5 
-                        ELSE 6 
+                ORDER BY
+                    CASE s.status
+                        WHEN 'pending_eft' THEN 1
+                        WHEN 'trial' THEN 2
+                        WHEN 'active' THEN 3
+                        WHEN 'expired' THEN 4
+                        WHEN 'cancelled' THEN 5
+                        ELSE 6
                     END,
                     s.created_at DESC
             ")->fetchAll();
+        } else if (in_array($filter, ['bobpay', 'card'])) {
+            // Filter by payment method
+            $stmt = $db->prepare("
+                SELECT s.*, u.username, u.email, u.phone
+                FROM subscriptions s
+                JOIN users u ON s.user_id = u.id
+                WHERE s.payment_method = ?
+                ORDER BY s.created_at DESC
+            ");
+            $stmt->execute([$filter]);
+            $subscriptions = $stmt->fetchAll();
         } else {
             $stmt = $db->prepare("
                 SELECT s.*, u.username, u.email, u.phone
@@ -1494,5 +1505,120 @@ class AdminController {
 
         setFlashMessage('success', 'Bursary status updated');
         header('Location: /admin/bursaries');
+    }
+    
+    /**
+     * BobPay Payment Management
+     */
+    public function bobpayPayments() {
+        require_once __DIR__ . '/../config/bobpay.php';
+        
+        $bobPay = new BobPayHelper();
+        
+        // Get filters from request
+        $filters = [
+            'include_retained_amount' => 'true',
+            'limit' => 20,
+            'order' => 'DESC',
+            'order_by' => 'time_created'
+        ];
+        
+        if (!empty($_GET['status'])) {
+            $filters['statuses'] = [$_GET['status']];
+        }
+        
+        if (!empty($_GET['from_date'])) {
+            $filters['start_date'] = $_GET['from_date'] . ' 00:00:00';
+        }
+        
+        if (!empty($_GET['to_date'])) {
+            $filters['end_date'] = $_GET['to_date'] . ' 23:59:59';
+        }
+        
+        if (!empty($_GET['search'])) {
+            $filters['search'] = $_GET['search'];
+        }
+        
+        // Get payment intents
+        $payments = $bobPay->getPaymentIntents($filters);
+        
+        // Get payment methods
+        $paymentMethods = $bobPay->getPublicPaymentMethods('SAN001');
+        
+        include __DIR__ . '/../templates/pages/admin/bobpay_payments.php';
+    }
+    
+    /**
+     * BobPay Process Refund
+     */
+    public function bobpayRefund() {
+        require_once __DIR__ . '/../config/bobpay.php';
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/bobpay');
+            exit;
+        }
+        
+        $paymentId = (int)($_POST['payment_id'] ?? 0);
+        $reason = $_POST['reason'] ?? '';
+        
+        if (!$paymentId) {
+            setFlashMessage('error', 'Invalid payment ID');
+            header('Location: /admin/bobpay');
+            exit;
+        }
+        
+        $bobPay = new BobPayHelper();
+        $result = $bobPay->refundPayment($paymentId);
+        
+        if ($result && isset($result['payment_method'])) {
+            setFlashMessage('success', 'Refund processed successfully!');
+            
+            // Log refund in database (optional)
+            $this->logRefund($paymentId, $reason, $result);
+        } else {
+            setFlashMessage('error', 'Failed to process refund. Please try again.');
+        }
+        
+        header('Location: /admin/bobpay');
+        exit;
+    }
+    
+    /**
+     * Log refund in database
+     */
+    private function logRefund($paymentId, $reason, $result) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO payment_refunds (payment_id, refund_amount, reason, bobpay_response, refunded_by, created_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+            ");
+            $refundAmount = $result['payment_method']['amount'] ?? 0;
+            $userId = getCurrentUser()['id'] ?? 0;
+            $stmt->execute([$paymentId, $refundAmount, $reason, json_encode($result), $userId]);
+        } catch (Exception $e) {
+            // Table might not exist, ignore
+            error_log('Refund log error: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * BobPay Payment Details
+     */
+    public function bobpayPaymentDetails($paymentId) {
+        require_once __DIR__ . '/../config/bobpay.php';
+        
+        $bobPay = new BobPayHelper();
+        $payment = $bobPay->getPaymentIntent($paymentId);
+        
+        if (!$payment) {
+            setFlashMessage('error', 'Payment not found');
+            header('Location: /admin/bobpay');
+            exit;
+        }
+        
+        $pageTitle = 'Payment Details #' . $paymentId;
+        include __DIR__ . '/../templates/pages/admin/bobpay_payment_details.php';
     }
 }

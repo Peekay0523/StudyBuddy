@@ -426,12 +426,18 @@ include __DIR__ . '/../layouts/header.php';
         </h2>
         <div class="features-section" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
             <?php foreach ($myGroups as $group): ?>
-                <div class="feature-card" style="border: 1px solid #e2e8f0; transition: transform 0.2s; cursor: pointer;" 
+                <div class="feature-card" style="border: 1px solid #e2e8f0; transition: transform 0.2s; cursor: pointer;"
                      onclick="window.location.href='/study-group/view/<?php echo $group['id']; ?>'">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
-                        <h3 style="font-size: 18px; color: #1e293b; margin: 0; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; position: relative;">
+                        <h3 style="font-size: 18px; color: #1e293b; margin: 0; flex: 1; padding-right: 60px;">
                             <?php echo htmlspecialchars($group['title']); ?>
                         </h3>
+                        <?php
+                        $groupNotificationCount = getStudyGroupNotificationCount($group['id']);
+                        if ($groupNotificationCount > 0):
+                        ?>
+                            <span class="notification-badge"><?php echo $groupNotificationCount > 99 ? '99+' : $groupNotificationCount; ?></span>
+                        <?php endif; ?>
                         <?php if ($group['user_role'] === 'admin'): ?>
                             <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
                                 ADMIN

@@ -131,6 +131,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     payment_reference TEXT,
     payment_date DATETIME,
     proof_path TEXT,
+    payment_method TEXT DEFAULT 'eft',
+    transaction_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

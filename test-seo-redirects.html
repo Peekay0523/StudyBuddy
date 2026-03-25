@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test SEO Keyword Redirects</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        h1 {
+            color: #1e293b;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        .test-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .test-link.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        code {
+            background: #1e293b;
+            color: #10b981;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .info-box {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 SEO Keyword Redirects - Test Page</h1>
+    
+    <div class="info-box">
+        <strong>ℹ️ How to Test:</strong> Click on any of the test links below. You should be automatically redirected to the dashboard page with the keyword tracked in the URL parameters.
+    </div>
+
+    <div class="test-section">
+        <h2>Test All Keywords</h2>
+        <p>Click each link to test the redirect functionality:</p>
+        
+        <h3>Learning Platform Keywords</h3>
+        <a href="/seo-keyword-redirect?q=learning+platform" class="test-link" target="_blank">
+            Learning Platform
+        </a>
+        <a href="/seo-keyword-redirect?q=learning+platorm" class="test-link" target="_blank">
+            Learning Platorm (misspelled)
+        </a>
+        <a href="/learning-platform" class="test-link success" target="_blank">
+            /learning-platform (Apache)
+        </a>
+        
+        <h3>Study Buddy Keywords</h3>
+        <a href="/seo-keyword-redirect?q=study+buddy" class="test-link" target="_blank">
+            Study Buddy
+        </a>
+        <a href="/seo-keyword-redirect?q=study+buddie" class="test-link" target="_blank">
+            Study Buddie
+        </a>
+        <a href="/seo-keyword-redirect?q=study+buddy+website" class="test-link" target="_blank">
+            Study Buddy Website
+        </a>
+        <a href="/seo-keyword-redirect?q=study+buddie+website" class="test-link" target="_blank">
+            Study Buddie Website
+        </a>
+        <a href="/study-buddy" class="test-link success" target="_blank">
+            /study-buddy (Apache)
+        </a>
+        <a href="/study-buddie" class="test-link success" target="_blank">
+            /study-buddie (Apache)
+        </a>
+        
+        <h3>Grade Improvement Keywords</h3>
+        <a href="/seo-keyword-redirect?q=better+way+to+improve+grades" class="test-link" target="_blank">
+            Better Way to Improve Grades
+        </a>
+        <a href="/better-way-to-improve-grades" class="test-link success" target="_blank">
+            /better-way-to-improve-grades (Apache)
+        </a>
+        
+        <h3>Regional Keywords</h3>
+        <a href="/seo-keyword-redirect?q=south+africa+learning+platform" class="test-link" target="_blank">
+            South Africa Learning Platform
+        </a>
+        <a href="/south-africa-learning-platform" class="test-link success" target="_blank">
+            /south-africa-learning-platform (Apache)
+        </a>
+        
+        <h3>Study Mate Keywords</h3>
+        <a href="/seo-keyword-redirect?q=study+mate" class="test-link" target="_blank">
+            Study Mate
+        </a>
+        <a href="/seo-keyword-redirect?q=studymate" class="test-link" target="_blank">
+            Studymate
+        </a>
+        <a href="/study-mate" class="test-link success" target="_blank">
+            /study-mate (Apache)
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <p>When you click on any test link:</p>
+        <ol>
+            <li>The system will detect the keyword</li>
+            <li>The keyword will be tracked in the database</li>
+            <li>You'll be redirected to: <code>/dashboard?ref=seo&keyword=...</code></li>
+            <li>The dashboard should load successfully</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Database Tracking</h2>
+        <p>To view tracked visits, run this SQL query:</p>
+        <pre style="background: #1e293b; color: #10b981; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>SELECT 
+    keyword,
+    COUNT(*) as total_visits,
+    MAX(visited_at) as last_visit,
+    ip_address,
+    user_agent
+FROM seo_keyword_redirects 
+GROUP BY keyword 
+ORDER BY total_visits DESC;</code></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Status Check</h2>
+        <div id="status-check">
+            <p>Checking system status...</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple status check
+        async function checkStatus() {
+            const statusDiv = document.getElementById('status-check');
+            
+            try {
+                // Test if the route exists
+                const response = await fetch('/seo-keyword-redirect?q=test');
+                
+                if (response.redirected && response.url.includes('/dashboard')) {
+                    statusDiv.innerHTML = `
+                        <p><span class="status success">✓ SUCCESS</span> SEO redirects are working correctly!</p>
+                        <p>Redirected to: <code>${response.url}</code></p>
+                    `;
+                } else if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <p><span class="status success">✓ OK</span> Route is accessible</p>
+                        <p>Status: ${response.status} ${response.statusText}</p>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <p><span class="status error">✗ ERROR</span> Route returned status: ${response.status}</p>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <p><span class="status error">✗ ERROR</span> ${error.message}</p>
+                    <p>Make sure the PHP server is running: <code>php -S localhost:8000 public/router.php</code></p>
+                `;
+            }
+        }
+        
+        checkStatus();
+    </script>
+</body>
+</html>

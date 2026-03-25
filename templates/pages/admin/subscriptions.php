@@ -24,32 +24,37 @@ include __DIR__ . '/../../layouts/admin_header.php';
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
         <!-- Filter Buttons -->
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <a href="/admin/subscriptions?filter=all" 
+            <a href="/admin/subscriptions?filter=all"
                class="btn-sm <?php echo ($filter ?? 'all') === 'all' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-list"></i> All
             </a>
-            <a href="/admin/subscriptions?filter=pending_eft" 
+            <a href="/admin/subscriptions?filter=pending_eft"
                class="btn-sm <?php echo ($filter ?? '') === 'pending_eft' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-clock"></i> Pending EFT
             </a>
-            <a href="/admin/subscriptions?filter=active" 
+            <a href="/admin/subscriptions?filter=bobpay"
+               class="btn-sm <?php echo ($filter ?? '') === 'bobpay' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
+               style="text-decoration: none;">
+                <i class="fas fa-credit-card"></i> BobPay
+            </a>
+            <a href="/admin/subscriptions?filter=active"
                class="btn-sm <?php echo ($filter ?? '') === 'active' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-check-circle"></i> Active
             </a>
-            <a href="/admin/subscriptions?filter=trial" 
+            <a href="/admin/subscriptions?filter=trial"
                class="btn-sm <?php echo ($filter ?? '') === 'trial' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-star"></i> Trial
             </a>
-            <a href="/admin/subscriptions?filter=expired" 
+            <a href="/admin/subscriptions?filter=expired"
                class="btn-sm <?php echo ($filter ?? '') === 'expired' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-times-circle"></i> Expired
             </a>
-            <a href="/admin/subscriptions?filter=cancelled" 
+            <a href="/admin/subscriptions?filter=cancelled"
                class="btn-sm <?php echo ($filter ?? '') === 'cancelled' ? 'btn-sm-info' : 'btn-sm-secondary'; ?>"
                style="text-decoration: none;">
                 <i class="fas fa-ban"></i> Cancelled
@@ -71,6 +76,8 @@ include __DIR__ . '/../../layouts/admin_header.php';
                 <th>Plan</th>
                 <th>Price</th>
                 <th>Status</th>
+                <th>Payment Method</th>
+                <th>Transaction ID</th>
                 <th>Payment Reference</th>
                 <th>Period Start</th>
                 <th>Period End</th>
@@ -80,7 +87,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
         <tbody>
             <?php if (empty($subscriptions)): ?>
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <td colspan="11" style="text-align: center; padding: 40px; color: #6b7280;">
                         <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
                         No subscriptions found
                     </td>
@@ -101,11 +108,45 @@ include __DIR__ . '/../../layouts/admin_header.php';
                         <td>R<?php echo number_format($sub['price'], 2); ?></td>
                         <td>
                             <span class="badge <?php echo $sub['status'] === 'active' ? 'active' : ($sub['status'] === 'cancelled' ? 'cancelled' : ($sub['status'] === 'trial' ? 'basic' : ($sub['status'] === 'pending_eft' ? 'premium' : 'inactive'))) ?>">
-                                <?php 
+                                <?php
                                     $statusDisplay = $sub['status'] === 'pending_eft' ? 'Pending EFT' : htmlspecialchars($sub['status'] ?? '');
                                     echo $statusDisplay;
                                 ?>
                             </span>
+                        </td>
+                        <td>
+                            <?php if (!empty($sub['payment_method'])): ?>
+                                <span style="font-size: 13px;">
+                                    <?php
+                                    $paymentMethod = $sub['payment_method'];
+                                    $paymentIcon = 'fa-credit-card';
+                                    $paymentColor = '#6b7280';
+                                    if ($paymentMethod === 'bobpay') {
+                                        $paymentLabel = 'BobPay';
+                                        $paymentColor = '#16a34a';
+                                    } else if ($paymentMethod === 'eft') {
+                                        $paymentLabel = 'EFT';
+                                        $paymentIcon = 'fa-university';
+                                        $paymentColor = '#dc2626';
+                                    } else {
+                                        $paymentLabel = 'Card';
+                                    }
+                                    ?>
+                                    <i class="fas <?php echo $paymentIcon; ?>" style="color: <?php echo $paymentColor; ?>;"></i>
+                                    <?php echo $paymentLabel; ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color: #6b7280; font-size: 13px;">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($sub['transaction_id'])): ?>
+                                <span style="font-size: 12px; color: #6b7280;" title="<?php echo htmlspecialchars($sub['transaction_id']); ?>">
+                                    <i class="fas fa-receipt"></i> <?php echo htmlspecialchars(substr($sub['transaction_id'], 0, 20)); ?><?php echo strlen($sub['transaction_id']) > 20 ? '...' : ''; ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color: #6b7280; font-size: 13px;">-</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($sub['status'] === 'pending_eft' && !empty($sub['payment_reference'])): ?>

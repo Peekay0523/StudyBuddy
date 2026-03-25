@@ -15,7 +15,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudySmart</span>
+            <i class="fas fa-graduation-cap icon-lg"></i> <span>StudyBuddie</span>
             <small>AI Learning Assistant</small>
         </div>
 
@@ -34,8 +34,24 @@
                     <!-- Regular users see full navigation -->
                     <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
                     <a href="/upload-script" class="<?php echo ($currentPage ?? '') === 'scripts' ? 'active' : ''; ?>"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
-                    <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>"><i class="fas fa-calendar-alt icon-sm"></i> Study Plan</a>
-                    <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>"><i class="fas fa-users icon-sm"></i> Study Group</a>
+                    <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>">
+                        <i class="fas fa-calendar-alt icon-sm"></i> Study Plan
+                        <?php
+                        $pendingPlans = getPendingStudyPlansCount();
+                        if ($pendingPlans > 0):
+                        ?>
+                            <span class="notification-badge"><?php echo $pendingPlans > 99 ? '99+' : $pendingPlans; ?></span>
+                        <?php endif; ?>
+                    </a>
+                    <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>">
+                        <i class="fas fa-users icon-sm"></i> Study Group
+                        <?php
+                        $groupActivity = getStudyGroupActivityCount();
+                        if ($groupActivity > 0):
+                        ?>
+                            <span class="notification-badge"><?php echo $groupActivity > 99 ? '99+' : $groupActivity; ?></span>
+                        <?php endif; ?>
+                    </a>
                     <a href="/scan" class="<?php echo ($currentPage ?? '') === 'scan' ? 'active' : ''; ?>"><i class="fas fa-camera icon-sm"></i> Scan to PDF</a>
                     <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
                     <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
@@ -74,7 +90,7 @@
                     <span></span>
                 </button>
                 <div class="top-logo">
-                    <i class="fas fa-graduation-cap"></i> StudySmart
+                    <i class="fas fa-graduation-cap"></i> StudyBuddie
                 </div>
             </div>
             <div class="top-nav-right">

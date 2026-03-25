@@ -81,9 +81,9 @@ try {
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Payment Method</label>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #2563eb; border-radius: 8px; cursor: pointer; background: #eff6ff; text-align: center;">
-                        <input type="radio" name="payment_method" value="payfast" checked style="margin-right: 8px;">
-                        <i class="fas fa-credit-card"></i> PayFast (Card)
+                    <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center;">
+                        <input type="radio" name="payment_method" value="bobpay" checked style="margin-right: 8px;">
+                        <i class="fas fa-credit-card"></i> BobPay (Card)
                     </label>
                     <label style="flex: 1; min-width: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center;">
                         <input type="radio" name="payment_method" value="eft" style="margin-right: 8px;">
@@ -92,65 +92,12 @@ try {
                 </div>
             </div>
 
-            <div id="cardPaymentFields">
+            <div id="bobPayFields">
                 <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #16a34a; margin-bottom: 20px;">
                     <p style="font-size: 14px; color: #166534; margin: 0;">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Secure Card Payment via PayFast:</strong> You will be redirected to PayFast's secure payment gateway to complete your card payment. All major credit and debit cards are accepted.
+                        <strong>Secure Card Payment via BobPay:</strong> You will be redirected to BobPay's secure payment gateway to complete your card payment. All major credit and debit cards are accepted.
                     </p>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label for="cardholder_name" style="display: block; margin-bottom: 8px; font-weight: 600;">Cardholder Name</label>
-                    <input
-                        type="text"
-                        id="cardholder_name"
-                        name="cardholder_name"
-                        placeholder="John Doe"
-                        style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                    >
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label for="card_number" style="display: block; margin-bottom: 8px; font-weight: 600;">Card Number</label>
-                    <input
-                        type="text"
-                        id="card_number"
-                        name="card_number"
-                        placeholder="1234 5678 9012 3456"
-                        maxlength="19"
-                        style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                    >
-                    <div style="margin-top: 8px; display: flex; gap: 10px;">
-                        <i class="fab fa-cc-visa" style="font-size: 24px; color: #1a1f71;"></i>
-                        <i class="fab fa-cc-mastercard" style="font-size: 24px; color: #eb001b;"></i>
-                        <i class="fab fa-cc-amex" style="font-size: 24px; color: #006fcf;"></i>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div>
-                        <label for="expiry_date" style="display: block; margin-bottom: 8px; font-weight: 600;">Expiry Date</label>
-                        <input
-                            type="text"
-                            id="expiry_date"
-                            name="expiry_date"
-                            placeholder="MM/YY"
-                            maxlength="5"
-                            style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                        >
-                    </div>
-                    <div>
-                        <label for="cvv" style="display: block; margin-bottom: 8px; font-weight: 600;">CVV</label>
-                        <input
-                            type="text"
-                            id="cvv"
-                            name="cvv"
-                            placeholder="123"
-                            maxlength="4"
-                            style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px;"
-                        >
-                    </div>
                 </div>
             </div>
 
@@ -283,24 +230,24 @@ try {
 // Toggle payment fields
 document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener('change', function() {
-        const cardFields = document.getElementById('cardPaymentFields');
+        const bobPayFields = document.getElementById('bobPayFields');
         const eftFields = document.getElementById('eftPaymentFields');
         const submitBtn = document.getElementById('submitBtn');
 
         // Hide all fields first
-        cardFields.style.display = 'none';
+        bobPayFields.style.display = 'none';
         eftFields.style.display = 'none';
 
         // Remove required from all fields
-        cardFields.querySelectorAll('input').forEach(input => input.required = false);
+        bobPayFields.querySelectorAll('input').forEach(input => input.required = false);
         eftFields.querySelectorAll('input').forEach(input => input.required = false);
 
         // Show and set required based on selection
-        if (this.value === 'payfast') {
-            // PayFast - card details will be entered on PayFast gateway
-            cardFields.style.display = 'block';
-            cardFields.querySelectorAll('input').forEach(input => input.required = false);
-            submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Card via PayFast';
+        if (this.value === 'bobpay') {
+            // BobPay - card details will be entered on BobPay gateway
+            bobPayFields.style.display = 'block';
+            bobPayFields.querySelectorAll('input').forEach(input => input.required = false);
+            submitBtn.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Card via BobPay';
         } else if (this.value === 'eft') {
             eftFields.style.display = 'block';
             eftFields.querySelectorAll('input').forEach(input => input.required = true);
@@ -338,16 +285,20 @@ function validatePayment() {
             return false;
         }
     }
-    // PayFast requires no additional validation
+    // BobPay and EFT require no additional validation
 
     return true;
 }
-</script>
 
-<style>
-#cardPaymentFields {
-    transition: all 0.3s ease;
-}
-</style>
+// Initialize with BobPay selected
+document.addEventListener('DOMContentLoaded', function() {
+    const bobPayRadio = document.querySelector('input[name="payment_method"][value="bobpay"]');
+    if (bobPayRadio) {
+        bobPayRadio.checked = true;
+        // Trigger change event to show BobPay fields
+        bobPayRadio.dispatchEvent(new Event('change'));
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

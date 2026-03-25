@@ -142,4 +142,25 @@ class StudyPlan {
             return []; // Table doesn't exist yet
         }
     }
+
+    /**
+     * Mark a study plan as complete
+     */
+    public function markComplete($planId) {
+        try {
+            // Check if is_completed column exists
+            $columns = $this->db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN);
+            $hasIsCompleted = in_array('is_completed', $columns);
+
+            if ($hasIsCompleted) {
+                $stmt = $this->db->prepare("UPDATE study_plans SET is_completed = 1 WHERE id = ?");
+                return $stmt->execute([$planId]);
+            } else {
+                // If column doesn't exist, just mark as inactive
+                return $this->updateActive($planId, 0);
+            }
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
 }

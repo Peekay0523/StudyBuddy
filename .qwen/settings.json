@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del *)",
+      "Bash(type *)",
+      "Bash(echo.)",
+      "Bash(echo)",
+      "Bash(echo *)",
+      "Bash(php *)",
+      "Bash(findstr *)",
+      "Bash(get-content *)",
+      "Bash(select-string *)",
+      "Bash(taskkill *)",
+      "Bash(timeout *)",
+      "Bash(powershell *)"
+    ]
+  },
+  "$version": 3
+}

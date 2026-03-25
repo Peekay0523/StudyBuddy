@@ -1,0 +1,34 @@
+# SEO Keyword Redirects Configuration
+# This file helps redirect specific search terms to the dashboard
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Redirect SEO keywords to dashboard
+    # Learning Platform variations
+    RewriteRule ^learning-platform/?$ /seo-keyword-redirect?q=learning%20platform [QSA,L,R=301]
+    RewriteRule ^learning-platorm/?$ /seo-keyword-redirect?q=learning%20platorm [QSA,L,R=301]
+    
+    # Study Buddy variations
+    RewriteRule ^study-buddy/?$ /seo-keyword-redirect?q=study%20buddy [QSA,L,R=301]
+    RewriteRule ^study-buddie/?$ /seo-keyword-redirect?q=study%20buddie [QSA,L,R=301]
+    RewriteRule ^study-buddys/?$ /seo-keyword-redirect?q=study%20buddys [QSA,L,R=301]
+    RewriteRule ^study-buddies/?$ /seo-keyword-redirect?q=study%20buddies [QSA,L,R=301]
+    
+    # Study Buddy Website variations
+    RewriteRule ^study-buddy-website/?$ /seo-keyword-redirect?q=study%20buddy%20website [QSA,L,R=301]
+    RewriteRule ^study-buddie-website/?$ /seo-keyword-redirect?q=study%20buddie%20website [QSA,L,R=301]
+    
+    # Better way to improve grades
+    RewriteRule ^better-way-to-improve-grades/?$ /seo-keyword-redirect?q=better%20way%20to%20improve%20grades [QSA,L,R=301]
+    
+    # South Africa Learning Platform
+    RewriteRule ^south-africa-learning-platform/?$ /seo-keyword-redirect?q=south%20africa%20learning%20platform [QSA,L,R=301]
+    
+    # Study Mate variations
+    RewriteRule ^study-mate/?$ /seo-keyword-redirect?q=study%20mate [QSA,L,R=301]
+    RewriteRule ^studymate/?$ /seo-keyword-redirect?q=studymate [QSA,L,R=301]
+    RewriteRule ^study-mate-website/?$ /seo-keyword-redirect?q=study%20mate%20website [QSA,L,R=301]
+</IfModule>

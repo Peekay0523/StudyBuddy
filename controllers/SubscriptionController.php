@@ -5,7 +5,7 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/payfast.php';
+require_once __DIR__ . '/../config/bobpay.php';
 
 class SubscriptionController {
     
@@ -15,16 +15,16 @@ class SubscriptionController {
             'price' => 0,
             'period' => 'Forever',
             'features' => [
-                '5 script uploads per month',
+                '10 script uploads per month',
                 'Basic AI chat (limited messages)',
                 'Simple study plans',
-                'Career recommendations',
-                'Ad-supported experience'
+                'Limited scripts',
+                'Ad Support'
             ],
             'limitations' => [
                 'No voice recitation',
-                'No advanced AI features',
-                'Limited storage (100MB)'
+                'No Memorundum generation',
+                'No career recommendations'
             ]
         ],
         'basic' => [
@@ -32,12 +32,12 @@ class SubscriptionController {
             'price' => 39,
             'period' => 'per month',
             'features' => [
-                '50 script uploads per month',
-                'Unlimited AI chat',
-                'AI study plan recitation',
-                'Priority email support',
-                'Ad-free experience',
-                'Advanced career guidance'
+                'Unlimited uploads per month',
+                'Unlimited AI chat with voice mode',
+                'AI study plan voice recitation',
+                'Career and Institution recommendations',
+                'Daily uploaded bursaries',
+                'Memorundum generation and voice recitation'
             ],
             'limitations' => [
                 'Standard storage (1GB)',
@@ -51,7 +51,7 @@ class SubscriptionController {
             'features' => [
                 'Unlimited script uploads',
                 'Unlimited AI chat with GPT-4',
-                'Voice recitation for all content',
+                'Voice recitation',
                 '24/7 priority support',
                 'Ad-free experience',
                 'Advanced analytics & insights',
@@ -110,6 +110,10 @@ class SubscriptionController {
         }
 
         $user = getCurrentUser();
+        
+        // Debug: Log user data
+        error_log('Subscription: User data - ' . json_encode($user));
+        
         $plan = $_POST['plan'] ?? 'basic';
         $paymentMethod = $_POST['payment_method'] ?? 'card';
 
@@ -212,191 +216,236 @@ class SubscriptionController {
             );
             header('Location: /subscription/success?plan=' . $plan . '&status=pending');
             exit;
-        } else if ($paymentMethod === 'payfast') {
-            // PayFast - redirect to PayFast payment page
-            $this->processPayFastPayment($user, $plan);
-            exit;
-        } else if ($paymentMethod === 'card') {
-            // Card Payment via PayFast
-            $this->processPayFastPayment($user, $plan);
+        } else if ($paymentMethod === 'bobpay') {
+            // BobPay - redirect to BobPay payment page
+            $this->processBobPayPayment($user, $plan);
             exit;
         }
         exit;
     }
 
     /**
-     * Process PayFast Payment
+     * Process BobPay Payment
      */
-    private function processPayFastPayment($user, $plan) {
-        $payFast = new PayFastHelper();
+    private function processBobPayPayment($user, $plan) {
+        error_log('BobPay: Processing payment for user: ' . json_encode($user) . ', plan: ' . $plan);
         
-        if (!$payFast->isConfigured()) {
-            setFlashMessage('error', 'PayFast is not configured. Please contact the administrator.');
+        $bobPay = new BobPayHelper();
+
+        if (!$bobPay->isConfigured()) {
+            error_log('BobPay: Not configured');
+            setFlashMessage('error', 'BobPay is not configured. Please contact the administrator.');
             header('Location: /subscription/checkout?plan=' . $plan);
             exit;
         }
 
         $planDetails = $this->plans[$plan];
-        
+        error_log('BobPay: Plan details: ' . json_encode($planDetails));
+
         // Generate a unique token for this transaction
         $token = bin2hex(random_bytes(16));
-        
+
         // Store transaction data in session for verification on return
-        $_SESSION['payfast_transaction'] = [
+        $_SESSION['bobpay_transaction'] = [
             'user_id' => $user['id'],
             'plan' => $plan,
             'amount' => $planDetails['price'],
             'token' => $token,
             'timestamp' => time()
         ];
+        error_log('BobPay: Session data stored');
 
-        // Prepare PayFast data
-        $pfData = [
+        // Prepare BobPay data
+        $bobPayData = $bobPay->preparePaymentData([
             'amount' => $planDetails['price'],
-            'item_name' => "StudySmart {$planDetails['name']} Plan Subscription",
-            'item_description' => "Monthly subscription to {$planDetails['name']} plan",
-            'custom_str1' => $user['id'],
-            'custom_str2' => $plan,
-            'custom_str3' => $token,
-            'email_confirm' => '1',
-            'return_url' => APP_URL . '/subscription/payfast/return',
-            'cancel_url' => APP_URL . '/subscription/payfast/cancel',
-            'notify_url' => APP_URL . '/subscription/payfast/notify',
-        ];
+            'customer_email' => $user['email'] ?? 'customer@example.com', // Use placeholder if no email
+            'customer_name' => $user['username'] ?? 'Customer',
+            'success_url' => APP_URL . '/subscription/bobpay/return',
+            'cancel_url' => APP_URL . '/subscription/bobpay/cancel',
+            'callback_url' => APP_URL . '/subscription/bobpay/webhook',
+            'metadata' => [
+                'user_id' => $user['id'],
+                'plan' => $plan,
+                'payment_id' => 'sub_' . $user['id'] . '_' . time()
+            ]
+        ]);
+        
+        error_log('BobPay: Payment data prepared: ' . json_encode($bobPayData));
 
-        // Redirect to PayFast
-        $payFastUrl = $payFast->getPaymentUrl($pfData);
-        header('Location: ' . $payFastUrl);
+        // Create payment via BobPay API
+        error_log('BobPay: Calling createPayment...');
+        $response = $bobPay->createPayment($bobPayData);
+        error_log('BobPay: Response received: ' . json_encode($response));
+
+        if (!$response || (!isset($response['url']) && !isset($response['short_url']))) {
+            error_log('BobPay Payment Failed: No URL in response. Response: ' . json_encode($response));
+            setFlashMessage('error', 'Failed to initiate BobPay payment. Please try again or contact support.');
+            header('Location: /subscription/checkout?plan=' . $plan);
+            exit;
+        }
+
+        // Get payment URL (prefer short_url if available)
+        $paymentUrl = $response['short_url'] ?? $response['url'];
+        error_log('BobPay: Payment URL: ' . $paymentUrl);
+
+        // Store transaction ID for verification
+        $_SESSION['bobpay_transaction']['payment_url'] = $paymentUrl;
+
+        // Redirect user to BobPay checkout
+        header('Location: ' . $paymentUrl);
         exit;
     }
 
     /**
-     * PayFast Return URL - Handle successful payment
+     * BobPay Return URL - Handle successful payment
      */
-    public function payfastReturn() {
+    public function bobpayReturn() {
         requireStudent();
-        
+
         $user = getCurrentUser();
-        
-        // Get POST data from PayFast
-        $postData = $_POST;
-        
+
+        // Get transaction data from GET parameters or session
+        $transactionId = $_GET['transaction_id'] ?? $_SESSION['bobpay_transaction']['transaction_id'] ?? null;
+        $status = $_GET['status'] ?? $_GET['payment_status'] ?? '';
+
         // Verify session token
-        $sessionToken = $_SESSION['payfast_transaction']['token'] ?? '';
-        $postToken = $postData['custom_str3'] ?? '';
-        
-        if ($sessionToken !== $postToken) {
+        $sessionToken = $_SESSION['bobpay_transaction']['token'] ?? '';
+        $postToken = $_GET['token'] ?? $_SESSION['bobpay_transaction']['token'] ?? '';
+
+        if ($sessionToken !== $postToken && empty($transactionId)) {
             setFlashMessage('error', 'Invalid transaction token. Please contact support.');
             header('Location: /subscription');
             exit;
         }
-        
-        // Get plan and user ID from POST
-        $plan = $postData['custom_str2'] ?? 'basic';
-        $userId = (int)($postData['custom_str1'] ?? $user['id']);
-        
-        // Verify amounts match
-        $planDetails = $this->plans[$plan];
-        $paidAmount = (float)($postData['amount_gross'] ?? 0);
-        
-        if (abs($paidAmount - $planDetails['price']) > 0.01) {
-            setFlashMessage('error', 'Payment amount mismatch. Please contact support.');
-            header('Location: /subscription');
-            exit;
+
+        // Get plan and user ID from session
+        $plan = $_SESSION['bobpay_transaction']['plan'] ?? 'basic';
+        $userId = (int)($_SESSION['bobpay_transaction']['user_id'] ?? $user['id']);
+
+        // Verify payment status
+        if ($status !== 'successful' && $status !== 'completed' && $status !== 'success') {
+            // Try to verify with BobPay API
+            $bobPay = new BobPayHelper();
+            if ($bobPay->isConfigured() && $transactionId) {
+                $verification = $bobPay->verifyPayment($transactionId);
+                if ($verification && isset($verification['status'])) {
+                    $status = $verification['status'];
+                }
+            }
         }
-        
-        // Activate subscription
-        $this->activateSubscription($userId, $plan);
-        
-        // Clear session transaction data
-        unset($_SESSION['payfast_transaction']);
-        
-        setFlashMessage('success', "Successfully subscribed to {$planDetails['name']} plan! Your subscription is now active.");
-        header('Location: /subscription/success?plan=' . $plan);
+
+        // Check if payment was successful
+        if (in_array(strtolower($status), ['successful', 'completed', 'success'])) {
+            // Get transaction ID from GET parameters
+            $transactionId = $_GET['transaction_id'] ?? $_SESSION['bobpay_transaction']['transaction_id'] ?? null;
+
+            // Activate subscription
+            $this->activateSubscription($userId, $plan, 'bobpay', $transactionId);
+
+            // Clear session transaction data
+            unset($_SESSION['bobpay_transaction']);
+
+            $planDetails = $this->plans[$plan];
+            setFlashMessage('success', "Successfully subscribed to {$planDetails['name']} plan! Your subscription is now active.");
+            header('Location: /subscription/success?plan=' . $plan);
+        } else {
+            // Payment not confirmed - show pending message
+            setFlashMessage('info', 'Your payment is being processed. Please wait for confirmation.');
+            header('Location: /subscription/success?plan=' . $plan . '&status=pending');
+        }
         exit;
     }
 
     /**
-     * PayFast Cancel URL - Handle cancelled payment
+     * BobPay Cancel URL - Handle cancelled payment
      */
-    public function payfastCancel() {
+    public function bobpayCancel() {
         requireStudent();
-        
+
         // Clear session transaction data
-        unset($_SESSION['payfast_transaction']);
-        
+        unset($_SESSION['bobpay_transaction']);
+
         setFlashMessage('info', 'Payment was cancelled. You can try again when you\'re ready.');
         header('Location: /subscription');
         exit;
     }
 
     /**
-     * PayFast Notify URL - ITN (Instant Transaction Notification)
-     * This is called by PayFast servers to notify of payment status
+     * BobPay Webhook URL - Instant Transaction Notification
+     * This is called by BobPay servers to notify of payment status
      */
-    public function payfastNotify() {
-        // Get all POST data
-        $postData = file_get_contents('php://input');
-        parse_str($postData, $postedData);
-        
-        // Log the ITN data for debugging
-        $logFile = __DIR__ . '/../logs/payfast_itn.log';
+    public function bobpayWebhook() {
+        // Get raw POST data
+        $payload = file_get_contents('php://input');
+        $postData = json_decode($payload, true);
+
+        // Log the webhook data for debugging
+        $logFile = __DIR__ . '/../logs/bobpay_webhook.log';
         if (!is_dir(dirname($logFile))) {
             mkdir(dirname($logFile), 0755, true);
         }
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - ITN Received: " . print_r($postedData, true) . "\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Webhook Received: " . print_r($postData, true) . "\n", FILE_APPEND);
+
+        // Verify signature if provided
+        $bobPay = new BobPayHelper();
+        $signature = $_SERVER['HTTP_X_BOBPAY_SIGNATURE'] ?? $_SERVER['HTTP_X_SIGNATURE'] ?? null;
         
-        // Verify signature
-        $payFast = new PayFastHelper();
-        if (!$payFast->verifySignature($postedData)) {
+        if ($signature && !$bobPay->verifyWebhookSignature($payload, $signature)) {
             http_response_code(400);
             echo 'Invalid signature';
             exit;
         }
-        
+
         // Check transaction status
-        $transactionStatus = $postedData['payment_status'] ?? '';
-        
-        if ($transactionStatus !== 'COMPLETE') {
+        $transactionStatus = $postData['status'] ?? '';
+
+        if (!in_array(strtolower($transactionStatus), ['successful', 'completed', 'success'])) {
             http_response_code(200);
             echo 'Status not complete';
             exit;
         }
-        
+
         // Get transaction details
-        $userId = (int)($postedData['custom_str1'] ?? 0);
-        $plan = $postedData['custom_str2'] ?? 'basic';
-        $token = $postedData['custom_str3'] ?? '';
-        
-        if (!$userId || !isset($this->plans[$plan])) {
+        $metadata = $postData['metadata'] ?? [];
+        $userId = (int)($metadata['user_id'] ?? $postData['customer_id'] ?? 0);
+        $plan = $metadata['plan'] ?? 'basic';
+        $token = $metadata['token'] ?? '';
+
+        if (!$userId) {
             http_response_code(400);
             echo 'Invalid transaction data';
             exit;
         }
-        
+
         // Verify amount
-        $planDetails = $this->plans[$plan];
-        $paidAmount = (float)($postedData['amount_gross'] ?? 0);
-        
+        $planDetails = $this->plans[$plan] ?? null;
+        if (!$planDetails) {
+            http_response_code(400);
+            echo 'Invalid plan';
+            exit;
+        }
+
+        $paidAmount = (float)($postData['amount'] ?? 0);
         if (abs($paidAmount - $planDetails['price']) > 0.01) {
             http_response_code(400);
             echo 'Amount mismatch';
             exit;
         }
-        
+
         // Check if subscription already activated
         if ($this->userHasActiveSubscription($userId)) {
             http_response_code(200);
             echo 'Subscription already active';
             exit;
         }
-        
+
         // Activate subscription
-        $this->activateSubscription($userId, $plan);
-        
+        $transactionId = $postData['id'] ?? $postData['transaction_id'] ?? null;
+        $this->activateSubscription($userId, $plan, 'bobpay', $transactionId);
+
         // Log successful activation
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Subscription activated for user {$userId}, plan {$plan}\n", FILE_APPEND);
-        
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Subscription activated for user {$userId}, plan {$plan}, transaction_id: {$transactionId}\n", FILE_APPEND);
+
         http_response_code(200);
         echo 'OK';
         exit;
@@ -518,24 +567,24 @@ class SubscriptionController {
         }
     }
 
-    private function activateSubscription($userId, $plan) {
+    private function activateSubscription($userId, $plan, $paymentMethod = 'card', $transactionId = null) {
         $db = Database::getInstance()->getConnection();
-        
+
         try {
             $stmt = $db->prepare("
-                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at)
-                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'))
+                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
+                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
             ");
-            $stmt->execute([$userId, $plan, $this->plans[$plan]['price']]);
+            $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
         } catch (Exception $e) {
             // Table might not exist, create it
             $this->createSubscriptionsTable();
-            
+
             $stmt = $db->prepare("
-                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at)
-                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'))
+                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
+                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
             ");
-            $stmt->execute([$userId, $plan, $this->plans[$plan]['price']]);
+            $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
         }
     }
 
@@ -571,7 +620,7 @@ class SubscriptionController {
 
     private function createSubscriptionsTable() {
         $db = Database::getInstance()->getConnection();
-        
+
         $db->exec("
             CREATE TABLE IF NOT EXISTS subscriptions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -582,6 +631,11 @@ class SubscriptionController {
                 current_period_start DATETIME,
                 current_period_end DATETIME,
                 cancelled_at DATETIME,
+                payment_reference TEXT,
+                payment_date DATETIME,
+                proof_path TEXT,
+                payment_method TEXT DEFAULT 'eft',
+                transaction_id TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)

@@ -784,4 +784,57 @@ class StudyGroupController {
         header('Location: /invites');
         exit;
     }
+
+    /**
+     * Mark all messages in a study group as viewed
+     */
+    public function markMessagesAsViewed($groupId) {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $user = getCurrentUser();
+        $group = $this->studyGroupModel->findById($groupId);
+
+        if (!$group || !$group['is_active']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Group not found']);
+            return;
+        }
+
+        if (!$this->studyGroupModel->isMember($groupId, $user['id'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            return;
+        }
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if is_viewed column exists
+            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN);
+            $hasIsViewed = in_array('is_viewed', $columns);
+
+            if ($hasIsViewed) {
+                // Mark all messages from other users as viewed
+                $stmt = $db->prepare("
+                    UPDATE study_group_messages
+                    SET is_viewed = 1
+                    WHERE study_group_id = ?
+                    AND user_id != ?
+                    AND is_viewed = 0
+                ");
+                $stmt->execute([$groupId, $user['id']]);
+            }
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark messages as viewed']);
+        }
+    }
 }

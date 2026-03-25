@@ -1354,6 +1354,34 @@ include __DIR__ . '/../layouts/header.php';
             modal3.style.display = 'none';
         }
     }
+
+    // Mark all messages as viewed when page loads
+    async function markMessagesAsViewed() {
+        try {
+            await fetch('/study-group/<?php echo $group['id']; ?>/mark-viewed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+        } catch (error) {
+            console.error('Error marking messages as viewed:', error);
+        }
+    }
+
+    // Mark messages as viewed when page loads
+    markMessagesAsViewed();
+
+    // Also mark messages as viewed when receiving new messages via polling
+    const originalLoadMessages = window.loadMessages || null;
+    if (originalLoadMessages) {
+        window.loadMessages = function() {
+            const result = originalLoadMessages.apply(this, arguments);
+            // Mark as viewed after loading messages
+            setTimeout(() => markMessagesAsViewed(), 500);
+            return result;
+        };
+    }
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
