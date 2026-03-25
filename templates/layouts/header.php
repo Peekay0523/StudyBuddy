@@ -43,7 +43,7 @@
                             <span class="notification-badge"><?php echo $pendingPlans > 99 ? '99+' : $pendingPlans; ?></span>
                         <?php endif; ?>
                     </a>
-                    <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>">
+                    <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>" id="study-group-link">
                         <i class="fas fa-users icon-sm"></i> Study Group
                         <?php
                         $groupActivity = getStudyGroupActivityCount();

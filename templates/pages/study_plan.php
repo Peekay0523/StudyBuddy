@@ -112,6 +112,27 @@ $extraHead = <<<'HTML'
     border-color: #10b981;
     background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
 }
+.calendar-day.has-reminders {
+    border-color: #8b5cf6;
+    background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%);
+}
+.calendar-day.has-reminders .calendar-day-number {
+    color: #7c3aed;
+}
+.calendar-day.has-overdue-reminders {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+.calendar-day.has-overdue-reminders .calendar-day-number {
+    color: #dc2626;
+}
+.calendar-day.has-important-reminders {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+.calendar-day.has-important-reminders .calendar-day-number {
+    color: #d97706;
+}
 .calendar-day-number {
     font-weight: 700;
     margin-bottom: 8px;
@@ -127,6 +148,36 @@ $extraHead = <<<'HTML'
     display: inline-block;
     font-weight: 600;
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+.calendar-reminder-count {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    display: inline-block;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+.calendar-overdue-count {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    display: inline-block;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+.calendar-important-count {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    display: inline-block;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
 }
 
 /* Calendar Navigation Buttons */
@@ -945,6 +996,12 @@ include __DIR__ . '/../layouts/header.php';
                     <option value="weekdays">Weekdays (Mon-Fri)</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="reminder-important" name="is_important" style="width: auto;">
+                    <span style="color: #1e293b; font-weight: 500;">Mark as important</span>
+                </label>
+            </div>
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button type="submit" class="btn-primary" style="flex: 1;">
                     <i class="fas fa-bell"></i> Create Reminder
@@ -1116,10 +1173,15 @@ function hideLoading() {
 
 async function loadCalendarData(year, month) {
     try {
-        const response = await fetch(`/study-plan/calendar?year=${year}&month=${month}`);
+        const url = `/study-plan/calendar?year=${year}&month=${month}`;
+        console.log('Fetching calendar data from:', url);
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Calendar data response:', data);
         if (data.success) {
             calendarData = data.calendar_data || {};
+            console.log('Calendar data loaded:', calendarData);
         }
     } catch (error) {
         console.error('Error loading calendar data:', error);
@@ -1163,14 +1225,45 @@ function renderCalendar() {
             dayEl.classList.add('today');
         }
 
-        const eventCount = calendarData[dateStr] || 0;
-        if (eventCount > 0) {
-            dayEl.classList.add('has-events');
+        const reminders = calendarData[dateStr] || [];
+        const reminderCount = reminders.length;
+        const reminderDate = new Date(dateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let isOverdue = false;
+        let isImportant = false;
+        
+        if (reminderCount > 0) {
+            // Check if any reminders are important
+            isImportant = reminders.some(r => r.is_important == 1);
+            
+            // Check if date has passed (overdue)
+            if (reminderDate < today) {
+                // Check if any reminders are not completed
+                const hasIncomplete = reminders.some(r => r.is_completed != 1);
+                if (hasIncomplete) {
+                    if (isImportant) {
+                        dayEl.classList.add('has-important-reminders');
+                    } else {
+                        dayEl.classList.add('has-overdue-reminders');
+                    }
+                    isOverdue = true;
+                } else {
+                    dayEl.classList.add('has-reminders');
+                }
+            } else {
+                if (isImportant) {
+                    dayEl.classList.add('has-important-reminders');
+                } else {
+                    dayEl.classList.add('has-reminders');
+                }
+            }
         }
 
         dayEl.innerHTML = `
             <div class="calendar-day-number">${day}</div>
-            ${eventCount > 0 ? `<span class="calendar-event-count">${eventCount}</span>` : ''}
+            ${reminderCount > 0 ? `<span class="${isOverdue && !isImportant ? 'calendar-overdue-count' : (isImportant ? 'calendar-important-count' : 'calendar-reminder-count')}">${reminderCount}</span>` : ''}
         `;
         dayEl.addEventListener('click', () => showDayDetail(dateStr));
         grid.appendChild(dayEl);
@@ -1198,17 +1291,134 @@ async function showDayDetail(dateStr) {
         const response = await fetch(`/study-plan/calendar?year=${dateStr.split('-')[0]}&month=${parseInt(dateStr.split('-')[1])}`);
         const data = await response.json();
 
-        // For simplicity, show a message - in production, fetch actual reminders
-        remindersDiv.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <p style="color: #6b7280;">Click "Add Reminder" to schedule study sessions for this day.</p>
-                <button class="btn-primary" onclick="openReminderModal('${dateStr}')" style="margin-top: 10px;">
-                    <i class="fas fa-plus"></i> Add Reminder
-                </button>
-            </div>
-        `;
+        const reminders = data.calendar_data[dateStr] || [];
+        
+        // Check if date is overdue
+        const reminderDate = new Date(dateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isOverdue = reminderDate < today;
+
+        if (reminders.length === 0) {
+            remindersDiv.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <p style="color: #6b7280; margin-bottom: 15px;">No reminders scheduled for this day.</p>
+                    <button class="btn-primary" onclick="openReminderModal('${dateStr}')" style="margin-top: 10px;">
+                        <i class="fas fa-plus"></i> Add Reminder
+                    </button>
+                </div>
+            `;
+        } else {
+            let html = '<div style="display: grid; gap: 12px;">';
+            
+            reminders.forEach(reminder => {
+                const isCompleted = reminder.is_completed == 1;
+                const isImportant = reminder.is_important == 1;
+                const timeDisplay = reminder.reminder_time ?
+                    `<i class="fas fa-clock"></i> ${formatTime(reminder.reminder_time)}` : '';
+                
+                // Determine styling based on completion, overdue, and important status
+                let bgColor, borderColor, textColor;
+                if (isCompleted) {
+                    bgColor = '#f3f4f6';
+                    borderColor = '#9ca3af';
+                    textColor = '#6b7280';
+                } else if (isImportant) {
+                    bgColor = '#fef3c7';
+                    borderColor = '#f59e0b';
+                    textColor = '#92400e';
+                } else if (isOverdue) {
+                    bgColor = '#fee2e2';
+                    borderColor = '#ef4444';
+                    textColor = '#991b1b';
+                } else {
+                    bgColor = '#ede9fe';
+                    borderColor = '#8b5cf6';
+                    textColor = '#1e293b';
+                }
+
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: ${bgColor}; border-radius: 8px; border-left: 4px solid ${borderColor}; opacity: ${isCompleted ? '0.7' : '1'};">
+                        <div style="flex: 1;">
+                            <strong style="color: ${textColor}; ${isCompleted ? 'text-decoration: line-through;' : ''}">${escapeHtml(reminder.title)}</strong>
+                            ${reminder.description ? `<p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.85rem;">${escapeHtml(reminder.description)}</p>` : ''}
+                            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 0.85rem;">
+                                ${timeDisplay}
+                                ${isImportant && !isCompleted ? '<span style="color: #f59e0b; font-weight: 600; margin-left: 8px;"><i class="fas fa-star"></i> Important</span>' : ''}
+                                ${isOverdue && !isCompleted && !isImportant ? '<span style="color: #ef4444; font-weight: 600; margin-left: 8px;"><i class="fas fa-exclamation-circle"></i> Overdue</span>' : ''}
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            ${!isCompleted ? `
+                                <button class="btn-sm btn-success complete-reminder" data-id="${reminder.id}" style="cursor: pointer;" onclick="completeReminderFromDetail(${reminder.id})">
+                                    <i class="fas fa-check"></i> Complete
+                                </button>
+                            ` : `
+                                <button class="btn-sm btn-secondary" style="cursor: default;" disabled>
+                                    <i class="fas fa-check-double"></i> Completed
+                                </button>
+                            `}
+                            <button class="btn-sm btn-danger delete-reminder" data-id="${reminder.id}" style="cursor: pointer;" onclick="deleteReminderFromDetail(${reminder.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn-primary" onclick="openReminderModal('${dateStr}')" style="padding: 10px 20px;">
+                        <i class="fas fa-plus"></i> Add Another Reminder
+                    </button>
+                </div>
+            `;
+            
+            remindersDiv.innerHTML = html;
+        }
     } catch (error) {
+        console.error('Error loading reminders:', error);
         remindersDiv.innerHTML = '<p style="text-align: center; color: #dc2626;">Error loading reminders</p>';
+    }
+}
+
+function formatTime(timeStr) {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+
+function completeReminderFromDetail(reminderId) {
+    if (confirm('Mark this reminder as completed?')) {
+        showLoading('Completing reminder...');
+        fetch(`/study-plan/reminder-complete/${reminderId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setTimeout(() => location.reload(), 500);
+                }
+            })
+            .catch(() => alert('Error completing reminder'))
+            .finally(() => hideLoading());
+    }
+}
+
+function deleteReminderFromDetail(reminderId) {
+    if (confirm('Delete this reminder?')) {
+        showLoading('Deleting reminder...');
+        fetch(`/study-plan/reminder-delete/${reminderId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setTimeout(() => location.reload(), 500);
+                }
+            })
+            .catch(() => alert('Error deleting reminder'))
+            .finally(() => hideLoading());
     }
 }
 
@@ -1466,23 +1676,23 @@ if (closeDayDetailBottom) {
 }
 
 // Calendar navigation
-document.getElementById('prev-month')?.addEventListener('click', () => {
+document.getElementById('prev-month')?.addEventListener('click', async () => {
     currentMonth--;
     if (currentMonth < 1) {
         currentMonth = 12;
         currentYear--;
     }
-    loadCalendarData(currentYear, currentMonth);
+    await loadCalendarData(currentYear, currentMonth);
     renderCalendar();
 });
 
-document.getElementById('next-month')?.addEventListener('click', () => {
+document.getElementById('next-month')?.addEventListener('click', async () => {
     currentMonth++;
     if (currentMonth > 12) {
         currentMonth = 1;
         currentYear++;
     }
-    loadCalendarData(currentYear, currentMonth);
+    await loadCalendarData(currentYear, currentMonth);
     renderCalendar();
 });
 
@@ -1494,8 +1704,11 @@ window.addEventListener('click', (e) => {
 });
 
 // Initialize calendar
-loadCalendarData(currentYear, currentMonth);
-renderCalendar();
+async function initCalendar() {
+    await loadCalendarData(currentYear, currentMonth);
+    renderCalendar();
+}
+initCalendar();
 
 // Hide loading overlay on page load
 window.addEventListener('load', () => {

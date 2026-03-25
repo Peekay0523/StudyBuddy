@@ -286,6 +286,9 @@ class StudyGroupController {
             exit;
         }
 
+        // Mark messages and scripts as viewed for this group
+        $this->markGroupNotificationsAsViewedServerSide($groupId);
+
         $members = $this->studyGroupModel->getMembers($groupId);
         $isMember = $this->studyGroupModel->isMember($groupId, $user['id']);
         $userRole = $isMember ? $this->studyGroupModel->getUserRole($groupId, $user['id']) : null;
@@ -816,7 +819,7 @@ class StudyGroupController {
             $db = Database::getInstance()->getConnection();
 
             // Check if is_viewed column exists
-            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN);
+            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
             $hasIsViewed = in_array('is_viewed', $columns);
 
             if ($hasIsViewed) {
@@ -831,10 +834,168 @@ class StudyGroupController {
                 $stmt->execute([$groupId, $user['id']]);
             }
 
+            // Update last_visited timestamp to clear script notifications
+            $stmt = $db->prepare("
+                UPDATE study_group_members
+                SET last_visited = CURRENT_TIMESTAMP
+                WHERE study_group_id = ? AND user_id = ?
+            ");
+            $stmt->execute([$groupId, $user['id']]);
+
             echo json_encode(['success' => true]);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to mark messages as viewed']);
+        }
+    }
+
+    /**
+     * Mark all study group notifications as viewed (for main study group page) - Server side version
+     */
+    private function markAllNotificationsAsViewedServerSide() {
+        $user = getCurrentUser();
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Get all study groups the user is a member of
+            $stmt = $db->prepare("
+                SELECT study_group_id
+                FROM study_group_members
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$user['id']]);
+            $groupIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($groupIds)) {
+                // Check if is_viewed column exists
+                $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                $hasIsViewed = in_array('is_viewed', $columns);
+
+                if ($hasIsViewed) {
+                    // Mark all messages from other users as viewed in all groups
+                    $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+                    $stmt = $db->prepare("
+                        UPDATE study_group_messages
+                        SET is_viewed = 1
+                        WHERE study_group_id IN ($placeholders)
+                        AND user_id != ?
+                        AND is_viewed = 0
+                    ");
+                    $params = array_merge($groupIds, [$user['id']]);
+                    $stmt->execute($params);
+                }
+
+                // Update last_visited timestamp for all groups to clear script notifications
+                $stmt = $db->prepare("
+                    UPDATE study_group_members
+                    SET last_visited = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$user['id']]);
+            }
+        } catch (Exception $e) {
+            // Silently fail - don't break the page if this fails
+            error_log('Error marking study group notifications as viewed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark notifications as viewed for a specific study group - Server side version
+     */
+    private function markGroupNotificationsAsViewedServerSide($groupId) {
+        $user = getCurrentUser();
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if is_viewed column exists
+            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $hasIsViewed = in_array('is_viewed', $columns);
+
+            if ($hasIsViewed) {
+                // Mark all messages from other users as viewed
+                $stmt = $db->prepare("
+                    UPDATE study_group_messages
+                    SET is_viewed = 1
+                    WHERE study_group_id = ?
+                    AND user_id != ?
+                    AND is_viewed = 0
+                ");
+                $stmt->execute([$groupId, $user['id']]);
+            }
+
+            // Update last_visited timestamp for this group to clear script notifications
+            $stmt = $db->prepare("
+                UPDATE study_group_members
+                SET last_visited = CURRENT_TIMESTAMP
+                WHERE study_group_id = ? AND user_id = ?
+            ");
+            $stmt->execute([$groupId, $user['id']]);
+        } catch (Exception $e) {
+            // Silently fail - don't break the page if this fails
+            error_log('Error marking group notifications as viewed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark all study group notifications as viewed (for main study group page)
+     */
+    public function markAllNotificationsAsViewed() {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $user = getCurrentUser();
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Get all study groups the user is a member of
+            $stmt = $db->prepare("
+                SELECT study_group_id
+                FROM study_group_members
+                WHERE user_id = ?
+            ");
+            $stmt->execute([$user['id']]);
+            $groupIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($groupIds)) {
+                // Check if is_viewed column exists
+                $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                $hasIsViewed = in_array('is_viewed', $columns);
+
+                if ($hasIsViewed) {
+                    // Mark all messages from other users as viewed in all groups
+                    $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+                    $stmt = $db->prepare("
+                        UPDATE study_group_messages
+                        SET is_viewed = 1
+                        WHERE study_group_id IN ($placeholders)
+                        AND user_id != ?
+                        AND is_viewed = 0
+                    ");
+                    $params = array_merge($groupIds, [$user['id']]);
+                    $stmt->execute($params);
+                }
+
+                // Update last_visited timestamp for all groups to clear script notifications
+                $stmt = $db->prepare("
+                    UPDATE study_group_members
+                    SET last_visited = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([$user['id']]);
+            }
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark notifications as viewed']);
         }
     }
 }

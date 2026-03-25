@@ -2,6 +2,9 @@
 $pageTitle = 'View Study Plan - StudySmart';
 $currentPage = 'study-plan';
 include __DIR__ . '/../layouts/header.php';
+
+// Determine if study plan is completed
+$isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 ?>
 
 <h1 class="title">Study Plan</h1>
@@ -32,10 +35,7 @@ include __DIR__ . '/../layouts/header.php';
         <button id="stopReciteBtn" onclick="stopRecitation()" class="btn-secondary" style="cursor: pointer; display: none;">
             <i class="fas fa-stop"></i> Stop Recitation
         </button>
-        <?php 
-        $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
-        if (!$isCompleted): 
-        ?>
+        <?php if (!$isCompleted): ?>
             <button onclick="markStudyPlanComplete()" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #059669);">
                 <i class="fas fa-check-circle"></i> Mark as Complete
             </button>
@@ -83,14 +83,79 @@ let availableVoices = [];
 // Mark study plan as viewed when page loads (removes notification)
 async function markStudyPlanAsViewed() {
     try {
-        await fetch('/study-plan/<?php echo $studyPlan['id']; ?>/mark-viewed', {
+        console.log('Marking study plan <?php echo $studyPlan['id']; ?> as viewed...');
+        const response = await fetch('/study-plan/<?php echo $studyPlan['id']; ?>/mark-viewed', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include', // Send cookies for session
         });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            console.log('Study plan marked as viewed successfully');
+            // Update notification badge in header
+            updateNotificationBadge();
+        } else {
+            console.error('Failed to mark as viewed:', data.error);
+        }
     } catch (error) {
         console.error('Error marking study plan as viewed:', error);
+    }
+}
+
+// Update notification badge count
+async function updateNotificationBadge() {
+    try {
+        console.log('Fetching pending count from API...');
+        
+        // Fetch the actual count from the server
+        const response = await fetch('/api/study-plan/pending-count', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            console.error('API returned error status:', response.status);
+            return;
+        }
+
+        const data = await response.json();
+        console.log('API response data:', data);
+        
+        // Find and update the badge in the sidebar
+        const badge = document.querySelector('.sidebar .menu a[href="/study-plan"] .notification-badge');
+        console.log('Badge element found:', badge ? 'yes' : 'no');
+        
+        if (badge) {
+            if (data.success) {
+                const count = data.count;
+                console.log('Current pending count from server:', count);
+                
+                if (count <= 0) {
+                    badge.remove();
+                    console.log('Badge removed (count is 0)');
+                } else {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    console.log('Badge updated to:', count);
+                }
+            } else {
+                console.error('API returned success=false:', data.error);
+            }
+        } else {
+            console.log('No badge element found on page (might already be hidden)');
+        }
+    } catch (error) {
+        console.error('Error updating badge:', error);
     }
 }
 
@@ -285,22 +350,38 @@ async function markStudyPlanComplete() {
         return;
     }
 
+    console.log('Marking study plan <?php echo $studyPlan['id']; ?> as complete...');
+
     try {
         const response = await fetch('/study-plan/complete/<?php echo $studyPlan['id']; ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
 
+        console.log('Complete API response status:', response.status);
+
         const data = await response.json();
+        console.log('Complete API response data:', data);
 
         if (data.success) {
+            console.log('Study plan marked as complete successfully');
+            
             // Show success message
             alert('Study plan marked as complete!');
-            // Reload the page to show updated status
-            location.reload();
+            
+            // Update notification badge by fetching fresh count from server
+            console.log('Updating notification badge...');
+            await updateNotificationBadge();
+            console.log('Notification badge update complete');
+            
+            // Redirect to study plan page (not reload) to show updated count
+            console.log('Redirecting to /study-plan');
+            window.location.href = '/study-plan';
         } else {
+            console.error('API returned error:', data.error);
             alert('Failed to mark study plan as complete. Please try again.');
         }
     } catch (error) {

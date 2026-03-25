@@ -14,14 +14,14 @@ class StudyReminder {
     /**
      * Create a new reminder
      */
-    public function create($userId, $title, $reminderDate, $reminderTime = null, $description = '', $studyPlanId = null, $isRecurring = 0, $recurringPattern = null) {
+    public function create($userId, $title, $reminderDate, $reminderTime = null, $description = '', $studyPlanId = null, $isRecurring = 0, $recurringPattern = null, $isImportant = 0) {
         try {
             $stmt = $this->db->prepare("
-                INSERT INTO study_reminders 
-                (user_id, study_plan_id, title, description, reminder_date, reminder_time, is_recurring, recurring_pattern) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO study_reminders
+                (user_id, study_plan_id, title, description, reminder_date, reminder_time, is_recurring, recurring_pattern, is_important)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$userId, $studyPlanId, $title, $description, $reminderDate, $reminderTime, $isRecurring, $recurringPattern]);
+            $stmt->execute([$userId, $studyPlanId, $title, $description, $reminderDate, $reminderTime, $isRecurring, $recurringPattern, $isImportant]);
             return $this->db->lastInsertId();
         } catch (PDOException $e) {
             error_log("StudyReminder create error: " . $e->getMessage());

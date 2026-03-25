@@ -149,6 +149,9 @@ $router->get('/view-study-plan/{id}', function($planId) {
     $controller = new StudyPlanController();
     $controller->view($planId);
 });
+$router->get('/run-notification-migration', function() {
+    require __DIR__ . '/../migrate_notification_tracking.php';
+});
 $router->get('/recite-study-plan/{id}', function($planId) {
     require_once __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
@@ -193,6 +196,11 @@ $router->post('/study-plan/{id}/mark-viewed', function($planId) {
     require_once __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
     $controller->markAsViewed($planId);
+});
+$router->get('/api/study-plan/pending-count', function() {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->getPendingCount();
 });
 
 // Report Cards
@@ -244,6 +252,11 @@ $router->post('/study-group/{id}/mark-viewed', function($groupId) {
     require_once __DIR__ . '/../controllers/StudyGroupController.php';
     $controller = new StudyGroupController();
     $controller->markMessagesAsViewed($groupId);
+});
+$router->post('/study-group/mark-all-viewed', function() {
+    require_once __DIR__ . '/../controllers/StudyGroupController.php';
+    $controller = new StudyGroupController();
+    $controller->markAllNotificationsAsViewed();
 });
 
 // Serve voice recordings from database (MUST be before /send-message and /get-messages)

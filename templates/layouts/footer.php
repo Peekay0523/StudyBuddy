@@ -32,6 +32,29 @@
         sidebarLinks.forEach(link => {
             link.addEventListener('click', closeSidebar);
         });
+
+        // Mark study group notifications as viewed when clicking the Study Group link
+        const studyGroupLink = document.getElementById('study-group-link');
+        if (studyGroupLink) {
+            studyGroupLink.addEventListener('click', async function(e) {
+                // Mark all notifications as viewed
+                try {
+                    await fetch('/study-group/mark-all-viewed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    // Remove the badge
+                    const badge = this.querySelector('.notification-badge');
+                    if (badge) {
+                        badge.remove();
+                    }
+                } catch (error) {
+                    console.error('Error marking notifications as viewed:', error);
+                }
+            });
+        }
     }
 </script>
 

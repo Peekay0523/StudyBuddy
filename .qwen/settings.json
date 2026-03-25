@@ -12,7 +12,9 @@
       "Bash(select-string *)",
       "Bash(taskkill *)",
       "Bash(timeout *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(replace *)",
+      "Bash(set-content *)"
     ]
   },
   "$version": 3

@@ -28,26 +28,28 @@ function getPendingStudyPlansCount() {
         }
         
         // Check if is_completed column exists
-        $columns = $db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN);
+        $columns = $db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN, 1);
         $hasIsCompleted = in_array('is_completed', $columns);
         
         if ($hasIsCompleted) {
-            // Count study plans that are not completed
+            // Count study plans that are not completed and are active
             $stmt = $db->prepare("
-                SELECT COUNT(*) as count 
-                FROM study_plans 
-                WHERE student_id = ? 
+                SELECT COUNT(*) as count
+                FROM study_plans
+                WHERE student_id = ?
                 AND (is_completed = 0 OR is_completed IS NULL)
+                AND (is_active = 1 OR is_active IS NULL)
             ");
             $stmt->execute([$student['id']]);
             $result = $stmt->fetch();
             return (int)($result['count'] ?? 0);
         } else {
-            // If is_completed column doesn't exist, count all study plans
+            // If is_completed column doesn't exist, count active study plans
             $stmt = $db->prepare("
-                SELECT COUNT(*) as count 
-                FROM study_plans 
+                SELECT COUNT(*) as count
+                FROM study_plans
                 WHERE student_id = ?
+                AND (is_active = 1 OR is_active IS NULL)
             ");
             $stmt->execute([$student['id']]);
             $result = $stmt->fetch();
@@ -85,7 +87,7 @@ function getUnreadStudyGroupMessagesCount() {
         }
         
         // Check if is_viewed column exists
-        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN);
+        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
         $hasIsViewed = in_array('is_viewed', $columns);
         
         if ($hasIsViewed) {
@@ -130,37 +132,43 @@ function getNewStudyGroupScriptsCount() {
     if (!isLoggedIn()) {
         return 0;
     }
-    
+
     try {
         $db = Database::getInstance()->getConnection();
         $user = getCurrentUser();
-        
-        // Get all study groups the user is a member of
+
+        // Get all study groups the user is a member of with their last visited time
         $stmt = $db->prepare("
-            SELECT study_group_id 
-            FROM study_group_members 
+            SELECT study_group_id, last_visited
+            FROM study_group_members
             WHERE user_id = ?
         ");
         $stmt->execute([$user['id']]);
-        $groupIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        if (empty($groupIds)) {
+        $groupMemberships = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (empty($groupMemberships)) {
             return 0;
         }
-        
-        // Count scripts uploaded by OTHER users in last 7 days
-        $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
-        $stmt = $db->prepare("
-            SELECT COUNT(*) as count 
-            FROM study_group_scripts 
-            WHERE study_group_id IN ($placeholders)
-            AND user_id != ?
-            AND datetime(uploaded_at) > datetime('now', '-7 days')
-        ");
-        $params = array_merge($groupIds, [$user['id']]);
-        $stmt->execute($params);
-        $result = $stmt->fetch();
-        return (int)($result['count'] ?? 0);
+
+        // Count scripts uploaded by OTHER users after the user's last visit to each group
+        $totalCount = 0;
+        foreach ($groupMemberships as $membership) {
+            $groupId = $membership['study_group_id'];
+            $lastVisited = $membership['last_visited'];
+            
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as count
+                FROM study_group_scripts
+                WHERE study_group_id = ?
+                AND user_id != ?
+                AND datetime(uploaded_at) > datetime(?)
+            ");
+            $stmt->execute([$groupId, $user['id'], $lastVisited]);
+            $result = $stmt->fetch();
+            $totalCount += (int)($result['count'] ?? 0);
+        }
+
+        return $totalCount;
     } catch (Exception $e) {
         return 0;
     }
@@ -191,7 +199,7 @@ function getStudyGroupNotificationCount($groupId) {
         $user = getCurrentUser();
 
         // Check if is_viewed column exists
-        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN);
+        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
         $hasIsViewed = in_array('is_viewed', $columns);
 
         if ($hasIsViewed) {
@@ -220,15 +228,25 @@ function getStudyGroupNotificationCount($groupId) {
             $messagesCount = (int)($result['count'] ?? 0);
         }
 
-        // Count new scripts from OTHER users in last 7 days
+        // Get user's last visited time for this group
+        $stmt = $db->prepare("
+            SELECT last_visited
+            FROM study_group_members
+            WHERE study_group_id = ? AND user_id = ?
+        ");
+        $stmt->execute([$groupId, $user['id']]);
+        $membership = $stmt->fetch();
+        $lastVisited = $membership ? $membership['last_visited'] : date('Y-m-d H:i:s');
+
+        // Count new scripts from OTHER users uploaded after last visit
         $stmt = $db->prepare("
             SELECT COUNT(*) as count
             FROM study_group_scripts
             WHERE study_group_id = ?
             AND user_id != ?
-            AND datetime(uploaded_at) > datetime('now', '-7 days')
+            AND datetime(uploaded_at) > datetime(?)
         ");
-        $stmt->execute([$groupId, $user['id']]);
+        $stmt->execute([$groupId, $user['id'], $lastVisited]);
         $result = $stmt->fetch();
         $scriptsCount = (int)($result['count'] ?? 0);
 

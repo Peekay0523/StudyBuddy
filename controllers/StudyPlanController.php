@@ -166,6 +166,7 @@ class StudyPlanController {
         $studyPlanId = $_POST['study_plan_id'] ?? null;
         $isRecurring = isset($_POST['is_recurring']) ? 1 : 0;
         $recurringPattern = $_POST['recurring_pattern'] ?? null;
+        $isImportant = isset($_POST['is_important']) ? 1 : 0;
 
         if (!$title || !$reminderDate) {
             http_response_code(400);
@@ -182,7 +183,8 @@ class StudyPlanController {
                 $description,
                 $studyPlanId,
                 $isRecurring,
-                $recurringPattern
+                $recurringPattern,
+                $isImportant
             );
 
             if ($reminderId) {
@@ -207,7 +209,29 @@ class StudyPlanController {
         $year = $_GET['year'] ?? date('Y');
         $month = $_GET['month'] ?? date('n');
 
-        $calendarData = $this->studyReminderModel->getCountByDate($student['id'], $year, $month);
+        // Get full reminder data for the calendar
+        $reminders = $this->studyReminderModel->getCalendarData($student['id'], $year, $month);
+        
+        // Debug: Log reminder count
+        error_log("Calendar data for user {$student['id']}, year=$year, month=$month: " . count($reminders) . " reminders");
+        
+        // Group reminders by date
+        $calendarData = [];
+        foreach ($reminders as $reminder) {
+            $date = $reminder['reminder_date'];
+            if (!isset($calendarData[$date])) {
+                $calendarData[$date] = [];
+            }
+            $calendarData[$date][] = [
+                'id' => $reminder['id'],
+                'title' => $reminder['title'],
+                'description' => $reminder['description'],
+                'reminder_time' => $reminder['reminder_time'],
+                'is_completed' => $reminder['is_completed'],
+                'is_important' => $reminder['is_important'],
+                'study_plan_id' => $reminder['study_plan_id']
+            ];
+        }
 
         header('Content-Type: application/json');
         echo json_encode(['success' => true, 'calendar_data' => $calendarData]);
@@ -325,6 +349,22 @@ class StudyPlanController {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to mark study plan as viewed']);
+        }
+    }
+
+    /**
+     * Get count of pending (not completed) study plans
+     */
+    public function getPendingCount() {
+        requireStudent();
+
+        try {
+            $count = getPendingStudyPlansCount();
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'count' => $count]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Failed to get pending count']);
         }
     }
 }
