@@ -631,12 +631,22 @@ async function searchCareers() {
 
         if (data.success && data.careers && data.careers.length > 0) {
             resultsContainer.innerHTML = data.careers.map(career => {
-                const institutions = career.institutions || [];
+                let institutions = career.institutions || [];
                 
+                // Sort by APS (ascending) to show lowest requirements first
+                institutions.sort((a, b) => {
+                    const apsA = parseInt(a.required_aps) || 99;
+                    const apsB = parseInt(b.required_aps) || 99;
+                    return apsA - apsB;
+                });
+                
+                // Show all institutions (we have 15 per career, showing all)
+                const displayInstitutions = institutions;
+
                 // Build institutions HTML
                 let institutionsHtml = '';
-                if (institutions.length > 0) {
-                    institutionsHtml = institutions.map(inst => {
+                if (displayInstitutions.length > 0) {
+                    institutionsHtml = displayInstitutions.map(inst => {
                         const subjects = inst.subject_requirements || [];
                         const qualifications = inst.qualifications || [];
                         
@@ -652,11 +662,14 @@ async function searchCareers() {
                         
                         return `
                             <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #667eea;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                                     <h5 style="margin: 0; color: #1f2937; font-size: 14px; font-weight: 600;">
                                         <i class="fas fa-university"></i> ${escapeHtml(inst.name)}
                                     </h5>
-                                    ${inst.required_aps ? `<span class="career-result-aps" style="font-size: 11px; padding: 3px 8px;">APS: ${inst.required_aps}</span>` : ''}
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        ${inst.application_fee ? `<span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;"><i class="fas fa-tag"></i> R${inst.application_fee}</span>` : ''}
+                                        ${inst.required_aps ? `<span class="career-result-aps" style="font-size: 11px; padding: 3px 8px;">APS: ${inst.required_aps}</span>` : ''}
+                                    </div>
                                 </div>
                                 <div style="margin-bottom: 8px;">
                                     <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;"><strong>Required Subjects:</strong></div>
@@ -688,10 +701,13 @@ async function searchCareers() {
                         </div>
                         <p class="career-result-description" style="margin-bottom: 20px;">${escapeHtml(career.description || 'No description available')}</p>
                         <div style="margin-bottom: 15px;">
-                            <h5 style="margin: 0 0 10px 0; color: #1f2937; font-size: 15px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-graduation-cap" style="color: #667eea;"></i> Institutions & Requirements
+                            <h5 style="margin: 0 0 10px 0; color: #1f2937; font-size: 15px; display: flex; align-items: center; gap: 8px; justify-content: space-between;">
+                                <span><i class="fas fa-graduation-cap" style="color: #667eea;"></i> Institutions & Requirements</span>
+                                <span style="font-size: 12px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> All ${institutions.length} institutions shown</span>
                             </h5>
-                            ${institutionsHtml || '<p style="color: #6b7280; font-size: 13px;">No institutions listed for this career.</p>'}
+                            <div style="max-height: 500px; overflow-y: auto; padding-right: 5px; margin-bottom: 10px;">
+                                ${institutionsHtml || '<p style="color: #6b7280; font-size: 13px;">No institutions listed for this career.</p>'}
+                            </div>
                         </div>
                         <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
                             <button onclick="showCareerDetails(${career.id}, '${escapeHtml(career.name).replace(/'/g, "\\'")}') " class="btn-secondary btn-sm" style="padding: 8px 20px; font-size: 13px;">
