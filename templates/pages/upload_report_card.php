@@ -146,6 +146,210 @@ $extraHead = <<<'SCRIPT'
     border-radius: 12px;
     border: 2px dashed #e5e7eb;
 }
+
+/* Career Search Section */
+.career-search-section {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.career-search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.career-search-input {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.career-search-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.career-search-btn {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.career-search-btn:hover {
+    transform: translateY(-2px);
+}
+
+.career-search-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.career-results {
+    display: grid;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.career-result-item {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+    transition: all 0.2s;
+    margin-bottom: 15px;
+}
+
+.career-result-item:hover {
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.career-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.career-result-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.career-result-aps {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.career-result-description {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.career-result-subjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.subject-badge {
+    background: #e0e7ff;
+    color: #4f46e5;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.career-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+    color: #6b7280;
+}
+
+.career-loading {
+    text-align: center;
+    padding: 30px;
+    color: #6b7280;
+}
+
+.career-feedback-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f0fdf4;
+    border-radius: 12px;
+    border-left: 4px solid #10b981;
+}
+
+.career-feedback-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #059669;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.career-feedback-item {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.career-feedback-item strong {
+    color: #1f2937;
+}
+
+.feedback-meets {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.feedback-below {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.feedback-excellent {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Responsive layout for upload report card page */
+@media (max-width: 1024px) {
+    .upload-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    .career-search-card {
+        position: static !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .career-search-card {
+        padding: 20px !important;
+    }
+
+    .career-search-box {
+        flex-direction: column;
+    }
+
+    .career-search-btn {
+        width: 100%;
+    }
+}
 </style>
 SCRIPT;
 
@@ -400,6 +604,207 @@ async function markBursaryAsApplied(bursaryName, bursaryProvider) {
     }
 }
 
+// Career Search Functions
+let userSubjects = [];
+let userGrades = {};
+let calculatedAPS = 0;
+
+async function searchCareers() {
+    const searchInput = document.getElementById('career-search-input');
+    const resultsContainer = document.getElementById('career-results-container');
+    const searchBtn = document.getElementById('career-search-btn');
+
+    const query = searchInput.value.trim();
+
+    if (!query) {
+        resultsContainer.innerHTML = '<div class="career-no-results"><i class="fas fa-search" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>Please enter a career name to search</p></div>';
+        return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+    resultsContainer.innerHTML = '<div class="career-loading"><i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>Searching careers...</p></div>';
+
+    try {
+        const response = await fetch(`/api/search-careers?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        if (data.success && data.careers && data.careers.length > 0) {
+            resultsContainer.innerHTML = data.careers.map(career => {
+                const institutions = career.institutions || [];
+                
+                // Build institutions HTML
+                let institutionsHtml = '';
+                if (institutions.length > 0) {
+                    institutionsHtml = institutions.map(inst => {
+                        const subjects = inst.subject_requirements || [];
+                        const qualifications = inst.qualifications || [];
+                        
+                        // Subjects with levels
+                        const subjectsHtml = subjects.length > 0 ? 
+                            subjects.map(s => `<span class="subject-badge">${escapeHtml(s.subject)} - Level ${s.level}</span>`).join('') : 
+                            '<span style="color: #6b7280; font-size: 12px;">No specific subjects required</span>';
+                        
+                        // Qualifications
+                        const qualificationsHtml = qualifications.length > 0 ?
+                            qualifications.map(q => `<div style="font-size: 13px; color: #374151; margin: 4px 0;"><i class="fas fa-certificate" style="color: #667eea; margin-right: 5px;"></i>${escapeHtml(q.name)} (${escapeHtml(q.type)}, ${escapeHtml(q.duration || 'N/A')})</div>`).join('') :
+                            '<span style="color: #6b7280; font-size: 12px;">No qualifications listed</span>';
+                        
+                        return `
+                            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #667eea;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h5 style="margin: 0; color: #1f2937; font-size: 14px; font-weight: 600;">
+                                        <i class="fas fa-university"></i> ${escapeHtml(inst.name)}
+                                    </h5>
+                                    ${inst.required_aps ? `<span class="career-result-aps" style="font-size: 11px; padding: 3px 8px;">APS: ${inst.required_aps}</span>` : ''}
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;"><strong>Required Subjects:</strong></div>
+                                    <div class="career-result-subjects" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                                        ${subjectsHtml}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;"><strong>Qualifications:</strong></div>
+                                    ${qualificationsHtml}
+                                </div>
+                                ${inst.website ? `
+                                    <a href="${escapeHtml(inst.website)}" target="_blank" class="btn-primary btn-sm" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-size: 12px; padding: 6px 12px;">
+                                        <i class="fas fa-external-link-alt"></i> Visit Website
+                                    </a>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                return `
+                    <div class="career-result-item" style="cursor: default;" onclick="event.stopPropagation();">
+                        <div class="career-result-header" style="margin-bottom: 15px;">
+                            <h4 class="career-result-name" style="font-size: 20px;"><i class="fas fa-briefcase"></i> ${escapeHtml(career.name)}</h4>
+                            <span class="career-result-aps">
+                                <i class="fas fa-award"></i> Min APS: ${career.min_aps_score || 'N/A'}
+                            </span>
+                        </div>
+                        <p class="career-result-description" style="margin-bottom: 20px;">${escapeHtml(career.description || 'No description available')}</p>
+                        <div style="margin-bottom: 15px;">
+                            <h5 style="margin: 0 0 10px 0; color: #1f2937; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-graduation-cap" style="color: #667eea;"></i> Institutions & Requirements
+                            </h5>
+                            ${institutionsHtml || '<p style="color: #6b7280; font-size: 13px;">No institutions listed for this career.</p>'}
+                        </div>
+                        <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                            <button onclick="showCareerDetails(${career.id}, '${escapeHtml(career.name).replace(/'/g, "\\'")}') " class="btn-secondary btn-sm" style="padding: 8px 20px; font-size: 13px;">
+                                <i class="fas fa-info-circle"></i> View More Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            resultsContainer.innerHTML = '<div class="career-no-results"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>No careers found. Try a different search term.</p></div>';
+        }
+    } catch (error) {
+        console.error('Career search error:', error);
+        resultsContainer.innerHTML = '<div class="career-no-results"><i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 10px; display: block; color: #ef4444;"></i><p>Error searching careers. Please try again.</p></div>';
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+    }
+}
+
+async function showCareerDetails(careerId, careerName) {
+    const modal = document.getElementById('career-details-modal');
+    const modalTitle = document.getElementById('modal-career-title');
+    const modalContent = document.getElementById('modal-career-content');
+    
+    modalTitle.textContent = careerName;
+    modalContent.innerHTML = '<div class="career-loading"><i class="fas fa-spinner fa-spin" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>Loading career details...</p></div>';
+    modal.style.display = 'flex';
+    
+    try {
+        const response = await fetch(`/api/show-career/${careerId}`);
+        const data = await response.json();
+        
+        if (data.success && data.career) {
+            const career = data.career;
+            
+            let institutionsHtml = '';
+            if (career.institutions && career.institutions.length > 0) {
+                institutionsHtml = career.institutions.map(inst => `
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #667eea;">
+                        <h5 style="margin: 0 0 10px 0; color: #1f2937; font-size: 16px;">
+                            <i class="fas fa-university"></i> ${escapeHtml(inst.name)}
+                        </h5>
+                        <p style="margin: 5px 0; font-size: 14px; color: #6b7280;">
+                            <i class="fas fa-map-marker-alt"></i> ${escapeHtml(inst.city || '')}, ${escapeHtml(inst.province || '')}
+                        </p>
+                        ${inst.min_aps_score ? `
+                            <p style="margin: 5px 0; font-size: 14px;">
+                                <strong>Required APS:</strong> 
+                                <span class="career-result-aps" style="font-size: 12px; padding: 4px 10px;">${inst.min_aps_score}</span>
+                            </p>
+                        ` : ''}
+                        ${inst.subject_requirements && inst.subject_requirements.length > 0 ? `
+                            <div style="margin-top: 10px;">
+                                <strong style="font-size: 13px;">Required Subjects:</strong>
+                                <div class="career-result-subjects" style="margin-top: 8px;">
+                                    ${inst.subject_requirements.map(subject => `
+                                        <span class="subject-badge">${escapeHtml(subject.subject || subject)} - Level ${subject.level || 'N/A'}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${inst.qualifications && inst.qualifications.length > 0 ? `
+                            <div style="margin-top: 10px;">
+                                <strong style="font-size: 13px;">Qualifications Offered:</strong>
+                                <ul style="margin: 8px 0 0 20px; font-size: 14px; color: #374151;">
+                                    ${inst.qualifications.map(qual => `
+                                        <li>${escapeHtml(qual.name)} (${escapeHtml(qual.type)}, ${escapeHtml(qual.duration || 'N/A')})</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        ${inst.website ? `
+                            <a href="${escapeHtml(inst.website)}" target="_blank" class="btn-primary btn-sm" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 5px; text-decoration: none;">
+                                <i class="fas fa-external-link-alt"></i> Visit Website
+                            </a>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+            
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #4b5563; line-height: 1.6;">${escapeHtml(career.description || 'No description available')}</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #1f2937; font-size: 18px; margin-bottom: 15px;">
+                        <i class="fas fa-graduation-cap"></i> Institutions Offering This Career
+                    </h4>
+                    ${institutionsHtml || '<p class="career-no-results">No institutions found.</p>'}
+                </div>
+                <div style="text-align: center;">
+                    <button onclick="document.getElementById('career-details-modal').style.display = 'none'" class="btn-secondary" style="padding: 10px 30px;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            `;
+        } else {
+            modalContent.innerHTML = '<div class="career-no-results"><p>Error loading career details.</p></div>';
+        }
+    } catch (error) {
+        console.error('Error loading career details:', error);
+        modalContent.innerHTML = '<div class="career-no-results"><p>Error loading career details. Please try again.</p></div>';
+    }
+}
+
+function enterPressedForSearch(event) {
+    if (event.key === 'Enter') {
+        searchCareers();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     initUploadHandlers();
     loadUploadedReportCards();
@@ -427,7 +832,8 @@ include __DIR__ . '/../layouts/header.php';
     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
 <?php endif; ?>
 
-<div class="upload-container">
+<div class="upload-container" style="display: grid; grid-template-columns: 1fr 400px; gap: 30px; align-items: start;">
+    <!-- Left Column: Upload Form -->
     <div class="auth-box" style="max-width: 600px;">
         <form method="post" action="/upload-report-card" enctype="multipart/form-data">
             <!-- Drag & Drop File Input -->
@@ -485,18 +891,41 @@ include __DIR__ . '/../layouts/header.php';
         </form>
     </div>
 
-    <div class="report-cards-section">
-        <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>
-        <div id="report-cards-list" class="report-cards-list">
-            <p class="loading">Loading report cards...</p>
+    <!-- Right Column: Career Search Card -->
+    <div class="career-search-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: sticky; top: 20px;">
+        <h3 style="margin: 0 0 10px 0; color: #1f2937; display: flex; align-items: center; gap: 10px; font-size: 18px;">
+            <i class="fas fa-compass" style="color: #667eea;"></i> Search Careers & Check APS
+        </h3>
+        <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Search for careers and find out the required APS and subjects for South African universities.</p>
+        
+        <div class="career-search-box" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="career-search-input" class="career-search-input" placeholder="e.g., Doctor, Engineer..." onkeypress="enterPressedForSearch(event)" style="flex: 1; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            <button type="button" id="career-search-btn" class="career-search-btn" onclick="searchCareers()" style="padding: 10px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+        
+        <div id="career-results-container" class="career-results" style="max-height: 400px; overflow-y: auto;">
+            <div class="career-no-results" style="text-align: center; padding: 20px 10px;">
+                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
+                <p style="color: #6b7280; margin: 0; font-size: 13px;">Enter a career name to search</p>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="report-cards-section" style="margin-top: 40px;">
-        <h2 class="section-title"><i class="fas fa-scholarship"></i> New Bursaries Available for You</h2>
-        <div id="bursaries-list" class="bursaries-list-container">
-            <p class="loading"><i class="fas fa-spinner fa-spin"></i> Loading bursaries...</p>
-        </div>
+<!-- Your Uploaded Report Cards Section (Full Width Below) -->
+<div class="report-cards-section" style="margin-top: 40px;">
+    <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>
+    <div id="report-cards-list" class="report-cards-list">
+        <p class="loading">Loading report cards...</p>
+    </div>
+</div>
+
+<div class="report-cards-section">
+    <h2 class="section-title"><i class="fas fa-scholarship"></i> New Bursaries Available for You</h2>
+    <div id="bursaries-list" class="bursaries-list-container">
+        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Loading bursaries...</p>
     </div>
 </div>
 
@@ -641,6 +1070,23 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 </script>
+
+<!-- Career Details Modal -->
+<div id="career-details-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;">
+            <h3 id="modal-career-title" style="margin: 0; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-briefcase" style="color: #667eea;"></i> Career Details
+            </h3>
+            <button onclick="document.getElementById('career-details-modal').style.display = 'none'" style="background: none; border: none; font-size: 24px; color: #6b7280; cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modal-career-content">
+            <!-- Career details will be loaded here -->
+        </div>
+    </div>
+</div>
 
 <!-- Select from Scans Modal -->
 <div id="scans-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">

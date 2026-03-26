@@ -577,6 +577,28 @@ HTML;
 $router->get('/api/get-user-report-cards', 'ReportCardController@getUserReportCards');
 $router->post('/delete-report-card/{id}', 'ReportCardController@deleteReportCard');
 
+// Career API endpoints
+$router->get('/api/search-careers', function() {
+    require_once __DIR__ . '/../controllers/CareerController.php';
+    $controller = new CareerController();
+    $controller->search();
+});
+$router->get('/api/show-career/{id}', function($id) {
+    require_once __DIR__ . '/../controllers/CareerController.php';
+    $controller = new CareerController();
+    $controller->show($id);
+});
+$router->get('/api/career-categories', function() {
+    require_once __DIR__ . '/../controllers/CareerController.php';
+    $controller = new CareerController();
+    $controller->categories();
+});
+$router->get('/api/career-institutions', function() {
+    require_once __DIR__ . '/../controllers/CareerController.php';
+    $controller = new CareerController();
+    $controller->institutions();
+});
+
 // Static files (for development) - serve from public folder
 if (isset($_SERVER['REQUEST_URI'])) {
     $uri = $_SERVER['REQUEST_URI'];

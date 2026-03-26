@@ -14,7 +14,8 @@
       "Bash(timeout *)",
       "Bash(powershell *)",
       "Bash(replace *)",
-      "Bash(set-content *)"
+      "Bash(set-content *)",
+      "Bash(curl *)"
     ]
   },
   "$version": 3
