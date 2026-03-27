@@ -258,6 +258,16 @@ $router->post('/study-group/mark-all-viewed', function() {
     $controller = new StudyGroupController();
     $controller->markAllNotificationsAsViewed();
 });
+$router->post('/study-group/{id}/mark-chat-viewed', function($groupId) {
+    require_once __DIR__ . '/../controllers/StudyGroupController.php';
+    $controller = new StudyGroupController();
+    $controller->markChatAsViewed($groupId);
+});
+$router->post('/study-group/{id}/mark-scripts-viewed', function($groupId) {
+    require_once __DIR__ . '/../controllers/StudyGroupController.php';
+    $controller = new StudyGroupController();
+    $controller->markScriptsAsViewed($groupId);
+});
 
 // Serve voice recordings from database (MUST be before /send-message and /get-messages)
 $router->get('/study-group/{groupId}/voice/{messageId}', function($groupId, $messageId) {
@@ -597,6 +607,16 @@ $router->get('/api/career-institutions', function() {
     require_once __DIR__ . '/../controllers/CareerController.php';
     $controller = new CareerController();
     $controller->institutions();
+});
+
+// Study Group Notification Count API
+$router->get('/api/study-group-notification-count', function() {
+    requireLogin();
+    header('Content-Type: application/json');
+    
+    $count = getStudyGroupActivityCount();
+    echo json_encode(['count' => $count]);
+    exit;
 });
 
 // Static files (for development) - serve from public folder

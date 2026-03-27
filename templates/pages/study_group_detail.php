@@ -228,6 +228,16 @@ include __DIR__ . '/../layouts/header.php';
     .tab-content.active {
         display: block;
     }
+    .tab-notification-badge {
+        background: #ef4444;
+        color: white;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 6px;
+        display: inline-block;
+    }
 </style>
 
 <style>
@@ -681,9 +691,21 @@ include __DIR__ . '/../layouts/header.php';
 <div class="tab-container">
     <button class="tab-btn active" onclick="switchTab('chat')">
         <i class="fas fa-comments"></i> Chat
+        <?php
+        $chatNotificationCount = getStudyGroupChatNotificationCount($group['id']);
+        if ($chatNotificationCount > 0):
+        ?>
+            <span class="tab-notification-badge"><?php echo $chatNotificationCount > 99 ? '99+' : $chatNotificationCount; ?></span>
+        <?php endif; ?>
     </button>
     <button class="tab-btn" onclick="switchTab('scripts')">
         <i class="fas fa-file-alt"></i> Shared Scripts
+        <?php
+        $scriptsNotificationCount = getStudyGroupScriptsNotificationCount($group['id']);
+        if ($scriptsNotificationCount > 0):
+        ?>
+            <span class="tab-notification-badge"><?php echo $scriptsNotificationCount > 99 ? '99+' : $scriptsNotificationCount; ?></span>
+        <?php endif; ?>
     </button>
     <button class="tab-btn" onclick="switchTab('members')">
         <i class="fas fa-users"></i> Members
@@ -899,13 +921,133 @@ include __DIR__ . '/../layouts/header.php';
     let mediaRecorder;
     let audioChunks = [];
 
+    // Track which tabs have been viewed
+    let chatViewed = false;
+    let scriptsViewed = false;
+
+    // Initialize: Track which tabs have been viewed
+    // NOTE: We don't mark notifications as viewed on page load anymore.
+    // Notifications are only cleared when the user explicitly clicks on a tab.
+    // This ensures notifications persist until the user intentionally views the content.
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded - chatViewed:', chatViewed, 'scriptsViewed:', scriptsViewed);
+        
+        // Check initial badge counts for debugging
+        const chatBadge = document.querySelector('.tab-btn[onclick*="chat"] .tab-notification-badge');
+        const scriptsBadge = document.querySelector('.tab-btn[onclick*="scripts"] .tab-notification-badge');
+        console.log('Initial chat badge:', chatBadge ? chatBadge.textContent : 'none');
+        console.log('Initial scripts badge:', scriptsBadge ? scriptsBadge.textContent : 'none');
+    });
+
     // Tab switching
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
+
         event.target.closest('.tab-btn').classList.add('active');
         document.getElementById(tabName + '-tab').classList.add('active');
+
+        console.log('Switched to tab:', tabName, 'chatViewed:', chatViewed, 'scriptsViewed:', scriptsViewed);
+
+        // Mark notifications as read when viewing tab (only on click, not on page load)
+        if (tabName === 'chat' && !chatViewed) {
+            chatViewed = true;
+            console.log('Marking chat as viewed');
+            markChatAsViewed();
+        } else if (tabName === 'scripts' && !scriptsViewed) {
+            scriptsViewed = true;
+            console.log('Marking scripts as viewed');
+            markScriptsAsViewed();
+        }
+    }
+
+    // Mark chat messages as viewed
+    async function markChatAsViewed() {
+        console.log('markChatAsViewed called for group <?php echo $group['id']; ?>');
+        try {
+            await fetch('/study-group/<?php echo $group['id']; ?>/mark-chat-viewed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            console.log('Chat marked as viewed, removing badge');
+            // Remove chat notification badge
+            const chatTab = document.querySelector('.tab-btn[onclick*="chat"]');
+            if (chatTab) {
+                const badge = chatTab.querySelector('.tab-notification-badge');
+                if (badge) {
+                    badge.remove();
+                    console.log('Chat badge removed from DOM');
+                }
+            }
+            // Update sidebar notification count
+            updateSidebarNotificationCount();
+        } catch (error) {
+            console.error('Error marking chat as viewed:', error);
+        }
+    }
+
+    // Mark scripts as viewed
+    async function markScriptsAsViewed() {
+        console.log('markScriptsAsViewed called for group <?php echo $group['id']; ?>');
+        try {
+            await fetch('/study-group/<?php echo $group['id']; ?>/mark-scripts-viewed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            console.log('Scripts marked as viewed, removing badge');
+            // Remove scripts notification badge
+            const scriptsTab = document.querySelector('.tab-btn[onclick*="scripts"]');
+            if (scriptsTab) {
+                const badge = scriptsTab.querySelector('.tab-notification-badge');
+                if (badge) {
+                    badge.remove();
+                    console.log('Scripts badge removed from DOM');
+                }
+            }
+            // Update sidebar notification count
+            updateSidebarNotificationCount();
+        } catch (error) {
+            console.error('Error marking scripts as viewed:', error);
+        }
+    }
+
+    // Update sidebar notification count
+    async function updateSidebarNotificationCount() {
+        try {
+            const response = await fetch('/api/study-group-notification-count');
+            const data = await response.json();
+            console.log('Sidebar notification count updated:', data.count);
+            
+            const sidebarBadge = document.querySelector('.sidebar a[href="/study-group"] .notification-badge');
+
+            if (data.count <= 0) {
+                // Remove badge if count is 0
+                if (sidebarBadge) sidebarBadge.remove();
+                console.log('Removed sidebar badge (count is 0)');
+            } else {
+                // Update badge count
+                if (sidebarBadge) {
+                    sidebarBadge.textContent = data.count > 99 ? '99+' : data.count;
+                    console.log('Updated sidebar badge to:', data.count);
+                } else if (data.count > 0) {
+                    // Create badge if it doesn't exist
+                    const studyGroupLink = document.querySelector('.sidebar a[href="/study-group"]');
+                    if (studyGroupLink) {
+                        const badge = document.createElement('span');
+                        badge.className = 'notification-badge';
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        studyGroupLink.appendChild(badge);
+                        console.log('Created sidebar badge with count:', data.count);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error updating sidebar notification count:', error);
+        }
     }
 
     // Chat form submission
@@ -1104,7 +1246,7 @@ include __DIR__ . '/../layouts/header.php';
         try {
             const response = await fetch('/study-group/<?php echo $group['id']; ?>/get-messages?after_id=' + lastMessageId);
             const result = await response.json();
-            
+
             if (result.messages && result.messages.length > 0) {
                 result.messages.forEach(msg => {
                     if (msg.id > lastMessageId) {
@@ -1112,6 +1254,21 @@ include __DIR__ . '/../layouts/header.php';
                         lastMessageId = msg.id;
                     }
                 });
+                // Update notification badge if chat tab is not active
+                const chatTab = document.querySelector('.tab-btn[onclick*="chat"]');
+                const chatTabActive = chatTab && chatTab.classList.contains('active');
+                if (!chatTabActive) {
+                    // Add or update chat notification badge
+                    let badge = chatTab.querySelector('.tab-notification-badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'tab-notification-badge';
+                        chatTab.appendChild(badge);
+                    }
+                    let count = parseInt(badge.textContent) || 0;
+                    count += result.messages.length;
+                    badge.textContent = count > 99 ? '99+' : count;
+                }
             }
         } catch (error) {
             console.error('Error polling messages:', error);
@@ -1355,33 +1512,9 @@ include __DIR__ . '/../layouts/header.php';
         }
     }
 
-    // Mark all messages as viewed when page loads
-    async function markMessagesAsViewed() {
-        try {
-            await fetch('/study-group/<?php echo $group['id']; ?>/mark-viewed', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-        } catch (error) {
-            console.error('Error marking messages as viewed:', error);
-        }
-    }
-
-    // Mark messages as viewed when page loads
-    markMessagesAsViewed();
-
-    // Also mark messages as viewed when receiving new messages via polling
-    const originalLoadMessages = window.loadMessages || null;
-    if (originalLoadMessages) {
-        window.loadMessages = function() {
-            const result = originalLoadMessages.apply(this, arguments);
-            // Mark as viewed after loading messages
-            setTimeout(() => markMessagesAsViewed(), 500);
-            return result;
-        };
-    }
+    // NOTE: We no longer mark messages as viewed on page load.
+    // Messages are only marked as viewed when the user clicks on the Chat tab.
+    // This ensures notifications persist until the user actually views the chat.
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

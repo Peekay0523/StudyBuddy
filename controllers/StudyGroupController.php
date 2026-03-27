@@ -286,8 +286,9 @@ class StudyGroupController {
             exit;
         }
 
-        // Mark messages and scripts as viewed for this group
-        $this->markGroupNotificationsAsViewedServerSide($groupId);
+        // NOTE: We no longer mark notifications as viewed here automatically.
+        // Notifications are now cleared when the user views specific tabs (chat, scripts)
+        // This allows for granular notification tracking across different sections
 
         $members = $this->studyGroupModel->getMembers($groupId);
         $isMember = $this->studyGroupModel->isMember($groupId, $user['id']);
@@ -996,6 +997,78 @@ class StudyGroupController {
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to mark notifications as viewed']);
+        }
+    }
+
+    /**
+     * Mark chat messages as viewed for a specific study group
+     */
+    public function markChatAsViewed($groupId) {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $user = getCurrentUser();
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Check if is_viewed column exists
+            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $hasIsViewed = in_array('is_viewed', $columns);
+
+            if ($hasIsViewed) {
+                // Mark all messages from other users as viewed
+                $stmt = $db->prepare("
+                    UPDATE study_group_messages
+                    SET is_viewed = 1
+                    WHERE study_group_id = ?
+                    AND user_id != ?
+                    AND is_viewed = 0
+                ");
+                $stmt->execute([$groupId, $user['id']]);
+            }
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark chat as viewed']);
+        }
+    }
+
+    /**
+     * Mark scripts as viewed for a specific study group
+     */
+    public function markScriptsAsViewed($groupId) {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $user = getCurrentUser();
+
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Update last_visited timestamp for this group to clear script notifications
+            $stmt = $db->prepare("
+                UPDATE study_group_members
+                SET last_visited = CURRENT_TIMESTAMP
+                WHERE study_group_id = ? AND user_id = ?
+            ");
+            $stmt->execute([$groupId, $user['id']]);
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to mark scripts as viewed']);
         }
     }
 }

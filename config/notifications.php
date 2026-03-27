@@ -255,3 +255,91 @@ function getStudyGroupNotificationCount($groupId) {
         return 0;
     }
 }
+
+/**
+ * Get count of unread chat messages for a specific study group
+ * @param int $groupId Study group ID
+ * @return int Count of unread messages in the group
+ */
+function getStudyGroupChatNotificationCount($groupId) {
+    if (!isLoggedIn()) {
+        return 0;
+    }
+
+    try {
+        $db = Database::getInstance()->getConnection();
+        $user = getCurrentUser();
+
+        // Check if is_viewed column exists
+        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        $hasIsViewed = in_array('is_viewed', $columns);
+
+        if ($hasIsViewed) {
+            // Count unread messages from OTHER users
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as count
+                FROM study_group_messages
+                WHERE study_group_id = ?
+                AND user_id != ?
+                AND (is_viewed = 0 OR is_viewed IS NULL)
+            ");
+            $stmt->execute([$groupId, $user['id']]);
+            $result = $stmt->fetch();
+            return (int)($result['count'] ?? 0);
+        } else {
+            // If is_viewed column doesn't exist, count messages from last 7 days
+            $stmt = $db->prepare("
+                SELECT COUNT(*) as count
+                FROM study_group_messages
+                WHERE study_group_id = ?
+                AND user_id != ?
+                AND datetime(created_at) > datetime('now', '-7 days')
+            ");
+            $stmt->execute([$groupId, $user['id']]);
+            $result = $stmt->fetch();
+            return (int)($result['count'] ?? 0);
+        }
+    } catch (Exception $e) {
+        return 0;
+    }
+}
+
+/**
+ * Get count of new scripts for a specific study group
+ * @param int $groupId Study group ID
+ * @return int Count of new scripts in the group
+ */
+function getStudyGroupScriptsNotificationCount($groupId) {
+    if (!isLoggedIn()) {
+        return 0;
+    }
+
+    try {
+        $db = Database::getInstance()->getConnection();
+        $user = getCurrentUser();
+
+        // Get user's last visited time for this group
+        $stmt = $db->prepare("
+            SELECT last_visited
+            FROM study_group_members
+            WHERE study_group_id = ? AND user_id = ?
+        ");
+        $stmt->execute([$groupId, $user['id']]);
+        $membership = $stmt->fetch();
+        $lastVisited = $membership ? $membership['last_visited'] : date('Y-m-d H:i:s');
+
+        // Count new scripts from OTHER users uploaded after last visit
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as count
+            FROM study_group_scripts
+            WHERE study_group_id = ?
+            AND user_id != ?
+            AND datetime(uploaded_at) > datetime(?)
+        ");
+        $stmt->execute([$groupId, $user['id'], $lastVisited]);
+        $result = $stmt->fetch();
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        return 0;
+    }
+}
