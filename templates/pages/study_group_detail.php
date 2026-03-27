@@ -925,18 +925,24 @@ include __DIR__ . '/../layouts/header.php';
     let chatViewed = false;
     let scriptsViewed = false;
 
-    // Initialize: Track which tabs have been viewed
-    // NOTE: We don't mark notifications as viewed on page load anymore.
-    // Notifications are only cleared when the user explicitly clicks on a tab.
-    // This ensures notifications persist until the user intentionally views the content.
+    // Initialize: Mark chat as viewed on page load since Chat tab is active by default
+    // This ensures chat notifications are cleared when user enters the study group page
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Page loaded - chatViewed:', chatViewed, 'scriptsViewed:', scriptsViewed);
+        console.log('Page loaded - checking active tab');
         
         // Check initial badge counts for debugging
         const chatBadge = document.querySelector('.tab-btn[onclick*="chat"] .tab-notification-badge');
         const scriptsBadge = document.querySelector('.tab-btn[onclick*="scripts"] .tab-notification-badge');
         console.log('Initial chat badge:', chatBadge ? chatBadge.textContent : 'none');
         console.log('Initial scripts badge:', scriptsBadge ? scriptsBadge.textContent : 'none');
+        
+        // Chat tab is active by default, so mark chat notifications as viewed
+        const chatTab = document.querySelector('.tab-btn[onclick*="chat"]');
+        if (chatTab && chatTab.classList.contains('active')) {
+            chatViewed = true;
+            console.log('Chat tab is active on load, marking chat as viewed');
+            markChatAsViewed();
+        }
     });
 
     // Tab switching
