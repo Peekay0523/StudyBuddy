@@ -3,11 +3,433 @@ $pageTitle = 'Upload Script - StudySmart';
 $currentPage = 'scripts';
 $canGenerateMemorandum = $canGenerateMemorandum ?? false;
 $canGenerateMemorandumJson = json_encode($canGenerateMemorandum);
-$extraHead = <<<'SCRIPT'
-<script>
-// Subscription plan check for memorandum generation
-const CAN_GENERATE_MEMORANDUM = <?php echo $canGenerateMemorandumJson; ?>;
+$extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandumJson . ';</script>' . <<<'SCRIPT'
+<style>
+/* Upload Script Page Styles */
+.upload-script-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
+.upload-header {
+    margin-bottom: 30px;
+}
+
+.upload-title {
+    font-size: 28px;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.upload-subtitle {
+    color: #64748b;
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Alert Boxes */
+.alert {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1px solid #fdba74;
+    color: #9a3412;
+}
+
+.alert-error {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+/* Upload Locked State */
+.upload-locked {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.upload-locked i {
+    font-size: 64px;
+    color: #d1d5db;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.upload-locked h3 {
+    margin: 0 0 10px 0;
+    color: #374151;
+    font-size: 20px;
+}
+
+.upload-locked p {
+    color: #6b7280;
+    margin: 0 0 20px 0;
+    font-size: 14px;
+}
+
+/* Upload Container */
+.upload-container {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Auth Box */
+.auth-box {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Upload Area */
+.upload-area {
+    border: 3px dashed #cbd5e1 !important;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.upload-area:hover {
+    border-color: #667eea !important;
+    background: #e0e7ff !important;
+}
+
+.upload-area i {
+    font-size: 40px;
+    color: #667eea;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.upload-area h4 {
+    margin: 0 0 8px 0;
+    color: #1e293b;
+    font-size: 15px;
+}
+
+.upload-area p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Preview Section */
+#preview-section {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+}
+
+/* Browse Grade Card */
+.browse-grade-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+    position: sticky;
+    top: 20px;
+}
+
+.browse-grade-card h3 {
+    margin: 0 0 10px 0;
+    color: #1f2937;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.browse-grade-card > p {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* Grade Links */
+.grade-links {
+    display: grid;
+    gap: 10px;
+}
+
+.grade-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    border: 2px solid;
+}
+
+.grade-link-btn.grade-8 {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-color: #bae6fd;
+    color: #0369a1;
+}
+
+.grade-link-btn.grade-9 {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.grade-link-btn.grade-10 {
+    background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
+    border-color: #fde047;
+    color: #a16207;
+}
+
+.grade-link-btn.grade-11 {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+    border-color: #fb923c;
+    color: #c2410c;
+}
+
+.grade-link-btn.grade-12 {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    border-color: #c4b5fd;
+    color: #6d28d9;
+}
+
+.grade-link-btn:hover {
+    transform: translateX(5px);
+}
+
+/* Scripts Section */
+.scripts-section {
+    margin-top: 40px;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.section-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .upload-container {
+        grid-template-columns: 1fr;
+    }
+
+    .browse-grade-card {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .upload-script-page {
+        padding: 15px;
+    }
+
+    .upload-title {
+        font-size: 22px;
+    }
+
+    .auth-box,
+    .browse-grade-card,
+    .scripts-section {
+        padding: 20px;
+    }
+
+    .upload-area {
+        padding: 20px;
+    }
+
+    .upload-area i {
+        font-size: 32px;
+    }
+
+    .upload-area h4 {
+        font-size: 14px;
+    }
+
+    .grade-links {
+        grid-template-columns: 1fr;
+    }
+
+    .grade-link-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .upload-locked {
+        padding: 40px 15px;
+    }
+
+    .upload-locked i {
+        font-size: 48px;
+    }
+
+    .upload-locked h3 {
+        font-size: 18px;
+    }
+
+    .section-title {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .upload-script-page {
+        padding: 10px;
+    }
+
+    .auth-box,
+    .browse-grade-card,
+    .scripts-section {
+        padding: 15px;
+    }
+
+    .form-group input[type="text"],
+    .form-group select {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .upload-area {
+        padding: 15px;
+    }
+
+    .upload-area i {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    .upload-area h4 {
+        font-size: 13px;
+    }
+
+    .upload-area p {
+        font-size: 12px;
+    }
+
+    #preview-section {
+        padding: 10px;
+    }
+
+    #preview-section > div {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    #preview-section #clear-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .grade-link-btn span {
+        font-size: 12px;
+    }
+}
+</style>
+
+<script>
 document.addEventListener("DOMContentLoaded", function() {
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("script_file");
@@ -20,58 +442,40 @@ console.log('Upload script page loaded');
 console.log('uploadArea:', uploadArea);
 console.log('fileInput:', fileInput);
 
-// Click to upload
-if (uploadArea && fileInput) {
-    uploadArea.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Upload area clicked, triggering file input click');
-        
-        // Create a temporary file input and trigger it
-        const tempInput = document.createElement('input');
-        tempInput.type = 'file';
-        tempInput.accept = fileInput.accept;
-        tempInput.style.display = 'none';
-        tempInput.id = 'temp-file-input';
-        tempInput.name = 'script_file';
-        
-        tempInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                fileInput.files = this.files;
-                const event = new Event('change', { bubbles: true });
-                fileInput.dispatchEvent(event);
-            }
-            tempInput.remove();
-        });
-        
-        document.body.appendChild(tempInput);
-        tempInput.click();
-    });
-} else {
-    console.error('Upload area or file input not found!');
-}
-
 // Drag and drop
-if (uploadArea) {
+if (uploadArea && fileInput) {
     uploadArea.addEventListener("dragover", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         uploadArea.style.borderColor = "#667eea";
         uploadArea.style.background = "#e0e7ff";
     });
 
-    uploadArea.addEventListener("dragleave", () => {
+    uploadArea.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         uploadArea.style.borderColor = "#cbd5e1";
         uploadArea.style.background = "#f8fafc";
     });
 
     uploadArea.addEventListener("drop", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         uploadArea.style.borderColor = "#cbd5e1";
         uploadArea.style.background = "#f8fafc";
 
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            handleFile(files[0]);
+            // Set the dropped file to the file input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(files[0]);
+            fileInput.files = dataTransfer.files;
+            
+            // Trigger change event
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+            
+            console.log('File dropped:', files[0].name);
         }
     });
 }
@@ -363,40 +767,46 @@ SCRIPT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 
-<h1 class="title">Upload Script</h1>
-<p class="subtitle">Upload your study script for AI analysis and memorandum generation.</p>
-
-<?php if (!$canGenerateMemorandum): ?>
-    <div class="alert alert-info" style="padding: 12px 16px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1px solid #fdba74; border-radius: 8px; color: #9a3412; margin-bottom: 20px;">
-        <i class="fas fa-lock" style="margin-right: 8px;"></i>
-        <strong>Memorandum generation is locked.</strong> 
-        Upgrade to <a href="/subscription" style="color: #c2410c; text-decoration: underline; font-weight: 600;">Basic</a> or <a href="/subscription" style="color: #c2410c; text-decoration: underline; font-weight: 600;">Premium</a> to unlock AI-powered memorandum generation for your scripts.
+<div class="upload-script-page">
+    <div class="upload-header">
+        <h1 class="upload-title">Upload Script</h1>
+        <p class="upload-subtitle">Upload your study script for AI analysis and memorandum generation.</p>
     </div>
-<?php endif; ?>
 
-<?php if ($error): ?>
+    <?php if (!$canGenerateMemorandum): ?>
+    <div class="upload-locked">
+        <i class="fas fa-lock"></i>
+        <h3>Upload Feature Locked</h3>
+        <p>This feature is only available for Basic and Premium subscribers</p>
+        <a href="/subscription" class="btn-primary">
+            <i class="fas fa-unlock"></i> Upgrade Now
+        </a>
+    </div>
+    <?php else: ?>
+
+    <?php if ($error): ?>
     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-<?php endif; ?>
+    <?php endif; ?>
 
-<div class="upload-container" style="display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start;">
+<div class="upload-container">
     <!-- Left Column: Upload Form -->
-    <div class="auth-box" style="max-width: 100%;">
+    <div class="auth-box">
         <form method="post" action="/upload-script" enctype="multipart/form-data" id="upload-script-form">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Script File (PDF, DOCX, or TXT)</label>
-                <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease; user-select: none;" onmouseover="this.style.borderColor='#667eea';this.style.background='#e0e7ff'" onmouseout="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc'">
+                <label for="script_file">Script File (PDF, DOCX, or TXT)</label>
+                <label for="script_file" class="upload-area" id="upload-area">
                     <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
-                    <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
-                    <p style="margin: 0; color: #64748b; font-size: 13px;">PDF, DOCX, TXT (Max 10MB)</p>
-                </div>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>Click or drag file to upload</h4>
+                    <p>PDF, DOCX, TXT (Max 10MB)</p>
+                </label>
                 <div style="margin-top: 15px; text-align: center;">
-                    <button type="button" id="select-from-scans-btn" class="btn-secondary" style="padding: 10px 20px; font-size: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(102,126,234,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <button type="button" id="select-from-scans-btn" class="btn-secondary">
                         <i class="fas fa-folder-open"></i> Select from My Scans
                     </button>
                 </div>
-                <div id="preview-section" style="display: none; margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;">
+                <div id="preview-section">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <i class="fas fa-file-alt" style="font-size: 28px; color: #667eea;"></i>
                         <div style="flex: 1;">
@@ -432,34 +842,34 @@ include __DIR__ . '/../layouts/header.php';
                 </select>
             </div>
 
-            <button type="submit" class="btn-primary">Upload Script</button>
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Upload Script</button>
         </form>
     </div>
 
     <!-- Right Column: Browse Scripts by Grade Card -->
-    <div class="browse-grade-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: sticky; top: 20px;">
-        <h3 style="margin: 0 0 10px 0; color: #1f2937; display: flex; align-items: center; gap: 10px; font-size: 18px;">
+    <div class="browse-grade-card">
+        <h3>
             <i class="fas fa-graduation-cap" style="color: #667eea;"></i> Browse Scripts by Grade
         </h3>
-        <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Select your grade to view available scripts and study materials uploaded by your school.</p>
-        <div class="grade-links" style="display: grid; gap: 10px;">
-            <a href="/browse-scripts/8" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; border-radius: 8px; color: #0369a1; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100)';this.style.borderColor='#7dd3fc';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100)';this.style.borderColor='#bae6fd';this.style.transform='translateX(0)'">
+        <p>Select your grade to view available scripts and study materials uploaded by your school.</p>
+        <div class="grade-links">
+            <a href="/browse-scripts/8" class="grade-link-btn grade-8">
                 <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 8</span>
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
-            <a href="/browse-scripts/9" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; border-radius: 8px; color: #15803d; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #dcfce7 0%, #86efac 100)';this.style.borderColor='#4ade80';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100)';this.style.borderColor='#86efac';this.style.transform='translateX(0)'">
+            <a href="/browse-scripts/9" class="grade-link-btn grade-9">
                 <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 9</span>
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
-            <a href="/browse-scripts/10" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); border: 2px solid #fde047; border-radius: 8px; color: #a16207; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #fef08a 0%, #fde047 100)';this.style.borderColor='#facc15';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #fef9c3 0%, #fef08a 100)';this.style.borderColor='#fde047';this.style.transform='translateX(0)'">
+            <a href="/browse-scripts/10" class="grade-link-btn grade-10">
                 <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 10</span>
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
-            <a href="/browse-scripts/11" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); border: 2px solid #fb923c; border-radius: 8px; color: #c2410c; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #fdba74 0%, #fb923c 100)';this.style.borderColor='#fb7185';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #fed7aa 0%, #fdba74 100)';this.style.borderColor='#fb923c';this.style.transform='translateX(0)'">
+            <a href="/browse-scripts/11" class="grade-link-btn grade-11">
                 <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 11</span>
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
-            <a href="/browse-scripts/12" class="grade-link-btn" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); border: 2px solid #c4b5fd; border-radius: 8px; color: #6d28d9; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100)';this.style.borderColor='#a78bfa';this.style.transform='translateX(5px)'" onmouseout="this.style.background='linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100)';this.style.borderColor='#c4b5fd';this.style.transform='translateX(0)'">
+            <a href="/browse-scripts/12" class="grade-link-btn grade-12">
                 <span><i class="fas fa-chevron-right" style="font-size: 12px; margin-right: 8px;"></i> Grade 12</span>
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
@@ -468,38 +878,16 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <!-- Your Uploaded Scripts Section (Full Width Below) -->
-<div class="scripts-section" style="margin-top: 40px;">
-    <h2 class="section-title" style="font-size: 24px; margin-bottom: 20px; color: #1f2937; display: flex; align-items: center; gap: 10px;">
+<div class="scripts-section">
+    <h2 class="section-title">
         <i class="fas fa-file-alt"></i> Your Uploaded Scripts
     </h2>
     <div id="scripts-list" class="scripts-list">
         <p class="loading">Loading scripts...</p>
     </div>
 </div>
-
-<style>
-/* Responsive layout for upload page */
-@media (max-width: 1024px) {
-    .upload-container {
-        grid-template-columns: 1fr !important;
-    }
-    
-    .browse-grade-card {
-        position: static !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .browse-grade-card {
-        padding: 20px !important;
-    }
-    
-    .grade-link-btn {
-        padding: 10px 14px !important;
-        font-size: 13px !important;
-    }
-}
-</style>
+</div>
+<?php endif; ?>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

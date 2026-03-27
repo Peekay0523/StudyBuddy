@@ -36,12 +36,26 @@ class ScriptController {
         $error = '';
         $success = '';
 
-        // Debug logging
-        error_log("Upload request method: " . $_SERVER['REQUEST_METHOD']);
-        error_log("POST data: " . print_r($_POST, true));
-        error_log("FILES data: " . print_r($_FILES, true));
+        // Check user's subscription plan - only Basic and Premium can upload scripts
+        $subscriptionController = new SubscriptionController();
+        $user = getCurrentUser();
+        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
+        $currentPlan = $userSubscription['plan'] ?? 'free';
+        $canGenerateMemorandum = ($currentPlan !== 'free');
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Block free tier users from uploading
+        if (!$canGenerateMemorandum) {
+            $error = 'Script upload is only available for Basic and Premium subscribers. Please upgrade your plan.';
+        }
+
+        // Debug logging
+        error_log("Upload request method: " . ($_SERVER['REQUEST_METHOD'] ?? 'NOT SET'));
+        error_log("Current plan: " . $currentPlan);
+        error_log("Can upload: " . ($canGenerateMemorandum ? 'YES' : 'NO'));
+        error_log("POST data: " . print_r($_POST ?? [], true));
+        error_log("FILES data: " . print_r($_FILES ?? [], true));
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canGenerateMemorandum) {
             $student = getCurrentStudent();
             error_log("Current student ID: " . ($student['id'] ?? 'NOT FOUND'));
 
@@ -154,13 +168,6 @@ class ScriptController {
                 }
             }
         }
-
-        // Check user's subscription plan for memorandum generation feature
-        $subscriptionController = new SubscriptionController();
-        $user = getCurrentUser();
-        $userSubscription = $subscriptionController->getUserSubscription($user['id']);
-        $currentPlan = $userSubscription['plan'] ?? 'free';
-        $canGenerateMemorandum = ($currentPlan !== 'free');
 
         include __DIR__ . '/../templates/pages/upload_script.php';
     }

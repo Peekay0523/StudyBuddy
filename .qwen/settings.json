@@ -15,7 +15,8 @@
       "Bash(powershell *)",
       "Bash(replace *)",
       "Bash(set-content *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git checkout *)"
     ]
   },
   "$version": 3

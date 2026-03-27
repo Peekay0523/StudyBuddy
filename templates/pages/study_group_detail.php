@@ -145,13 +145,28 @@ include __DIR__ . '/../layouts/header.php';
         display: flex;
         align-items: center;
         gap: 10px;
-        min-width: 200px;
+        min-width: 250px;
         max-width: 100%;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 12px;
+        border-radius: 20px;
+    }
+    .voice-note i {
+        font-size: 20px;
+        flex-shrink: 0;
+        color: inherit;
     }
     .voice-note audio {
         height: 35px;
         max-width: 100%;
-        width: 100%;
+        width: 180px;
+        flex: 1;
+    }
+    .chat-message.own .voice-note {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .chat-message.other .voice-note {
+        background: rgba(255, 255, 255, 0.15);
     }
     .scripts-section {
         background: white;
@@ -473,20 +488,32 @@ include __DIR__ . '/../layouts/header.php';
         }
 
         .voice-note {
-            min-width: 120px;
+            min-width: 220px;
             max-width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+
+        .voice-note i {
+            font-size: 18px;
+            flex-shrink: 0;
         }
 
         .voice-note audio {
-            height: 28px;
-            width: 100%;
+            height: 32px;
+            width: 160px;
             max-width: 100%;
+            flex: 1;
         }
 
         /* Voice message bubble adjustments for extra small screens */
         .chat-message.own .voice-note,
         .chat-message.other .voice-note {
-            min-width: 100px;
+            min-width: 220px;
             max-width: 100%;
         }
 

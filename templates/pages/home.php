@@ -80,15 +80,15 @@ include __DIR__ . '/../layouts/header.php';
     <!-- Stats -->
     <div class="sample-stats-grid">
         <div class="stat-item">
-            <div class="stat-value stat-blue">500+</div>
+            <div class="stat-value stat-blue">100+</div>
             <div class="stat-label">Students Helped</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value stat-gold">1,200+</div>
+            <div class="stat-value stat-gold">100+</div>
             <div class="stat-label">Scripts Analyzed</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value stat-green">94%</div>
+            <div class="stat-value stat-green">84%</div>
             <div class="stat-label">Improved Grades</div>
         </div>
     </div>
