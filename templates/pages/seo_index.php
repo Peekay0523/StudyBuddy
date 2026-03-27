@@ -97,7 +97,7 @@ include __DIR__ . '/../layouts/header.php';
                         <?php echo htmlspecialchars(substr($page['meta_description'] ?? $page['title'], 0, 120)); ?>...
                     </p>
                     <small style="color: #94a3b8; font-size: 0.8rem;">
-                        <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($page['created_at'])); ?>
+                        <i class="fas fa-calendar"></i> <?php echo $page['created_at'] ? date('M d, Y', strtotime($page['created_at'])) : 'Unknown date'; ?>
                     </small>
                 </a>
             <?php endforeach; ?>

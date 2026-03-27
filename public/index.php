@@ -483,6 +483,34 @@ $router->get('/admin/bobpay', 'AdminController@bobpayPayments');
 $router->post('/admin/bobpay/refund', 'AdminController@bobpayRefund');
 $router->get('/admin/bobpay/payment/{id}', 'AdminController@bobpayPaymentDetails');
 
+// Admin - SEO Pages Management
+$router->get('/admin/seo/pages', 'SEOController@adminList');
+$router->get('/admin/seo/pages/add', 'SEOController@adminAdd');
+$router->post('/admin/seo/pages/create', 'SEOController@adminCreate');
+$router->get('/admin/seo/pages/edit/{id}', 'SEOController@adminEdit');
+$router->post('/admin/seo/pages/update/{id}', 'SEOController@adminUpdate');
+$router->post('/admin/seo/pages/delete/{id}', 'SEOController@adminDelete');
+$router->post('/admin/seo/pages/toggle-publish/{id}', 'SEOController@adminTogglePublish');
+$router->post('/admin/seo/pages/{id}/upload-resource', 'SEOController@adminUploadResource');
+$router->post('/admin/seo/pages/delete-resource/{resourceId}', 'SEOController@adminDeleteResource');
+$router->get('/admin/seo/pages/generate', 'SEOController@generate');
+$router->post('/admin/seo/pages/generate', 'SEOController@generate');
+$router->get('/admin/seo/generate', 'SEOController@generate');
+$router->post('/admin/seo/generate', 'SEOController@generate');
+
+// Admin - SEO Pages Management (short routes for backward compatibility)
+$router->get('/admin/seo/add', 'SEOController@adminAdd');
+$router->get('/admin/seo/edit/{id}', 'SEOController@adminEdit');
+$router->post('/admin/seo/update/{id}', 'SEOController@adminUpdate');
+$router->post('/admin/seo/delete/{id}', 'SEOController@adminDelete');
+$router->get('/admin/seo/toggle-publish/{id}', 'SEOController@adminTogglePublish');
+
+// Public SEO Pages
+$router->get('/seo', 'SEOController@index');
+$router->get('/seo/search', 'SEOController@search');
+$router->get('/seo/{subject}/{grade}', 'SEOController@browse');
+$router->get('/seo/{slug}', 'SEOController@show');
+
 // Scripts API endpoints
 $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');
 $router->post('/api/generate-memorandum', 'ScriptController@generateMemorandum');

@@ -51,7 +51,7 @@ $metaDescription = "Complete study resources, past papers, and memorandums for $
                     </p>
                     <div class="resource-meta">
                         <span class="views">👁️ <?php echo number_format($page['views']); ?> views</span>
-                        <span class="date">📅 <?php echo date('d M Y', strtotime($page['published_at'])); ?></span>
+                        <span class="date">📅 <?php echo $page['published_at'] ? date('d M Y', strtotime($page['published_at'])) : 'Not published'; ?></span>
                     </div>
                     <a href="/seo/<?php echo urlencode($page['slug']); ?>" class="btn btn-primary btn-sm">View Resource</a>
                 </article>

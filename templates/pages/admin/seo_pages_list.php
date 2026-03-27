@@ -174,7 +174,7 @@ foreach ($totalPages as $page) {
                         </td>
                         <td style="padding: 15px;">
                             <span style="color: #6b7280; font-size: 13px;">
-                                <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($page['created_at'])); ?>
+                                <i class="fas fa-calendar"></i> <?php echo $page['created_at'] ? date('M d, Y', strtotime($page['created_at'])) : 'Unknown date'; ?>
                             </span>
                         </td>
                         <td style="padding: 15px;">
