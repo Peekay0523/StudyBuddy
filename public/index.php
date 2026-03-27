@@ -65,6 +65,11 @@ $router->get('/add-bursaries-table', function() {
     require __DIR__ . '/../add_bursaries_table.php';
 });
 
+// Add Bursary Notification Tracking
+$router->get('/add-bursary-notification-tracking', function() {
+    require __DIR__ . '/../add_bursary_notification_tracking.php';
+});
+
 // Test scan conversion directly
 $router->get('/test-scan-direct', function() {
     require __DIR__ . '/../test-scan-direct.php';
@@ -617,6 +622,46 @@ $router->get('/api/study-group-notification-count', function() {
     $count = getStudyGroupActivityCount();
     echo json_encode(['count' => $count]);
     exit;
+});
+
+// Bursary Notification Count API
+$router->get('/api/bursary-notification-count', function() {
+    requireLogin();
+    header('Content-Type: application/json');
+    
+    $count = getBursaryNotificationCount();
+    echo json_encode(['count' => $count]);
+    exit;
+});
+
+// Mark Bursaries as Viewed
+$router->post('/mark-bursaries-viewed', function() {
+    requireLogin();
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+        exit;
+    }
+    
+    $user = getCurrentUser();
+    
+    try {
+        $db = Database::getInstance()->getConnection();
+        
+        // Update last_viewed timestamp
+        $stmt = $db->prepare("
+            UPDATE users
+            SET bursaries_last_viewed = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ");
+        $stmt->execute([$user['id']]);
+        
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to mark bursaries as viewed']);
+    }
 });
 
 // Static files (for development) - serve from public folder

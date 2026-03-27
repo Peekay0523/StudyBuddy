@@ -53,7 +53,15 @@
                         <?php endif; ?>
                     </a>
                     <a href="/scan" class="<?php echo ($currentPage ?? '') === 'scan' ? 'active' : ''; ?>"><i class="fas fa-camera icon-sm"></i> Scan to PDF</a>
-                    <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>"><i class="fas fa-bullseye icon-sm"></i> Careers</a>
+                    <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>" id="careers-link">
+                        <i class="fas fa-bullseye icon-sm"></i> Careers
+                        <?php
+                        $bursaryCount = getBursaryNotificationCount();
+                        if ($bursaryCount > 0):
+                        ?>
+                            <span class="notification-badge"><?php echo $bursaryCount > 99 ? '99+' : $bursaryCount; ?></span>
+                        <?php endif; ?>
+                    </a>
                     <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
                     <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
                 <?php endif; ?>

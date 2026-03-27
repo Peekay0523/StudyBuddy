@@ -947,6 +947,9 @@ include __DIR__ . '/../layouts/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Mark bursaries as viewed when page loads
+    markBursariesAsViewed();
+    
     // Form validation - check if file is selected before submit
     const form = document.querySelector('form');
     if (form) {
@@ -973,7 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return false;
             }
-            
+
             // Show loading overlay
             showLoading('Uploading report card...');
         });
@@ -1084,6 +1087,21 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Mark bursaries as viewed
+async function markBursariesAsViewed() {
+    try {
+        await fetch('/mark-bursaries-viewed', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log('Bursaries marked as viewed');
+    } catch (error) {
+        console.error('Error marking bursaries as viewed:', error);
+    }
 }
 </script>
 

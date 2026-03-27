@@ -63,6 +63,42 @@
                 }
             });
         }
+
+        // Mark bursary notifications as viewed when clicking the Careers link
+        const careersLink = document.getElementById('careers-link');
+        if (careersLink) {
+            careersLink.addEventListener('click', async function(e) {
+                // Mark bursaries as viewed
+                try {
+                    await fetch('/mark-bursaries-viewed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    // Refresh the notification count
+                    const response = await fetch('/api/bursary-notification-count');
+                    const data = await response.json();
+                    
+                    // Remove or update badge
+                    const badge = this.querySelector('.notification-badge');
+                    if (data.count <= 0) {
+                        if (badge) badge.remove();
+                    } else {
+                        if (badge) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                        } else if (data.count > 0) {
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'notification-badge';
+                            newBadge.textContent = data.count > 99 ? '99+' : data.count;
+                            this.appendChild(newBadge);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error marking bursaries as viewed:', error);
+                }
+            });
+        }
     }
 </script>
 

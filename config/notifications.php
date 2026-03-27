@@ -343,3 +343,42 @@ function getStudyGroupScriptsNotificationCount($groupId) {
         return 0;
     }
 }
+
+/**
+ * Get count of new bursaries available for current user
+ * @return int Count of new bursaries
+ */
+function getBursaryNotificationCount() {
+    if (!isLoggedIn()) {
+        return 0;
+    }
+
+    try {
+        $db = Database::getInstance()->getConnection();
+        $user = getCurrentUser();
+
+        // Get user's last viewed time for bursaries
+        $stmt = $db->prepare("
+            SELECT bursaries_last_viewed
+            FROM users
+            WHERE id = ?
+        ");
+        $stmt->execute([$user['id']]);
+        $result = $stmt->fetch();
+        $lastViewed = $result ? $result['bursaries_last_viewed'] : date('Y-m-d H:i:s');
+
+        // Count active bursaries created after last view
+        $stmt = $db->prepare("
+            SELECT COUNT(*) as count
+            FROM bursaries
+            WHERE is_active = 1
+            AND deadline >= date('now')
+            AND datetime(created_at) > datetime(?)
+        ");
+        $stmt->execute([$lastViewed]);
+        $result = $stmt->fetch();
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        return 0;
+    }
+}
