@@ -14,6 +14,20 @@ $isTrial = $userSubscription['is_trial'] ?? false;
     <p class="subtitle">Choose the perfect plan for your learning journey</p>
 </div>
 
+<div class="feature-card" style="margin-bottom: 25px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b;">
+    <div style="display: flex; align-items: flex-start; gap: 15px;">
+        <i class="fas fa-info-circle" style="font-size: 24px; color: #f59e0b; margin-top: 2px;"></i>
+        <div>
+            <h4 style="margin-bottom: 8px; color: #92400e; font-size: 16px;"><i class="fas fa-users"></i> Parental Assistance Required</h4>
+            <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.5;">
+                <strong>Parents may assist you in these steps as card payments will be required.</strong> 
+                If you're a student, please ask a parent or guardian to help you complete the subscription process. 
+                Payments can be made securely via credit/debit card or EFT bank transfer.
+            </p>
+        </div>
+    </div>
+</div>
+
 <?php if ($currentPlan !== 'free'): ?>
 <div class="feature-card" style="margin-bottom: 30px; background: linear-gradient(135deg, <?php echo $isTrial ? '#059669 0%, #10b981 100%' : '#16a34a 0%, #059669 100%'; ?>); color: white;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">

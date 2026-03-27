@@ -3,6 +3,123 @@
  * Styles for long-tail SEO content pages
  */
 
+/* Checkout Page Styles */
+.checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.checkout-card {
+    break-inside: avoid;
+}
+
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 0 15px;
+    }
+
+    .checkout-card {
+        padding: 20px !important;
+    }
+
+    .checkout-card h3 {
+        font-size: 18px !important;
+    }
+
+    /* Stack payment method options vertically on mobile */
+    .checkout-card label[style*="flex: 1"] {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        padding: 15px !important;
+    }
+
+    .checkout-card input[type="radio"][name="payment_method"] {
+        margin-right: 8px;
+        transform: scale(1.2);
+    }
+
+    /* Make bank details grid single column on mobile */
+    .checkout-card .bank-details-grid,
+    .checkout-card div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Improve button visibility on mobile */
+    .checkout-card .btn-primary {
+        font-size: 16px !important;
+        padding: 15px 20px !important;
+        min-height: 50px !important;
+        width: 100% !important;
+    }
+
+    /* Make form inputs larger on mobile */
+    .checkout-card input[type="text"],
+    .checkout-card input[type="number"],
+    .checkout-card input[type="date"],
+    .checkout-card input[type="file"] {
+        font-size: 16px !important;
+        padding: 14px !important;
+        min-height: 48px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Adjust info boxes padding on mobile */
+    .checkout-card .info-box,
+    .checkout-card div[style*="background: linear-gradient"] {
+        padding: 15px !important;
+    }
+
+    .checkout-card .info-box h4,
+    .checkout-card div[style*="background: linear-gradient"] h4 {
+        font-size: 15px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .checkout-card .info-box p,
+    .checkout-card div[style*="background: linear-gradient"] p {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Improve order summary layout on mobile */
+    .checkout-card .order-summary-item {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    /* Make total due more prominent */
+    .checkout-card div[style*="font-size: 18px"] {
+        font-size: 16px !important;
+    }
+
+    /* Adjust feature list padding */
+    .checkout-card ul {
+        padding-left: 18px !important;
+    }
+
+    .checkout-card li {
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+    }
+
+    /* Improve back link visibility */
+    .checkout-card a[style*="text-align: center"] {
+        display: block !important;
+        padding: 10px !important;
+        font-size: 15px !important;
+    }
+}
+
 /* Main Container */
 .seo-page-container {
     display: grid;

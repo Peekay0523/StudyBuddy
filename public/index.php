@@ -445,6 +445,24 @@ $router->get('/debug-database', function() {
     require __DIR__ . '/../debug-database.php';
 });
 
+// Debug subscription
+$router->get('/debug-subscription', function() {
+    require __DIR__ . '/../debug-subscription.php';
+});
+$router->post('/debug-subscription/clear', function() {
+    requireLogin();
+    $user = getCurrentUser();
+    $db = Database::getInstance()->getConnection();
+    try {
+        $db->prepare("DELETE FROM subscriptions WHERE user_id = ?")->execute([$user['id']]);
+        setFlashMessage('success', 'All subscription records cleared. You can now subscribe to a plan.');
+    } catch (Exception $e) {
+        setFlashMessage('error', 'Error clearing subscriptions: ' . $e->getMessage());
+    }
+    header('Location: /debug-subscription');
+    exit;
+});
+
 // Admin Routes
 $router->get('/admin', 'AdminController@index');
 $router->get('/admin/users', 'AdminController@users');

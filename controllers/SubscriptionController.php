@@ -554,10 +554,13 @@ class SubscriptionController {
         $db = Database::getInstance()->getConnection();
 
         try {
+            // Check for active paid subscriptions only (exclude free tier users)
+            // A user can have a subscription record but still be on free tier if it's cancelled or expired
             $stmt = $db->prepare("
                 SELECT COUNT(*) FROM subscriptions
                 WHERE user_id = ?
                 AND status IN ('active', 'trial', 'pending_eft')
+                AND datetime(current_period_end) > datetime('now')
             ");
             $stmt->execute([$userId]);
             $count = $stmt->fetchColumn();

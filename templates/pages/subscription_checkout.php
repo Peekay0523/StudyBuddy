@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../controllers/SubscriptionController.php';
+$extraHead = '<link rel="stylesheet" href="/assets/css/seo-pages.css">';
 include __DIR__ . '/../layouts/header.php';
 
 $plan = $_GET['plan'] ?? 'basic';
@@ -41,26 +42,26 @@ try {
     <p class="subtitle">Complete your subscription to <?php echo htmlspecialchars($planDetails['name']); ?></p>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
-    
+<div class="checkout-grid">
+
     <!-- Order Summary -->
-    <div class="feature-card">
+    <div class="feature-card checkout-card">
         <h3 style="margin-bottom: 20px;"><i class="fas fa-receipt"></i> Order Summary</h3>
-        
+
         <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span style="font-weight: 600;"><?php echo $planDetails['name']; ?> Plan</span>
                 <span>R<?php echo $planDetails['price']; ?>.00</span>
             </div>
         </div>
-        
+
         <div style="border-top: 2px dashed #e5e7eb; padding-top: 20px;">
             <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700;">
                 <span>Total Due Today</span>
                 <span style="color: #16a34a;">R<?php echo $planDetails['price']; ?>.00</span>
             </div>
         </div>
-        
+
         <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0284c7;">
             <h4 style="margin-bottom: 10px; color: #0369a1;"><i class="fas fa-info-circle"></i> What's Included:</h4>
             <ul style="margin: 0; padding-left: 20px; color: #0369a1;">
@@ -72,7 +73,7 @@ try {
     </div>
 
     <!-- Payment Form -->
-    <div class="feature-card">
+    <div class="feature-card checkout-card">
         <h3 style="margin-bottom: 20px;"><i class="fas fa-credit-card"></i> Payment Details</h3>
         
         <form method="POST" action="/subscription/process-payment" id="paymentForm" onsubmit="return validatePayment()" enctype="multipart/form-data">
@@ -108,7 +109,7 @@ try {
                         <i class="fas fa-university"></i> Bank Details for EFT Transfer
                     </h4>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="bank-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div>
                             <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">Bank Name</label>
                             <div style="font-weight: 600; color: #1f2937;"><?php echo htmlspecialchars($bankingDetails['bank_name']); ?></div>
