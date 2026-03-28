@@ -316,9 +316,9 @@ class AIHelper {
 
 3. STRUCTURE FOR EACH QUESTION:
    Question [number]: [Full question text]
-   
+
    Answer: [ONE clear final answer only]
-   
+
    Solution/Explanation:
    - Show ALL steps clearly
    - Explain the formula or method used

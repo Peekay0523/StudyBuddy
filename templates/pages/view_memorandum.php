@@ -3,112 +3,54 @@ $pageTitle = 'View Memorandum - StudySmart';
 $currentPage = 'scripts';
 $scriptId = $script['id'];
 $scriptTitle = addslashes($script['title']);
-$extraScripts = <<<EOT
+
+$extraHead = '<style>
+.highlight-word {
+    background-color: #fef08a;
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: background-color 0.1s ease;
+}
+.highlight-sentence {
+    background-color: #fef08a;
+    border-radius: 4px;
+    padding: 2px;
+    display: inline;
+}
+@media (max-width: 768px) {
+    .highlight-word, .highlight-sentence {
+        background-color: #fde047;
+        padding: 3px 5px;
+    }
+}
+</style>
 <script>
 let synthesis = window.speechSynthesis;
 let isSpeaking = false;
 let currentUtterance = null;
-const SCRIPT_ID = $scriptId;
-const SCRIPT_TITLE = "$scriptTitle";
-
-function preprocessMathForSpeech(text) {
-    // Replace mathematical symbols with spoken words
-    let processed = text;
-
-    // Remove bullet point dashes first (before processing math symbols)
-    // This handles: "   - Understanding" or "- Understanding"
-    processed = processed.replace(/^\s*-\s+/gm, " ");
-
-    // Replace division symbols
-    processed = processed.replace(/\s*÷\s*/g, " divided by ");
-    processed = processed.replace(/\s*\//g, " divided by ");
-
-    // Replace multiplication symbols
-    processed = processed.replace(/\s*×\s*/g, " times ");
-    processed = processed.replace(/\s*\*/g, " times ");
-    processed = processed.replace(/\s*·\s*/g, " times ");
-
-    // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
-    processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "\$1 plus \$2");
-    processed = processed.replace(/(\d)\s*-\s*(\d)/g, "\$1 minus \$2");
-    processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "\$1 plus \$2");
-    processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "\$1 minus \$2");
-
-    // Replace equals
-    processed = processed.replace(/\s*=\s*/g, " equals ");
-
-    // Replace inequality symbols
-    processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
-    processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
-    processed = processed.replace(/\s*≠\s*/g, " not equal to ");
-
-    // Remove parentheses silently (don't announce them for regular text)
-    processed = processed.split("(").join("");
-    processed = processed.split(")").join("");
-
-    // Remove square brackets silently
-    processed = processed.split("[").join("");
-    processed = processed.split("]").join("");
-
-    // Replace exponents
-    processed = processed.replace(/\^(\d+)/g, " to the power of \$1 ");
-
-    // Replace square root
-    processed = processed.replace(/√/g, " square root of ");
-
-    // Replace pi
-    processed = processed.replace(/π/g, " pi ");
-
-    // Replace percentage
-    processed = processed.replace(/%/g, " percent ");
-
-    // Replace degree symbol
-    processed = processed.replace(/°/g, " degrees ");
-
-    // Replace angle symbol
-    processed = processed.replace(/∠/g, " angle ");
-
-    // Replace therefore symbol
-    processed = processed.replace(/∴/g, " therefore ");
-
-    // Replace because symbol
-    processed = processed.replace(/∵/g, " because ");
-
-    // Replace infinity
-    processed = processed.replace(/∞/g, " infinity ");
-
-    // Replace less than and greater than (only in math context with numbers)
-    processed = processed.replace(/(\d)\s*</g, "\$1 less than ");
-    processed = processed.replace(/>/g, " greater than ");
-
-    // Replace "m =" with "m equals" for gradient context
-    processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "\$1 equals ");
-
-    // Clean up multiple spaces
-    processed = processed.replace(/\s+/g, " ").trim();
-
-    return processed;
-}
+const SCRIPT_ID = ' . $scriptId . ';
+const SCRIPT_TITLE = "' . $scriptTitle . '";
 
 function toggleSpeech() {
     const btn = document.getElementById("speech-btn");
     const icon = document.getElementById("speech-icon");
 
     if (isSpeaking) {
-        // Stop speech
         synthesis.cancel();
         isSpeaking = false;
+        clearHighlights();
+        restoreOriginalContent();
         btn.classList.remove("btn-danger");
         btn.classList.add("btn-primary");
         icon.classList.remove("fa-stop");
         icon.classList.add("fa-volume-high");
         btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
     } else {
-        // Start speech
-        const content = document.getElementById("memo-content").textContent;
-        const processedContent = preprocessMathForSpeech(content);
-        speakContent(processedContent);
+        const contentDiv = document.getElementById("memo-content");
+        const content = contentDiv.textContent;
         isSpeaking = true;
+        prepareContentForSentences(contentDiv);
+        speakContent(contentDiv);
         btn.classList.remove("btn-primary");
         btn.classList.add("btn-danger");
         icon.classList.remove("fa-volume-high");
@@ -117,31 +59,32 @@ function toggleSpeech() {
     }
 }
 
-function speakContent(text) {
-    if (!synthesis) return;
-
-    synthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-
-    // Select a natural voice if available
-    const voices = synthesis.getVoices();
-    const preferredVoice = voices.find(voice =>
-        voice.lang.includes("en-US") && voice.name.includes("Natural")
-    ) || voices.find(voice => voice.lang.includes("en")) || voices[0];
-
-    if (preferredVoice) {
-        utterance.voice = preferredVoice;
+function restoreOriginalContent() {
+    const contentDiv = document.getElementById("memo-content");
+    if (contentDiv && contentDiv.dataset.originalHtml) {
+        contentDiv.innerHTML = contentDiv.dataset.originalHtml;
+        contentDiv.dataset.originalHtml = "";
     }
+}
 
-    currentUtterance = utterance;
+function speakContent(contentDiv) {
+    if (!synthesis) return;
+    synthesis.cancel();
+    clearHighlights();
+    
+    const sentences = contentDiv.querySelectorAll(".sentence-span");
+    let currentIndex = 0;
+    
+    speakNextSentence(sentences, currentIndex);
+}
 
-    utterance.onend = () => {
+function speakNextSentence(sentences, index) {
+    if (!isSpeaking) return;
+    
+    if (index >= sentences.length) {
         isSpeaking = false;
+        clearHighlights();
+        restoreOriginalContent();
         const btn = document.getElementById("speech-btn");
         const icon = document.getElementById("speech-icon");
         if (btn) {
@@ -151,42 +94,91 @@ function speakContent(text) {
             icon.classList.add("fa-volume-high");
             btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
         }
+        return;
+    }
+    
+    const sentenceSpan = sentences[index];
+    const sentence = sentenceSpan.textContent;
+    
+    // Highlight current sentence
+    clearHighlights();
+    sentenceSpan.classList.add("highlight-sentence");
+    sentenceSpan.scrollIntoView({ behavior: "smooth", block: "center" });
+    
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = "en-US";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    utterance.onend = function() {
+        setTimeout(function() {
+            speakNextSentence(sentences, index + 1);
+        }, 100);
     };
-
-    utterance.onerror = () => {
+    
+    utterance.onerror = function() {
         isSpeaking = false;
+        clearHighlights();
+        restoreOriginalContent();
         const btn = document.getElementById("speech-btn");
         if (btn) {
             btn.classList.remove("btn-danger");
             btn.classList.add("btn-primary");
         }
     };
-
+    
     synthesis.speak(utterance);
 }
 
-// Stop speech when leaving page
-window.addEventListener("beforeunload", () => {
+function prepareContentForSentences(contentDiv) {
+    if (!contentDiv.dataset.originalHtml) {
+        contentDiv.dataset.originalHtml = contentDiv.innerHTML;
+    }
+    const text = contentDiv.textContent;
+    
+    // Split by sentences and wrap each in a span
+    const sentences = text.split(/([.!?]\s+)/);
+    let html = "";
+    
+    for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        if (sentence.trim()) {
+            html += "<span class=\"sentence-span\">" + escapeHtml(sentence) + "</span>";
+        } else if (sentence) {
+            html += sentence;
+        }
+    }
+    
+    contentDiv.innerHTML = html;
+}
+
+function clearHighlights() {
+    const highlights = document.querySelectorAll(".highlight-word, .highlight-sentence");
+    highlights.forEach(function(span) { span.classList.remove("highlight-word", "highlight-sentence"); });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+window.addEventListener("beforeunload", function() {
     if (synthesis) {
         synthesis.cancel();
     }
 });
 
-// Download memorandum with format selection
 function downloadMemorandum(format) {
     const scriptId = SCRIPT_ID;
     const scriptTitle = SCRIPT_TITLE;
-
-    // Show format selection modal
     const modal = document.getElementById("download-format-modal");
     modal.style.display = "flex";
-
-    // Set up download buttons
     document.getElementById("download-pdf-btn").onclick = function() {
         window.open("/download-memorandum/" + scriptId + "?format=pdf", "_blank");
         modal.style.display = "none";
     };
-
     document.getElementById("download-docx-btn").onclick = function() {
         window.open("/download-memorandum/" + scriptId + "?format=docx", "_blank");
         modal.style.display = "none";
@@ -197,7 +189,6 @@ function closeDownloadModal() {
     document.getElementById("download-format-modal").style.display = "none";
 }
 
-// Close modal when clicking outside
 document.addEventListener("DOMContentLoaded", function() {
     const modal = document.getElementById("download-format-modal");
     if (modal) {
@@ -208,8 +199,8 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
-</script>
-EOT;
+</script>';
+
 include __DIR__ . '/../layouts/header.php';
 ?>
 
