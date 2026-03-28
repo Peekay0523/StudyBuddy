@@ -23,11 +23,121 @@ $extraHead = '<style>
         padding: 3px 5px;
     }
 }
+
+/* Floating Recitation Control Bar */
+.recitation-control-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    min-width: 320px;
+    max-width: 90%;
+}
+
+.recitation-control-bar.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.recitation-control-bar.hidden {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+}
+
+.recitation-progress-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recitation-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.recitation-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+    width: 0%;
+}
+
+.recitation-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: monospace;
+}
+
+.recitation-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.recitation-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.recitation-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.recitation-btn:active {
+    transform: scale(0.95);
+}
+
+.recitation-sentence-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 50px;
+    text-align: center;
+}
 </style>
 <script>
 let synthesis = window.speechSynthesis;
 let isSpeaking = false;
+let isPaused = false;
 let currentUtterance = null;
+let currentSentenceIndex = 0;
+let totalSentences = 0;
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval = null;
+let sentences = [];
 const SCRIPT_ID = ' . $scriptId . ';
 const SCRIPT_TITLE = "' . $scriptTitle . '";
 
@@ -36,27 +146,137 @@ function toggleSpeech() {
     const icon = document.getElementById("speech-icon");
 
     if (isSpeaking) {
-        synthesis.cancel();
-        isSpeaking = false;
-        clearHighlights();
-        restoreOriginalContent();
-        btn.classList.remove("btn-danger");
-        btn.classList.add("btn-primary");
-        icon.classList.remove("fa-stop");
-        icon.classList.add("fa-volume-high");
-        btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
+        stopRecitation();
     } else {
         const contentDiv = document.getElementById("memo-content");
         const content = contentDiv.textContent;
         isSpeaking = true;
+        isPaused = false;
         prepareContentForSentences(contentDiv);
         speakContent(contentDiv);
+        showControlBar();
         btn.classList.remove("btn-primary");
         btn.classList.add("btn-danger");
         icon.classList.remove("fa-volume-high");
         icon.classList.add("fa-stop");
         btn.innerHTML = "<i class=\"fas fa-stop\" id=\"speech-icon\"></i> Stop Recitation";
     }
+}
+
+function stopRecitation() {
+    synthesis.cancel();
+    isSpeaking = false;
+    isPaused = false;
+    clearHighlights();
+    restoreOriginalContent();
+    hideControlBar();
+    stopTimer();
+    
+    const btn = document.getElementById("speech-btn");
+    const icon = document.getElementById("speech-icon");
+    if (btn) {
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-primary");
+        icon.classList.remove("fa-stop");
+        icon.classList.add("fa-volume-high");
+        btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
+    }
+}
+
+function togglePause() {
+    if (isPaused) {
+        resumeRecitation();
+    } else {
+        pauseRecitation();
+    }
+}
+
+function pauseRecitation() {
+    isPaused = true;
+    synthesis.pause();
+    stopTimer();
+    updatePauseButton();
+}
+
+function resumeRecitation() {
+    isPaused = false;
+    synthesis.resume();
+    startTimer();
+    updatePauseButton();
+}
+
+function updatePauseButton() {
+    const pauseBtn = document.getElementById("pause-btn");
+    if (pauseBtn) {
+        if (isPaused) {
+            pauseBtn.innerHTML = "<i class=\"fas fa-play\"></i>";
+            pauseBtn.title = "Resume";
+        } else {
+            pauseBtn.innerHTML = "<i class=\"fas fa-pause\"></i>";
+            pauseBtn.title = "Pause";
+        }
+    }
+}
+
+function showControlBar() {
+    const controlBar = document.getElementById("recitation-control-bar");
+    if (controlBar) {
+        controlBar.classList.remove("hidden");
+        controlBar.classList.add("visible");
+    }
+}
+
+function hideControlBar() {
+    const controlBar = document.getElementById("recitation-control-bar");
+    if (controlBar) {
+        controlBar.classList.remove("visible");
+        controlBar.classList.add("hidden");
+    }
+}
+
+function updateProgress(index) {
+    const progressFill = document.getElementById("recitation-progress-fill");
+    const currentTime = document.getElementById("current-time");
+    const totalTime = document.getElementById("total-time");
+    const sentenceCount = document.getElementById("sentence-count");
+    
+    if (progressFill && totalSentences > 0) {
+        const progress = ((index + 1) / totalSentences) * 100;
+        progressFill.style.width = progress + "%";
+    }
+    
+    if (sentenceCount) {
+        sentenceCount.textContent = (index + 1) + "/" + totalSentences;
+    }
+}
+
+function startTimer() {
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(() => {
+        elapsedTime = Date.now() - startTime;
+        updateTimeDisplay();
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimeDisplay() {
+    const currentTimeEl = document.getElementById("current-time");
+    if (currentTimeEl) {
+        currentTimeEl.textContent = formatTime(elapsedTime);
+    }
+}
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
 }
 
 function restoreOriginalContent() {
@@ -71,63 +291,56 @@ function speakContent(contentDiv) {
     if (!synthesis) return;
     synthesis.cancel();
     clearHighlights();
-    
-    const sentences = contentDiv.querySelectorAll(".sentence-span");
-    let currentIndex = 0;
-    
-    speakNextSentence(sentences, currentIndex);
+
+    sentences = contentDiv.querySelectorAll(".sentence-span");
+    totalSentences = sentences.length;
+    currentSentenceIndex = 0;
+
+    startTimer();
+    speakNextSentence();
 }
 
-function speakNextSentence(sentences, index) {
+function speakNextSentence() {
     if (!isSpeaking) return;
     
-    if (index >= sentences.length) {
-        isSpeaking = false;
-        clearHighlights();
-        restoreOriginalContent();
-        const btn = document.getElementById("speech-btn");
-        const icon = document.getElementById("speech-icon");
-        if (btn) {
-            btn.classList.remove("btn-danger");
-            btn.classList.add("btn-primary");
-            icon.classList.remove("fa-stop");
-            icon.classList.add("fa-volume-high");
-            btn.innerHTML = "<i class=\"fas fa-volume-high\" id=\"speech-icon\"></i> Recite Memorandum";
-        }
+    if (isPaused) {
+        setTimeout(speakNextSentence, 100);
         return;
     }
-    
-    const sentenceSpan = sentences[index];
+
+    if (currentSentenceIndex >= totalSentences) {
+        stopRecitation();
+        return;
+    }
+
+    const sentenceSpan = sentences[currentSentenceIndex];
     const sentence = sentenceSpan.textContent;
-    
+
     // Highlight current sentence
     clearHighlights();
     sentenceSpan.classList.add("highlight-sentence");
     sentenceSpan.scrollIntoView({ behavior: "smooth", block: "center" });
     
+    // Update progress
+    updateProgress(currentSentenceIndex);
+
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.lang = "en-US";
     utterance.rate = 0.95;
     utterance.pitch = 1;
     utterance.volume = 1;
-    
+
     utterance.onend = function() {
+        currentSentenceIndex++;
         setTimeout(function() {
-            speakNextSentence(sentences, index + 1);
+            speakNextSentence();
         }, 100);
     };
-    
+
     utterance.onerror = function() {
-        isSpeaking = false;
-        clearHighlights();
-        restoreOriginalContent();
-        const btn = document.getElementById("speech-btn");
-        if (btn) {
-            btn.classList.remove("btn-danger");
-            btn.classList.add("btn-primary");
-        }
+        stopRecitation();
     };
-    
+
     synthesis.speak(utterance);
 }
 
@@ -168,6 +381,8 @@ window.addEventListener("beforeunload", function() {
     if (synthesis) {
         synthesis.cancel();
     }
+    stopTimer();
+    hideControlBar();
 });
 
 function downloadMemorandum(format) {
@@ -189,7 +404,27 @@ function closeDownloadModal() {
     document.getElementById("download-format-modal").style.display = "none";
 }
 
+// Progress bar click to seek
 document.addEventListener("DOMContentLoaded", function() {
+    const progressBar = document.getElementById("recitation-progress-bar");
+    if (progressBar) {
+        progressBar.addEventListener("click", function(e) {
+            if (!isSpeaking || totalSentences === 0) return;
+            
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const targetIndex = Math.floor(percentage * totalSentences);
+            
+            if (targetIndex !== currentSentenceIndex) {
+                synthesis.cancel();
+                clearHighlights();
+                currentSentenceIndex = targetIndex;
+                speakNextSentence();
+            }
+        });
+    }
+    
     const modal = document.getElementById("download-format-modal");
     if (modal) {
         modal.addEventListener("click", function(e) {
@@ -263,6 +498,27 @@ include __DIR__ . '/../layouts/header.php';
     <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-book"></i> Memorandum Content</h4>
     <div id="memo-content" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
         <?php echo htmlspecialchars($memorandum['content'] ?? 'No memorandum available.'); ?>
+    </div>
+</div>
+
+<!-- Floating Recitation Control Bar -->
+<div id="recitation-control-bar" class="recitation-control-bar hidden">
+    <div class="recitation-controls">
+        <button id="pause-btn" class="recitation-btn" onclick="togglePause()" title="Pause">
+            <i class="fas fa-pause"></i>
+        </button>
+        <button class="recitation-btn" onclick="stopRecitation()" title="Stop">
+            <i class="fas fa-stop"></i>
+        </button>
+    </div>
+    <div class="recitation-progress-container">
+        <div class="recitation-progress-bar" id="recitation-progress-bar">
+            <div class="recitation-progress-fill" id="recitation-progress-fill"></div>
+        </div>
+        <div class="recitation-time">
+            <span id="current-time">00:00</span>
+            <span id="sentence-count">0/0</span>
+        </div>
     </div>
 </div>
 

@@ -30,6 +30,129 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     margin: 0;
 }
 
+/* Yellow Highlight Styles */
+.highlight-word {
+    background-color: #fef08a;
+    border-radius: 4px;
+    padding: 2px 4px;
+    transition: background-color 0.1s ease;
+}
+.highlight-sentence {
+    background-color: #fef08a;
+    border-radius: 4px;
+    padding: 2px;
+    display: inline;
+}
+@media (max-width: 768px) {
+    .highlight-word, .highlight-sentence {
+        background-color: #fde047;
+        padding: 3px 5px;
+    }
+}
+
+/* Floating Recitation Control Bar */
+.recitation-control-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    min-width: 320px;
+    max-width: 90%;
+}
+
+.recitation-control-bar.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.recitation-control-bar.hidden {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+}
+
+.recitation-progress-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recitation-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.recitation-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+    width: 0%;
+}
+
+.recitation-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: monospace;
+}
+
+.recitation-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.recitation-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.recitation-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.recitation-btn:active {
+    transform: scale(0.95);
+}
+
+.recitation-sentence-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    min-width: 50px;
+    text-align: center;
+}
+
 .back-btn {
     display: inline-flex;
     align-items: center;
@@ -178,31 +301,6 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     gap: 10px;
 }
 
-/* Recitation Output */
-.recitation-output {
-    display: none;
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.recitation-output h4 {
-    margin: 0 0 10px 0;
-    color: #0369a1;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.recitation-output #recitationText {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    color: #0c4a6e;
-}
-
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .view-study-plan-page {
@@ -311,12 +409,7 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
             <?php endif; ?>
         </div>
 
-        <div id="recitationOutput" class="recitation-output">
-            <h4><i class="fas fa-robot"></i> AI Recitation</h4>
-            <div id="recitationText"></div>
-        </div>
-
-        <div class="plan-details">
+        <div class="plan-details" id="plan-content">
             <h4><i class="fas fa-clipboard-list"></i> Plan Details</h4>
             <?php
             // Remove markdown formatting from study plan content
@@ -341,12 +434,148 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     </div>
 </div>
 
+<!-- Floating Recitation Control Bar -->
+<div id="recitation-control-bar" class="recitation-control-bar hidden">
+    <div class="recitation-controls">
+        <button id="pause-btn" class="recitation-btn" onclick="togglePause()" title="Pause">
+            <i class="fas fa-pause"></i>
+        </button>
+        <button class="recitation-btn" onclick="stopRecitation()" title="Stop">
+            <i class="fas fa-stop"></i>
+        </button>
+    </div>
+    <div class="recitation-progress-container">
+        <div class="recitation-progress-bar" id="recitation-progress-bar">
+            <div class="recitation-progress-fill" id="recitation-progress-fill"></div>
+        </div>
+        <div class="recitation-time">
+            <span id="current-time">00:00</span>
+            <span id="sentence-count">0/0</span>
+        </div>
+    </div>
+</div>
+
 <script>
 let isReciting = false;
-let synthesis = null;
+let isPaused = false;
+let synthesis = window.speechSynthesis;
 let availableVoices = [];
+let currentUtterance = null;
+let currentSentenceIndex = 0;
+let totalSentences = 0;
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval = null;
+let sentences = [];
+const PLAN_TITLE = "<?php echo addslashes($studyPlan['title']); ?>";
 
-// Mark study plan as viewed when page loads (removes notification)
+// Load available voices
+function loadVoices() {
+    availableVoices = window.speechSynthesis.getVoices();
+}
+
+if ('speechSynthesis' in window) {
+    loadVoices();
+    // Chrome loads voices asynchronously
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
+}
+
+function togglePause() {
+    if (isPaused) {
+        resumeRecitation();
+    } else {
+        pauseRecitation();
+    }
+}
+
+function pauseRecitation() {
+    isPaused = true;
+    synthesis.pause();
+    stopTimer();
+    updatePauseButton();
+}
+
+function resumeRecitation() {
+    isPaused = false;
+    synthesis.resume();
+    startTimer();
+    updatePauseButton();
+}
+
+function updatePauseButton() {
+    const pauseBtn = document.getElementById("pause-btn");
+    if (pauseBtn) {
+        if (isPaused) {
+            pauseBtn.innerHTML = "<i class=\"fas fa-play\"></i>";
+            pauseBtn.title = "Resume";
+        } else {
+            pauseBtn.innerHTML = "<i class=\"fas fa-pause\"></i>";
+            pauseBtn.title = "Pause";
+        }
+    }
+}
+
+function showControlBar() {
+    const controlBar = document.getElementById("recitation-control-bar");
+    if (controlBar) {
+        controlBar.classList.remove("hidden");
+        controlBar.classList.add("visible");
+    }
+}
+
+function hideControlBar() {
+    const controlBar = document.getElementById("recitation-control-bar");
+    if (controlBar) {
+        controlBar.classList.remove("visible");
+        controlBar.classList.add("hidden");
+    }
+}
+
+function updateProgress(index) {
+    const progressFill = document.getElementById("recitation-progress-fill");
+    const currentTime = document.getElementById("current-time");
+    const sentenceCount = document.getElementById("sentence-count");
+    
+    if (progressFill && totalSentences > 0) {
+        const progress = ((index + 1) / totalSentences) * 100;
+        progressFill.style.width = progress + "%";
+    }
+    
+    if (sentenceCount) {
+        sentenceCount.textContent = (index + 1) + "/" + totalSentences;
+    }
+}
+
+function startTimer() {
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(() => {
+        elapsedTime = Date.now() - startTime;
+        updateTimeDisplay();
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimeDisplay() {
+    const currentTimeEl = document.getElementById("current-time");
+    if (currentTimeEl) {
+        currentTimeEl.textContent = formatTime(elapsedTime);
+    }
+}
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+}
 async function markStudyPlanAsViewed() {
     try {
         console.log('Marking study plan <?php echo $studyPlan['id']; ?> as viewed...');
@@ -521,95 +750,182 @@ if ('speechSynthesis' in window) {
 }
 
 async function reciteStudyPlan() {
+    const btn = document.getElementById("reciteBtn");
+    const stopBtn = document.getElementById("stopReciteBtn");
+    const contentDiv = document.getElementById("plan-content");
+
     if (isReciting) {
         stopRecitation();
         return;
     }
 
-    const reciteBtn = document.getElementById('reciteBtn');
-    const stopBtn = document.getElementById('stopReciteBtn');
-    const outputDiv = document.getElementById('recitationOutput');
-    const recitationText = document.getElementById('recitationText');
-
-    reciteBtn.disabled = true;
-    reciteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-
-    try {
-        const response = await fetch('/recite-study-plan/<?php echo $studyPlan['id']; ?>', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate recitation');
-        }
-
-        const data = await response.json();
-
-        outputDiv.style.display = 'block';
-        recitationText.textContent = data.recitation;
-
-        // Use Web Speech API for text-to-speech
-        if ('speechSynthesis' in window) {
-            isReciting = true;
-            stopBtn.style.display = 'inline-block';
-
-            // Preprocess the text to convert math symbols to spoken words
-            const processedText = preprocessMathForSpeech(data.recitation);
-            synthesis = new SpeechSynthesisUtterance(processedText);
-            
-            // Select best available voice (prefer Google or Microsoft voices)
-            const preferredVoice = availableVoices.find(v => 
-                v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Natural')
-            ) || availableVoices.find(v => v.lang.startsWith('en'));
-            
-            if (preferredVoice) {
-                synthesis.voice = preferredVoice;
-            }
-            
-            synthesis.lang = 'en-US';
-            synthesis.rate = 0.95;
-            synthesis.pitch = 1.0;
-            synthesis.volume = 1.0;
-
-            synthesis.onend = function() {
-                isReciting = false;
-                reciteBtn.disabled = false;
-                reciteBtn.innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
-                stopBtn.style.display = 'none';
-            };
-
-            synthesis.onerror = function() {
-                isReciting = false;
-                reciteBtn.disabled = false;
-                reciteBtn.innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
-                stopBtn.style.display = 'none';
-            };
-
-            window.speechSynthesis.speak(synthesis);
-        } else {
-            recitationText.innerHTML += '<p style="color: #6b7280; margin-top: 10px; font-size: 0.9em;"><i class="fas fa-info-circle"></i> Text-to-speech is not supported in your browser. Please read the recitation above.</p>';
-        }
-
-    } catch (error) {
-        console.error('Error:', error);
-        outputDiv.style.display = 'block';
-        recitationText.innerHTML = '<span style="color: #dc2626;">Error generating recitation. Please try again.</span>';
-    } finally {
-        reciteBtn.disabled = false;
-        reciteBtn.innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
-    }
+    isReciting = true;
+    isPaused = false;
+    prepareContentForSentences(contentDiv);
+    speakContent(contentDiv);
+    showControlBar();
+    
+    btn.classList.remove("btn-primary");
+    btn.classList.add("btn-danger");
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Recitation';
+    stopBtn.style.display = 'inline-block';
 }
 
 function stopRecitation() {
-    if (synthesis) {
-        window.speechSynthesis.cancel();
-    }
+    synthesis.cancel();
     isReciting = false;
-    document.getElementById('reciteBtn').disabled = false;
-    document.getElementById('reciteBtn').innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
-    document.getElementById('stopReciteBtn').style.display = 'none';
+    isPaused = false;
+    clearHighlights();
+    restoreOriginalContent();
+    hideControlBar();
+    stopTimer();
+    
+    const btn = document.getElementById("reciteBtn");
+    const stopBtn = document.getElementById("stopReciteBtn");
+    btn.classList.remove("btn-danger");
+    btn.classList.add("btn-primary");
+    btn.innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
+    stopBtn.style.display = 'none';
 }
+
+function restoreOriginalContent() {
+    const contentDiv = document.getElementById("plan-content");
+    if (contentDiv && contentDiv.dataset.originalHtml) {
+        contentDiv.innerHTML = contentDiv.dataset.originalHtml;
+        contentDiv.dataset.originalHtml = "";
+    }
+}
+
+function speakContent(contentDiv) {
+    if (!synthesis) return;
+    synthesis.cancel();
+    clearHighlights();
+
+    sentences = contentDiv.querySelectorAll(".sentence-span");
+    totalSentences = sentences.length;
+    currentSentenceIndex = 0;
+
+    startTimer();
+    speakNextSentence();
+}
+
+function speakNextSentence() {
+    if (!isReciting) return;
+    
+    if (isPaused) {
+        setTimeout(speakNextSentence, 100);
+        return;
+    }
+
+    if (currentSentenceIndex >= totalSentences) {
+        stopRecitation();
+        return;
+    }
+
+    const sentenceSpan = sentences[currentSentenceIndex];
+    const sentence = sentenceSpan.textContent;
+
+    // Highlight current sentence
+    clearHighlights();
+    sentenceSpan.classList.add("highlight-sentence");
+    sentenceSpan.scrollIntoView({ behavior: "smooth", block: "center" });
+    
+    // Update progress
+    updateProgress(currentSentenceIndex);
+
+    // Preprocess the sentence for math symbols
+    const processedSentence = preprocessMathForSpeech(sentence);
+    const utterance = new SpeechSynthesisUtterance(processedSentence);
+    utterance.lang = "en-US";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    // Select best available voice
+    const preferredVoice = availableVoices.find(v =>
+        v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Natural')
+    ) || availableVoices.find(v => v.lang.startsWith('en'));
+
+    if (preferredVoice) {
+        utterance.voice = preferredVoice;
+    }
+
+    utterance.onend = function() {
+        currentSentenceIndex++;
+        setTimeout(function() {
+            speakNextSentence();
+        }, 100);
+    };
+
+    utterance.onerror = function() {
+        stopRecitation();
+    };
+
+    synthesis.speak(utterance);
+}
+
+function prepareContentForSentences(contentDiv) {
+    if (!contentDiv.dataset.originalHtml) {
+        contentDiv.dataset.originalHtml = contentDiv.innerHTML;
+    }
+    const text = contentDiv.textContent;
+
+    // Split by sentences and wrap each in a span
+    const sentences = text.split(/([.!?]\s+)/);
+    let html = "";
+
+    for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        if (sentence.trim()) {
+            html += "<span class=\"sentence-span\">" + escapeHtml(sentence) + "</span>";
+        } else if (sentence) {
+            html += sentence;
+        }
+    }
+
+    contentDiv.innerHTML = html;
+}
+
+function clearHighlights() {
+    const highlights = document.querySelectorAll(".highlight-word, .highlight-sentence");
+    highlights.forEach(function(span) { span.classList.remove("highlight-word", "highlight-sentence"); });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+window.addEventListener("beforeunload", function() {
+    if (synthesis) {
+        synthesis.cancel();
+    }
+    stopTimer();
+    hideControlBar();
+});
+
+// Progress bar click to seek
+document.addEventListener("DOMContentLoaded", function() {
+    const progressBar = document.getElementById("recitation-progress-bar");
+    if (progressBar) {
+        progressBar.addEventListener("click", function(e) {
+            if (!isReciting || totalSentences === 0) return;
+            
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const targetIndex = Math.floor(percentage * totalSentences);
+            
+            if (targetIndex !== currentSentenceIndex) {
+                synthesis.cancel();
+                clearHighlights();
+                currentSentenceIndex = targetIndex;
+                speakNextSentence();
+            }
+        });
+    }
+});
 
 async function markStudyPlanComplete() {
     if (!confirm('Mark this study plan as complete?')) {
