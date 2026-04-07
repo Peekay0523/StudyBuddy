@@ -13,6 +13,11 @@ include __DIR__ . '/../layouts/header.php';
     <?php else: ?>
         <a href="/dashboard" class="btn-cta">Go to Dashboard</a>
     <?php endif; ?>
+    
+    <!-- PWA Install Button -->
+    <button id="installBtn" class="btn-install" style="display: none;">
+        <i class="fas fa-mobile-alt"></i> Add to Home Screen
+    </button>
 </div>
 
 <!-- Sample Results Section -->
@@ -404,6 +409,49 @@ include __DIR__ . '/../layouts/header.php';
 
     .stat-label {
         font-size: 14px;
+    }
+}
+
+/* PWA Install Button Styling */
+.btn-install {
+    display: none;
+    margin: 20px auto;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #6C63FF 0%, #5a52d5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+}
+
+.btn-install:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(108, 99, 255, 0.4);
+}
+
+.btn-install i {
+    margin-right: 8px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(108, 99, 255, 0.6);
+    }
+}
+
+@media (max-width: 768px) {
+    .btn-install {
+        padding: 12px 24px;
+        font-size: 14px;
+        margin: 15px auto;
     }
 }
 </style>

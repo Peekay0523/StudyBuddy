@@ -16,7 +16,10 @@
       "Bash(replace *)",
       "Bash(set-content *)",
       "Bash(curl *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(dir *)",
+      "Bash(copy *)",
+      "Bash(netstat *)"
     ]
   },
   "$version": 3

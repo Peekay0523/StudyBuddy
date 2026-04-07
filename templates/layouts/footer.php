@@ -100,6 +100,68 @@
             });
         }
     }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('[Service Worker] Registered successfully:', registration.scope);
+                })
+                .catch((error) => {
+                    console.log('[Service Worker] Registration failed:', error);
+                });
+        });
+    }
+
+    // PWA Install Button Logic
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from showing automatically
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+        // Show the install button
+        if (installBtn) {
+            installBtn.style.display = 'block';
+        }
+    });
+
+    function installApp() {
+        if (!deferredPrompt) {
+            console.log('[PWA] Install prompt not available');
+            return;
+        }
+
+        // Show the install prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('[PWA] User accepted the install prompt');
+            } else {
+                console.log('[PWA] User dismissed the install prompt');
+            }
+            // Clear the deferredPrompt so it can't be used again
+            deferredPrompt = null;
+        });
+    }
+
+    if (installBtn) {
+        installBtn.addEventListener('click', installApp);
+    }
+
+    // Hide install button after app is installed
+    window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App installed successfully');
+        if (installBtn) {
+            installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
 </script>
 
 <?php echo $extraScripts ?? ''; ?>
