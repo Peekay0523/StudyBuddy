@@ -811,7 +811,7 @@ function speakContent(contentDiv) {
 
 function speakNextSentence() {
     if (!isReciting) return;
-    
+
     if (isPaused) {
         setTimeout(speakNextSentence, 100);
         return;
@@ -823,13 +823,16 @@ function speakNextSentence() {
     }
 
     const sentenceSpan = sentences[currentSentenceIndex];
-    const sentence = sentenceSpan.textContent;
+    let sentence = sentenceSpan.textContent;
+
+    // Clean up any extra whitespace
+    sentence = sentence.trim();
 
     // Highlight current sentence
     clearHighlights();
     sentenceSpan.classList.add("highlight-sentence");
     sentenceSpan.scrollIntoView({ behavior: "smooth", block: "center" });
-    
+
     // Update progress
     updateProgress(currentSentenceIndex);
 
@@ -852,9 +855,10 @@ function speakNextSentence() {
 
     utterance.onend = function() {
         currentSentenceIndex++;
+        // Add a small pause between sentences (200ms for natural break)
         setTimeout(function() {
             speakNextSentence();
-        }, 100);
+        }, 200);
     };
 
     utterance.onerror = function() {
@@ -870,16 +874,15 @@ function prepareContentForSentences(contentDiv) {
     }
     const text = contentDiv.textContent;
 
-    // Split by sentences and wrap each in a span
-    const sentences = text.split(/([.!?]\s+)/);
+    // Split by sentences but keep punctuation attached to each sentence
+    // This ensures the speech synthesizer treats periods as natural pauses
+    const sentences = text.match(/[^.!?]*[.!?]+[\s]*/g) || [];
     let html = "";
 
     for (let i = 0; i < sentences.length; i++) {
         const sentence = sentences[i];
         if (sentence.trim()) {
             html += "<span class=\"sentence-span\">" + escapeHtml(sentence) + "</span>";
-        } else if (sentence) {
-            html += sentence;
         }
     }
 
