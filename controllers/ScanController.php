@@ -768,4 +768,125 @@ class PurePhpPdf {
         header('Location: /scan');
         exit;
     }
+
+    /**
+     * Test mobile upload endpoint
+     */
+    public function testMobileUpload() {
+        header('Content-Type: application/json');
+
+        try {
+            // Log all request info
+            error_log("testMobileUpload: REQUEST_METHOD = " . $_SERVER['REQUEST_METHOD']);
+            error_log("testMobileUpload: FILES = " . print_r($_FILES, true));
+            error_log("testMobileUpload: POST = " . print_r($_POST, true));
+
+            if (!isset($_SESSION['user_id'])) {
+                http_response_code(401);
+                return json_encode(['success' => false, 'error' => 'Not logged in']);
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                return json_encode(['success' => false, 'error' => 'Method not allowed']);
+            }
+
+            if (!isset($_FILES['test_image']) || $_FILES['test_image']['error'] !== UPLOAD_ERR_OK) {
+                $errorMessages = [
+                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                    UPLOAD_ERR_NO_TMP_DIR => 'No temporary directory',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                    UPLOAD_ERR_EXTENSION => 'PHP extension stopped the upload'
+                ];
+                $errorCode = isset($_FILES['test_image']) ? $_FILES['test_image']['error'] : UPLOAD_ERR_NO_FILE;
+                $errorMsg = $errorMessages[$errorCode] ?? 'Unknown error';
+                error_log("testMobileUpload: Upload error code: $errorCode - $errorMsg");
+                http_response_code(400);
+                return json_encode([
+                    'success' => false,
+                    'error' => $errorMsg,
+                    'error_code' => $errorCode,
+                    'php_info' => [
+                        'upload_max_filesize' => ini_get('upload_max_filesize'),
+                        'post_max_size' => ini_get('post_max_size'),
+                        'max_file_uploads' => ini_get('max_file_uploads')
+                    ]
+                ]);
+            }
+
+            $user = getCurrentUser();
+            $file = $_FILES['test_image'];
+
+            // Get file info
+            $fileInfo = [
+                'name' => $file['name'],
+                'type' => $file['type'],
+                'size' => $file['size'],
+                'tmp_name' => $file['tmp_name'],
+                'error' => $file['error'],
+                'tmp_name_exists' => file_exists($file['tmp_name']),
+                'is_uploaded_file' => is_uploaded_file($file['tmp_name'])
+            ];
+
+            error_log("testMobileUpload: File info = " . print_r($fileInfo, true));
+
+            // Get image dimensions
+            $imgInfo = @getimagesize($file['tmp_name']);
+            if ($imgInfo) {
+                $fileInfo['dimensions'] = $imgInfo[0] . 'x' . $imgInfo[1];
+                $fileInfo['mime'] = $imgInfo['type'];
+            }
+
+            // Save to database like a normal scan
+            $fileData = file_get_contents($file['tmp_name']);
+            $testFilename = 'test_' . date('Y-m-d_H-i-s') . '_' . basename($file['name']);
+
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO scans (user_id, filename, original_filename, file_data, file_size, mime_type, is_saved)
+                VALUES (?, ?, ?, ?, ?, 'image/jpeg', 0)
+            ");
+
+            // Save original image (not PDF) for testing
+            $stmt->execute([
+                $user['id'],
+                $testFilename,
+                $file['name'],
+                $fileData,
+                $file['size']
+            ]);
+
+            $scanId = $db->lastInsertId();
+
+            error_log("testMobileUpload: Saved to database with scan_id = $scanId");
+
+            return json_encode([
+                'success' => true,
+                'message' => 'Test upload successful!',
+                'scan_id' => $scanId,
+                'file_info' => $fileInfo,
+                'session_user_id' => $_SESSION['user_id'],
+                'php_info' => [
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'post_max_size' => ini_get('post_max_size'),
+                    'max_file_uploads' => ini_get('max_file_uploads'),
+                    'memory_limit' => ini_get('memory_limit'),
+                    'max_execution_time' => ini_get('max_execution_time')
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            error_log("testMobileUpload: Exception - " . $e->getMessage());
+            error_log("testMobileUpload: Stack trace - " . $e->getTraceAsString());
+            http_response_code(500);
+            return json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
 }

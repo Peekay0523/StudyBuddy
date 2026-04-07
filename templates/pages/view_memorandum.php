@@ -436,6 +436,10 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>';
 
+$topics = json_decode($script['processed_topics'], true) ?? [];
+$extraHead .= '<script>window.QUIZ_TOPICS = ' . json_encode($topics) . ';</script>';
+$extraHead .= '<script src="/js/quiz.js"></script>';
+
 include __DIR__ . '/../layouts/header.php';
 ?>
 
@@ -498,6 +502,80 @@ include __DIR__ . '/../layouts/header.php';
     <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-book"></i> Memorandum Content</h4>
     <div id="memo-content" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
         <?php echo htmlspecialchars($memorandum['content'] ?? 'No memorandum available.'); ?>
+    </div>
+
+    <!-- Take Quiz Button -->
+    <div style="margin-top: 30px; text-align: center;">
+        <button id="take-quiz-btn" class="btn-primary" onclick="toggleQuiz()" style="padding: 14px 32px; font-size: 16px;">
+            <i class="fas fa-question-circle"></i> Take Quiz
+        </button>
+    </div>
+
+    <!-- Quiz Section -->
+    <div id="quiz-section" style="display: none; margin-top: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px; color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: white;"><i class="fas fa-brain"></i> Voice Quiz - Test Your Knowledge</h3>
+            <button onclick="toggleQuiz()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+
+        <!-- Quiz Progress -->
+        <div id="quiz-progress" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span id="quiz-progress-text">Question 1 of 5</span>
+                <span id="quiz-score">Score: 0/0</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; overflow: hidden;">
+                <div id="quiz-progress-bar" style="background: white; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <!-- Question Display -->
+        <div id="question-container" style="background: white; color: #1e293b; padding: 25px; border-radius: 10px; margin-bottom: 20px; min-height: 120px;">
+            <h4 style="margin-top: 0; color: #667eea;"><i class="fas fa-question"></i> Question:</h4>
+            <p id="current-question" style="font-size: 18px; line-height: 1.6; margin-bottom: 0;"></p>
+        </div>
+
+        <!-- Voice Answer Controls -->
+        <div id="voice-controls" style="text-align: center; margin-bottom: 20px;">
+            <button id="mic-btn" onclick="toggleVoiceInput()" style="background: white; color: #667eea; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                <i class="fas fa-microphone"></i> Click to Answer (Voice)
+            </button>
+            <p id="voice-status" style="margin-top: 10px; font-size: 14px; opacity: 0.9;"></p>
+        </div>
+
+        <!-- Answer Display -->
+        <div id="answer-display" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px; min-height: 50px;">
+            <strong>Your Answer:</strong>
+            <p id="user-answer" style="margin: 5px 0 0 0; font-size: 16px;"></p>
+        </div>
+
+        <!-- Feedback Display -->
+        <div id="feedback-display" style="display: none; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 id="feedback-title" style="margin-top: 0;"></h4>
+            <p id="feedback-text" style="margin-bottom: 0;"></p>
+        </div>
+
+        <!-- Next Question Button -->
+        <div id="next-btn-container" style="display: none; text-align: center;">
+            <button onclick="nextQuestion()" style="background: white; color: #667eea; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                Next Question <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Quiz Results -->
+        <div id="quiz-results" style="display: none; background: white; color: #1e293b; padding: 30px; border-radius: 10px; text-align: center;">
+            <h3 style="color: #667eea;"><i class="fas fa-trophy"></i> Quiz Complete!</h3>
+            <div style="font-size: 48px; font-weight: bold; color: #667eea; margin: 20px 0;">
+                <span id="final-score">0</span>/<span id="total-questions">0</span>
+            </div>
+            <p id="score-percentage" style="font-size: 24px; margin-bottom: 20px;"></p>
+            <p id="score-message" style="font-size: 18px; margin-bottom: 20px;"></p>
+            <button onclick="restartQuiz()" style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                <i class="fas fa-redo"></i> Retake Quiz
+            </button>
+        </div>
     </div>
 </div>
 

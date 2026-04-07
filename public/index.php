@@ -383,6 +383,12 @@ $router->post('/api/scan-save', 'ScanController@saveScan');
 $router->get('/api/scan-saved-list', 'ScanController@getSavedPdfs');
 $router->post('/api/scan-delete-saved', 'ScanController@deleteSavedPdf');
 
+// Test mobile upload
+$router->get('/test-mobile-upload', function() {
+    require __DIR__ . '/../test-mobile-upload.php';
+});
+$router->post('/test-mobile-upload', 'ScanController@testMobileUpload');
+
 // Scan routes - serve PDFs from database
 $router->get('/view-scan-saved/{id}', function($id) {
     require_once __DIR__ . '/../controllers/ScanController.php';
