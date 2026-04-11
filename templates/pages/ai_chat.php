@@ -88,6 +88,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 addMessage("🎤 Voice mode enabled. Click the microphone to start the conversation!", "ai");
                 micButton.style.display = "flex";
                 shouldContinueListening = true;
+                // Robot introduces itself
+                setTimeout(() => {
+                    robotSpeak("Hello! I'm your AI study assistant. Click the microphone and start talking!");
+                }, 500);
             } else {
                 addMessage("Voice mode disabled.", "ai");
                 micButton.style.display = "none";
@@ -128,11 +132,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 isSpeaking = false;
                 isPaused = false;
+                robotSpeaking = false;
                 stopTimer();
                 hideControlBar();
                 clearHighlights();
                 if (lastSpokenMessage) {
                     restoreOriginalMessage(lastSpokenMessage);
+                }
+                const statusEl = document.getElementById("robot-status");
+                if (statusEl) {
+                    statusEl.textContent = "Ready";
+                    statusEl.style.color = "#10a37f";
                 }
             });
         }
@@ -276,11 +286,17 @@ function stopRecitation() {
     }
     isSpeaking = false;
     isPaused = false;
+    robotSpeaking = false;
     stopTimer();
     hideControlBar();
     clearHighlights();
     if (lastSpokenMessage) {
         restoreOriginalMessage(lastSpokenMessage);
+    }
+    const statusEl = document.getElementById("robot-status");
+    if (statusEl) {
+        statusEl.textContent = "Ready";
+        statusEl.style.color = "#10a37f";
     }
 }
 
@@ -622,6 +638,9 @@ function speakMessage(text) {
         clearHighlights();
         stopTimer();
 
+        // Also activate robot mouth animation
+        robotSpeak(text);
+
         // Find the last AI message and prepare it for highlighting
         const lastMessage = document.querySelector(".chat-message.ai:last-of-type");
         if (lastMessage) {
@@ -635,7 +654,7 @@ function speakMessage(text) {
             const sentences = lastMessage ? lastMessage.querySelectorAll(".sentence-span") : [];
             totalSentences = sentences.length;
             currentSentenceIndex = 0;
-            
+
             if (totalSentences === 0) {
                 resolve();
                 return;
@@ -777,13 +796,187 @@ window.addEventListener("beforeunload", () => {
         restoreOriginalMessage(lastSpokenMessage);
     }
 });
+
+// ===== Pixel Talking Robot =====
+let robotSpeaking = false;
+let robotMouthIndex = 0;
+let mouthAnimationInterval = null;
+let eyeBlinkTimeout = null;
+
+function initPixelRobot() {
+    const robot = document.getElementById("robot");
+    if (!robot) return;
+
+    const layout = [
+        "0 0 0 0 0 0 0 1 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+        "0 0 1 1 1 1 1 1 1 1 1 1 1 0 0",
+        "0 1 1 1 1 1 1 1 1 1 1 1 1 1 0",
+        "1 1 1 2 2 2 2 2 2 2 2 2 1 1 1",
+        "1 1 2 2 3 3 2 2 2 3 3 2 2 1 1",
+        "1 1 2 2 3 3 2 2 2 3 3 2 2 1 1",
+        "1 1 2 2 2 2 2 2 2 2 2 2 2 1 1",
+        "1 1 1 2 2 2 4 4 4 2 2 2 1 1 1",
+        "1 1 1 2 2 2 4 5 4 2 2 2 1 1 1",
+        "1 1 1 2 2 2 4 4 4 2 2 2 1 1 1",
+        "0 1 1 1 1 1 1 1 1 1 1 1 1 1 0",
+        "0 0 1 1 1 1 1 1 1 1 1 1 1 0 0",
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0",
+        "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+    ];
+
+    layout.flatMap(row => row.split(" ")).forEach((cell) => {
+        const div = document.createElement("div");
+        div.classList.add("pixel");
+
+        if (cell === "1") div.classList.add("green");
+        if (cell === "2") div.classList.add("dark-green");
+        if (cell === "3") div.classList.add("eye-white");
+        if (cell === "4") div.classList.add("mouth-black");
+        if (cell === "5") div.classList.add("mouth-teeth");
+
+        robot.appendChild(div);
+    });
+
+    scheduleNextBlink();
+    startMouthAnimation();
+}
+
+function scheduleNextBlink() {
+    const randomDelay = 2000 + Math.random() * 4000;
+    if (eyeBlinkTimeout) clearTimeout(eyeBlinkTimeout);
+    eyeBlinkTimeout = setTimeout(() => {
+        blinkEyes();
+        scheduleNextBlink();
+    }, randomDelay);
+}
+
+function blinkEyes() {
+    const eyes = document.querySelectorAll(".pixel.eye-white");
+    if (eyes.length === 0) return;
+    eyes.forEach(e => {
+        e.style.transition = "all 0.1s ease";
+        e.style.background = "#0d8a6a";
+        e.style.boxShadow = "none";
+        e.style.transform = "scaleY(0.1)";
+    });
+    setTimeout(() => {
+        eyes.forEach(e => {
+            e.style.background = "#ffffff";
+            e.style.boxShadow = "0 0 6px rgba(255, 255, 255, 0.6)";
+            e.style.transform = "scaleY(1)";
+        });
+    }, 150);
+}
+
+function startMouthAnimation() {
+    if (mouthAnimationInterval) clearInterval(mouthAnimationInterval);
+    mouthAnimationInterval = setInterval(() => {
+        animateRobotMouth();
+    }, 50);
+}
+
+function animateRobotMouth() {
+    const mouths = document.querySelectorAll(".pixel.mouth-black");
+    if (mouths.length === 0) return;
+
+    if (robotSpeaking) {
+        robotMouthIndex++;
+        const mouthShape = robotMouthIndex % 8;
+        mouths.forEach((mouth) => {
+            switch(mouthShape) {
+                case 0:
+                case 5:
+                    mouth.style.background = "#10a37f";
+                    mouth.style.boxShadow = "0 0 4px rgba(16, 163, 127, 0.4)";
+                    mouth.style.transform = "scaleY(0.5)";
+                    break;
+                case 1:
+                case 4:
+                    mouth.style.background = "#10a37f";
+                    mouth.style.boxShadow = "0 0 6px rgba(16, 163, 127, 0.6)";
+                    mouth.style.transform = "scaleY(0.9)";
+                    break;
+                case 2:
+                case 3:
+                    mouth.style.background = "#10a37f";
+                    mouth.style.boxShadow = "0 0 8px rgba(16, 163, 127, 0.8)";
+                    mouth.style.transform = "scaleY(1.2)";
+                    break;
+                case 6:
+                    mouth.style.background = "#1a1a2e";
+                    mouth.style.boxShadow = "none";
+                    mouth.style.transform = "scaleY(0.1)";
+                    break;
+                case 7:
+                    mouth.style.background = "#10a37f";
+                    mouth.style.boxShadow = "0 0 3px rgba(16, 163, 127, 0.3)";
+                    mouth.style.transform = "scaleY(0.3)";
+                    break;
+            }
+        });
+    } else {
+        mouths.forEach(mouth => {
+            mouth.style.background = "#1a1a2e";
+            mouth.style.boxShadow = "none";
+            mouth.style.transform = "scaleY(0.1)";
+        });
+    }
+}
+
+function robotSpeak(text) {
+    if (!text || !('speechSynthesis' in window)) return;
+
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.9;
+    utter.pitch = 1.0;
+    robotSpeaking = true;
+    robotMouthIndex = 0;
+
+    const statusEl = document.getElementById("robot-status");
+    if (statusEl) {
+        statusEl.textContent = "Speaking...";
+        statusEl.style.color = "#4a9eff";
+        statusEl.style.borderColor = "rgba(74, 158, 255, 0.3)";
+        statusEl.style.background = "rgba(74, 158, 255, 0.1)";
+    }
+    
+    utter.onend = () => {
+        robotSpeaking = false;
+        if (statusEl) {
+            statusEl.textContent = "Ready";
+            statusEl.style.color = "#10a37f";
+            statusEl.style.borderColor = "rgba(16, 163, 127, 0.3)";
+            statusEl.style.background = "rgba(16, 163, 127, 0.1)";
+        }
+    };
+
+    utter.onerror = () => {
+        robotSpeaking = false;
+        if (statusEl) {
+            statusEl.textContent = "Error";
+            setTimeout(() => {
+                statusEl.textContent = "Ready";
+                statusEl.style.color = "#10a37f";
+            }, 2000);
+        }
+    };
+
+    speechSynthesis.speak(utter);
+}
+
+// Initialize robot
+document.addEventListener("DOMContentLoaded", function() {
+    initPixelRobot();
+});
 </script>
 EOT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 
-<h1 class="title">AI Chat Assistant</h1>
-<p class="subtitle">Ask me anything about your studies!</p>
+<h1 class="title" style="font-size: 1.5rem; margin-bottom: 0.25rem;">AI Chat Assistant</h1>
+<p class="subtitle" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Ask me anything about your studies!</p>
 
 <style>
 /* Yellow Highlight Styles for Voice Mode */
@@ -957,6 +1150,12 @@ include __DIR__ . '/../layouts/header.php';
     #stop-speech-btn:hover {
         background: #fecaca !important;
     }
+
+    /* Adjust chat container height for mobile */
+    #chat-container {
+        height: calc(100vh - 240px);
+        max-height: calc(100vh - 240px);
+    }
 }
 
 @media (max-width: 480px) {
@@ -971,14 +1170,19 @@ include __DIR__ . '/../layouts/header.php';
         touch-action: manipulation;
     }
 
-    /* Reduce chat height for better viewport fit */
-    .chat-container {
-        height: calc(100vh - 170px);
+    /* Further reduce height for small screens */
+    #chat-container {
+        height: calc(100vh - 220px);
+        max-height: calc(100vh - 220px);
     }
 
-    /* Scrollable messages with smooth scrolling */
-    .chat-messages {
-        -webkit-overflow-scrolling: touch;
+    /* Compact chat controls */
+    .chat-controls {
+        padding: 6px 15px;
+    }
+
+    .chat-input-form {
+        padding: 10px 15px;
     }
 }
 
@@ -1004,9 +1208,204 @@ include __DIR__ . '/../layouts/header.php';
 .chat-message.ai code.inline-code {
     background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #667eea;
 }
+
+/* Full viewport height layout */
+#chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 280px);
+    max-height: calc(100vh - 280px);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.chat-input-form {
+    flex-shrink: 0;
+}
+
+.chat-controls {
+    flex-shrink: 0;
+    padding: 8px 20px;
+}
+
+/* ===== Pixel Talking Robot ===== */
+.robot-section {
+    padding: 12px 20px 8px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(16, 163, 127, 0.05) 0%, transparent 100%);
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.robot-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.robot {
+    width: 100px;
+    height: 100px;
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    gap: 1px;
+    animation: float 3s infinite ease-in-out;
+    position: relative;
+    background: linear-gradient(135deg, rgba(16, 163, 127, 0.1) 0%, rgba(74, 158, 255, 0.1) 100%);
+    border-radius: 12px;
+    padding: 8px;
+    border: 2px solid rgba(16, 163, 127, 0.3);
+    box-shadow: 0 4px 16px rgba(16, 163, 127, 0.2),
+                inset 0 0 12px rgba(16, 163, 127, 0.05);
+}
+
+.robot::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 6px;
+    background: radial-gradient(ellipse, rgba(16, 163, 127, 0.5) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: shadow 3s infinite ease-in-out;
+}
+
+@keyframes shadow {
+    0%, 100% { transform: translateX(-50%) scaleX(1); opacity: 0.5; }
+    50% { transform: translateX(-50%) scaleX(0.7); opacity: 0.3; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+}
+
+.pixel {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    image-rendering: pixelated;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+}
+
+.pixel.green {
+    background: #10a37f;
+    filter: brightness(1.2);
+}
+.pixel.dark-green {
+    background: #0d8a6a;
+}
+.pixel.eye-white {
+    background: #ffffff;
+    filter: brightness(1.3);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+    transition: all 0.15s ease;
+    transform-origin: center;
+}
+.pixel.mouth-black {
+    background: #1a1a2e;
+    transition: all 0.05s ease;
+    transform-origin: center;
+}
+.pixel.mouth-teeth {
+    background: #ffffff;
+    transition: all 0.05s ease;
+}
+
+.robot-status {
+    font-size: 9px;
+    color: #10a37f;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    background: rgba(16, 163, 127, 0.1);
+    padding: 3px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(16, 163, 127, 0.3);
+}
+
+.robot-hint {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* Mobile Responsive for Robot */
+@media (max-width: 768px) {
+    .robot-section {
+        padding: 8px 12px 4px;
+    }
+
+    .robot {
+        width: 80px;
+        height: 80px;
+        padding: 6px;
+        border-radius: 10px;
+    }
+
+    .robot::after {
+        width: 60px;
+        height: 5px;
+        bottom: -6px;
+    }
+
+    .robot-wrapper {
+        gap: 4px;
+    }
+
+    .robot-status {
+        font-size: 8px;
+        padding: 2px 8px;
+    }
+
+    .robot-hint {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .robot-section {
+        padding: 6px 10px 3px;
+    }
+
+    .robot {
+        width: 70px;
+        height: 70px;
+        padding: 5px;
+    }
+
+    .robot::after {
+        width: 50px;
+        height: 4px;
+        bottom: -5px;
+    }
+
+    .robot-hint {
+        display: none;
+    }
+}
 </style>
 
-<div class="chat-container">
+<!-- Pixel Robot Section -->
+<div class="robot-section" id="robot-section">
+    <div class="robot-wrapper">
+        <div id="robot" class="robot"></div>
+        <div class="robot-status" id="robot-status">Ready</div>
+        <div class="robot-hint">Enable Voice Mode to chat with me!</div>
+    </div>
+</div>
+
+<div class="chat-container" id="chat-container">
     <div class="chat-messages" id="messages-container">
         <div class="chat-message ai">
             Hello! I'm your AI Study Assistant. I can help you with questions about various subjects, explain concepts, provide study tips, or create quiz questions. What would you like to know?
