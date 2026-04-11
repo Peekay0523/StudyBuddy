@@ -1,18 +1,18 @@
 <?php
 /**
- * AI Chat Controller
+ * AI Chat Controller - Updated to use Hybrid AI Router
  */
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../helpers/AIHelper.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class AIChatController {
-    private $aiHelper;
+    private $aiRouter;
 
     public function __construct() {
-        $this->aiHelper = new AIHelper();
+        $this->aiRouter = new AIRouter();
     }
 
     public function index() {
@@ -45,9 +45,19 @@ class AIChatController {
             exit;
         }
 
-        $systemPrompt = 'You are a helpful AI Study Assistant. Help students with their questions about various subjects, explain concepts clearly, provide study tips, and create quiz questions when asked. Be encouraging and supportive. Do NOT use markdown formatting (no **, ##, *, or other markdown symbols). Write in plain text only.';
+        $systemPrompt = 'You are a helpful AI Study Assistant. Help students with their questions about various subjects, explain concepts clearly, provide study tips, and create quiz questions when asked. Be encouraging and supportive.
 
-        $response = $this->aiHelper->chat($message, $systemPrompt);
+IMPORTANT FORMATTING RULES:
+- Use **bold** for key terms and definitions
+- Use headings (##, ###) for sections
+- Use bullet points (- or *) for lists
+- Use numbered lists (1., 2., etc.) for steps and sequences
+- Use code blocks (```) for formulas and code
+- Use blockquotes (>) for important notes
+- Break content into well-structured sections with clear headings
+- NEVER write everything in one paragraph - always structure your response with proper spacing';
+
+        $response = $this->aiRouter->chat($message, $systemPrompt);
 
         if ($response) {
             echo json_encode(['reply' => $response]);

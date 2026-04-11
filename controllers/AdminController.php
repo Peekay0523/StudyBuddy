@@ -1060,24 +1060,51 @@ class AdminController {
      */
     public function openaiSettings() {
         $db = Database::getInstance()->getConnection();
-        
+
         // Get usage statistics
         $stats = [
             'total_tokens_used' => 0,
             'tokens_this_month' => 0,
             'total_api_calls' => 0,
             'estimated_cost' => 0,
+            'openai_tokens' => 0,
+            'grok_tokens' => 0,
+            'openai_calls' => 0,
+            'grok_calls' => 0,
         ];
-        
+
         try {
+            // Check if model_used column exists
+            $columns = $db->query("PRAGMA table_info(openai_usage_logs)")->fetchAll(PDO::FETCH_ASSOC);
+            $columnNames = array_column($columns, 'name');
+            $hasModelUsed = in_array('model_used', $columnNames);
+            
+            // Total stats
             $stats['total_tokens_used'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs")->fetchColumn();
             $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
             $stats['total_api_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs")->fetchColumn();
-            $stats['estimated_cost'] = $stats['total_tokens_used'] * 0.0000006;
+            
+            // Model-specific stats (only if column exists)
+            if ($hasModelUsed) {
+                // Treat NULL as 'openai' for backward compatibility
+                $stats['openai_tokens'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE model_used = 'openai' OR model_used IS NULL")->fetchColumn();
+                $stats['grok_tokens'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE model_used = 'grok'")->fetchColumn();
+                $stats['openai_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs WHERE model_used = 'openai' OR model_used IS NULL")->fetchColumn();
+                $stats['grok_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs WHERE model_used = 'grok'")->fetchColumn();
+            } else {
+                // If column doesn't exist, assume all are OpenAI
+                $stats['openai_tokens'] = $stats['total_tokens_used'];
+                $stats['openai_calls'] = $stats['total_api_calls'];
+            }
+            
+            // Calculate estimated cost (only OpenAI has cost, Grok is cheaper)
+            $stats['estimated_cost'] = $stats['openai_tokens'] * 0.0000006;
+            $stats['estimated_savings'] = $stats['grok_tokens'] * 0.0000004; // Estimated savings from using Grok
         } catch (Exception $e) {
             // Table doesn't exist
+            error_log("Failed to fetch AI usage stats: " . $e->getMessage());
         }
-        
+
         // Get recent usage
         $recentUsage = $db->query("
             SELECT o.*, u.username
@@ -1086,10 +1113,10 @@ class AdminController {
             ORDER BY o.created_at DESC
             LIMIT 20
         ")->fetchAll();
-        
-        $pageTitle = 'OpenAI Settings - StudySmart';
+
+        $pageTitle = 'AI Settings - Hybrid AI Configuration';
         $currentPage = 'admin-openai';
-        
+
         include __DIR__ . '/../templates/pages/admin/openai_settings.php';
     }
 

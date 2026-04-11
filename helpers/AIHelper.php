@@ -11,14 +11,14 @@ class AIHelper {
         $this->apiKey = OPENAI_API_KEY;
     }
 
-    private function isValidApiKey() {
-        return !empty($this->apiKey) && 
-               $this->apiKey !== 'your-openai-api-key-here' && 
+    public function isValidApiKey() {
+        return !empty($this->apiKey) &&
+               $this->apiKey !== 'your-openai-api-key-here' &&
                $this->apiKey !== 'YOUR_OPENAI_API_KEY_HERE' &&
                strlen($this->apiKey) > 20;
     }
 
-    private function makeRequest($messages, $maxTokens = 500, $temperature = 0.7) {
+    public function makeRequest($messages, $maxTokens = 500, $temperature = 0.7) {
         if (!$this->isValidApiKey()) {
             return null;
         }
@@ -88,14 +88,15 @@ class AIHelper {
             }
             
             $stmt = $db->prepare("
-                INSERT INTO openai_usage_logs (user_id, prompt_tokens, completion_tokens, total_tokens, created_at)
-                VALUES (?, ?, ?, ?, datetime('now'))
+                INSERT INTO openai_usage_logs (user_id, prompt_tokens, completion_tokens, total_tokens, model_used, created_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
             ");
             $stmt->execute([
                 $userId,
                 $usage['prompt_tokens'] ?? 0,
                 $usage['completion_tokens'] ?? 0,
-                $usage['total_tokens'] ?? 0
+                $usage['total_tokens'] ?? 0,
+                'openai'
             ]);
         } catch (Exception $e) {
             // Silently fail - don't break functionality for logging

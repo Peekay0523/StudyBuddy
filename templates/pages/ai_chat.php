@@ -1,17 +1,15 @@
 <?php
 $pageTitle = 'AI Chat - StudySmart';
 $currentPage = 'ai-chat';
-$canUseVoiceModeJs = $canUseVoiceMode ? 'true' : 'false';
-$extraScripts = <<<EOT
+?>
 <script>
-const chatForm = document.getElementById("chat-form");
-const messageInput = document.getElementById("message-input");
-const messagesContainer = document.getElementById("messages-container");
-const fileInput = document.getElementById("file-input");
-const voiceModeToggle = document.getElementById("voice-mode-toggle");
-const micButton = document.getElementById("mic-btn");
-const micIcon = document.getElementById("mic-icon");
-
+window.canUseVoiceModeConfig = <?php echo $canUseVoiceMode ? 'true' : 'false'; ?>;
+</script>
+<?php
+$extraScripts = <<<'EOT'
+<script>
+// Global variables
+let chatForm, messageInput, messagesContainer, fileInput, voiceModeToggle, micButton, micIcon;
 let isVoiceMode = false;
 let isListening = false;
 let recognition = null;
@@ -21,11 +19,11 @@ let shouldContinueListening = false;
 let isSpeaking = false;
 let isPaused = false;
 let currentSentenceIndex = 0;
-let totalSentences = 0;
-let startTime = 0;
 let elapsedTime = 0;
 let timerInterval = null;
 let sentences = [];
+let totalSentences = 0;
+let lastSpokenMessage = null;
 
 // Initialize voices on mobile browsers
 function initVoices() {
@@ -40,6 +38,141 @@ function initVoices() {
 }
 
 initVoices();
+
+// Initialize DOM elements and event listeners when DOM is ready
+document.addEventListener("DOMContentLoaded", function() {
+    // Initialize DOM elements
+    chatForm = document.getElementById("chat-form");
+    messageInput = document.getElementById("message-input");
+    messagesContainer = document.getElementById("messages-container");
+    fileInput = document.getElementById("file-input");
+    voiceModeToggle = document.getElementById("voice-mode-toggle");
+    micButton = document.getElementById("mic-btn");
+    micIcon = document.getElementById("mic-icon");
+
+    console.log("chatForm:", chatForm);
+    console.log("messageInput:", messageInput);
+
+    // Form submission handler
+    if (chatForm) {
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            console.log("Form submitted, message:", messageInput.value);
+            sendMessage();
+        });
+    } else {
+        console.error("chatForm is null! DOM not ready?");
+    }
+
+    // File upload functionality
+    const uploadBtn = document.getElementById("upload-btn");
+    if (uploadBtn) {
+        uploadBtn.addEventListener("click", () => {
+            fileInput.click();
+        });
+    }
+
+    fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            addMessage("📎 Attached: " + file.name, "user");
+        }
+        fileInput.value = "";
+    });
+
+    // Voice Mode Toggle
+    if (canUseVoiceMode && voiceModeToggle) {
+        voiceModeToggle.addEventListener("change", (e) => {
+            isVoiceMode = e.target.checked;
+            if (isVoiceMode) {
+                addMessage("🎤 Voice mode enabled. Click the microphone to start the conversation!", "ai");
+                micButton.style.display = "flex";
+                shouldContinueListening = true;
+            } else {
+                addMessage("Voice mode disabled.", "ai");
+                micButton.style.display = "none";
+                shouldContinueListening = false;
+                stopListening();
+                if (synthesis) {
+                    synthesis.cancel();
+                }
+                isSpeaking = false;
+                clearHighlights();
+                if (lastSpokenMessage) {
+                    restoreOriginalMessage(lastSpokenMessage);
+                }
+            }
+        });
+    }
+
+    // Microphone Button
+    if (canUseVoiceMode && micButton) {
+        micButton.addEventListener("click", () => {
+            if (isListening) {
+                stopListening();
+                shouldContinueListening = false;
+            } else {
+                shouldContinueListening = true;
+                startListening();
+            }
+        });
+    }
+
+    // Stop speech button
+    if (canUseVoiceMode) {
+        const stopSpeechBtn = document.getElementById("stop-speech-btn");
+        if (stopSpeechBtn) {
+            stopSpeechBtn.addEventListener("click", () => {
+                if (synthesis) {
+                    synthesis.cancel();
+                }
+                isSpeaking = false;
+                isPaused = false;
+                stopTimer();
+                hideControlBar();
+                clearHighlights();
+                if (lastSpokenMessage) {
+                    restoreOriginalMessage(lastSpokenMessage);
+                }
+            });
+        }
+    }
+
+    // Progress bar click to seek
+    const progressBar = document.getElementById("recitation-progress-bar");
+    if (progressBar) {
+        progressBar.addEventListener("click", function(e) {
+            if (!isSpeaking || totalSentences === 0) return;
+
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const targetIndex = Math.floor(percentage * totalSentences);
+
+            if (targetIndex !== currentSentenceIndex) {
+                synthesis.cancel();
+                clearHighlights();
+                currentSentenceIndex = targetIndex;
+                speakNextSentence(sentences, () => {});
+            }
+        });
+    }
+
+    // Browser support check for voice
+    if (canUseVoiceMode) {
+        if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+            if (micButton) micButton.style.display = "none";
+            if (voiceModeToggle) voiceModeToggle.style.display = "none";
+            console.log("Speech recognition not supported");
+        }
+    } else {
+        // Free user - hide voice controls
+        if (micButton) micButton.style.display = "none";
+        if (voiceModeToggle) voiceModeToggle.style.display = "none";
+        const stopBtn = document.getElementById("stop-speech-btn");
+        if (stopBtn) stopBtn.style.display = "none";
+    }
+});
 
 // Control Bar Functions
 function togglePause() {
@@ -152,7 +285,7 @@ function stopRecitation() {
 }
 
 // Only initialize voice features for paid users
-const canUseVoiceMode = {$canUseVoiceModeJs};
+const canUseVoiceMode = window.canUseVoiceModeConfig || false;
 
 if (canUseVoiceMode) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -236,27 +369,17 @@ if (canUseVoiceMode) {
     console.log("Voice mode not available for free users");
 }
 
-// Browser support check (only for paid users)
-if (canUseVoiceMode) {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-        micButton.style.display = "none";
-        voiceModeToggle.style.display = "none";
-        console.log("Speech recognition not supported");
-    }
-} else {
-    // Free user - hide voice controls
-    if (micButton) micButton.style.display = "none";
-    if (voiceModeToggle) voiceModeToggle.style.display = "none";
-    if (document.getElementById("stop-speech-btn")) document.getElementById("stop-speech-btn").style.display = "none";
-}
-
-chatForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    sendMessage();
-});
-
 async function sendMessage() {
+    console.log("sendMessage called");
+    console.log("messageInput:", messageInput);
+    
+    if (!messageInput) {
+        console.error("messageInput is null!");
+        return;
+    }
+    
     const message = messageInput.value.trim();
+    console.log("Message to send:", message);
     if (!message) return;
 
     // Stop listening while processing
@@ -270,6 +393,7 @@ async function sendMessage() {
     const loadingId = addMessage("Thinking...", "ai");
 
     try {
+        console.log("Sending request to /api/chatbot...");
         const formData = new FormData();
         formData.append("message", message);
 
@@ -278,10 +402,15 @@ async function sendMessage() {
             body: formData
         });
 
+        console.log("Response status:", response.status);
         const data = await response.json();
+        console.log("Response data:", data);
 
         // Remove loading message
-        document.getElementById(loadingId).remove();
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) {
+            loadingElement.remove();
+        }
 
         if (data.reply) {
             addMessage(data.reply, "ai");
@@ -293,8 +422,12 @@ async function sendMessage() {
             addMessage("⚠️ " + data.error, "ai");
         }
     } catch (error) {
-        document.getElementById(loadingId).remove();
-        addMessage("Error: Failed to connect to server", "ai");
+        console.error("Error in sendMessage:", error);
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+        addMessage("Error: Failed to connect to server - " + error.message, "ai");
     }
 }
 
@@ -302,61 +435,69 @@ function addMessage(text, type) {
     const div = document.createElement("div");
     div.className = "chat-message " + type;
     div.id = "msg-" + Date.now();
-    div.textContent = text;
+    
+    if (type === "ai") {
+        div.innerHTML = renderMarkdown(text);
+    } else {
+        div.textContent = text;
+    }
+    
     messagesContainer.appendChild(div);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     return div.id;
 }
 
-// File upload functionality
-document.getElementById("upload-btn").addEventListener("click", () => {
-    fileInput.click();
-});
-
-fileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        addMessage("📎 Attached: " + file.name, "user");
+function renderMarkdown(text) {
+    let html = text;
+    
+    // Escape HTML first
+    html = html.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;');
+    
+    // Code blocks
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Blockquotes
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+    
+    // List items
+    html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+    
+    // Paragraphs
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/(<\/h[1-3]>)\n/g, '$1');
+    html = html.replace(/(<\/li>)\n/g, '$1');
+    html = html.replace(/(<\/ul>)\n/g, '$1');
+    html = html.replace(/(<\/blockquote>)\n/g, '$1');
+    html = html.replace(/(<\/pre>)\n/g, '$1');
+    html = html.replace(/\n/g, '<br>');
+    
+    if (!html.startsWith('<')) {
+        html = '<p>' + html + '</p>';
     }
-    fileInput.value = "";
-});
-
-// Voice Mode Toggle
-if (canUseVoiceMode && voiceModeToggle) {
-    voiceModeToggle.addEventListener("change", (e) => {
-        isVoiceMode = e.target.checked;
-        if (isVoiceMode) {
-            addMessage("🎤 Voice mode enabled. Click the microphone to start the conversation!", "ai");
-            micButton.style.display = "flex";
-            shouldContinueListening = true;
-        } else {
-            addMessage("Voice mode disabled.", "ai");
-            micButton.style.display = "none";
-            shouldContinueListening = false;
-            stopListening();
-            if (synthesis) {
-                synthesis.cancel();
-            }
-            isSpeaking = false;
-            clearHighlights();
-            if (lastSpokenMessage) {
-                restoreOriginalMessage(lastSpokenMessage);
-            }
-        }
-    });
-}
-
-// Microphone Button
-if (canUseVoiceMode && micButton) {
-    micButton.addEventListener("click", () => {
-        if (isListening) {
-            stopListening();
-            shouldContinueListening = false;
-        } else {
-            shouldContinueListening = true;
-            startListening();
-        }
-    });
+    
+    html = html.replace(/<p><\/p>/g, '');
+    
+    return html;
 }
 
 function startListening() {
@@ -390,8 +531,6 @@ function stopListening() {
 }
 
 // Text-to-Speech with Highlighting
-let lastSpokenMessage = null;
-
 function preprocessMathForSpeech(text) {
     let processed = text;
     
@@ -638,45 +777,6 @@ window.addEventListener("beforeunload", () => {
         restoreOriginalMessage(lastSpokenMessage);
     }
 });
-
-// Stop speech when clicking stop button
-if (canUseVoiceMode) {
-    document.getElementById("stop-speech-btn")?.addEventListener("click", () => {
-        if (synthesis) {
-            synthesis.cancel();
-        }
-        isSpeaking = false;
-        isPaused = false;
-        stopTimer();
-        hideControlBar();
-        clearHighlights();
-        if (lastSpokenMessage) {
-            restoreOriginalMessage(lastSpokenMessage);
-        }
-    });
-}
-
-// Progress bar click to seek
-document.addEventListener("DOMContentLoaded", function() {
-    const progressBar = document.getElementById("recitation-progress-bar");
-    if (progressBar) {
-        progressBar.addEventListener("click", function(e) {
-            if (!isSpeaking || totalSentences === 0) return;
-            
-            const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percentage = clickX / rect.width;
-            const targetIndex = Math.floor(percentage * totalSentences);
-            
-            if (targetIndex !== currentSentenceIndex) {
-                synthesis.cancel();
-                clearHighlights();
-                currentSentenceIndex = targetIndex;
-                speakNextSentence(sentences, () => {});
-            }
-        });
-    }
-});
 </script>
 EOT;
 include __DIR__ . '/../layouts/header.php';
@@ -880,6 +980,29 @@ include __DIR__ . '/../layouts/header.php';
     .chat-messages {
         -webkit-overflow-scrolling: touch;
     }
+}
+
+.chat-message.ai h1, .chat-message.ai h2, .chat-message.ai h3 {
+    margin: 16px 0 8px 0; font-weight: 600; line-height: 1.3;
+}
+.chat-message.ai h1 { font-size: 1.4em; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
+.chat-message.ai h2 { font-size: 1.2em; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; }
+.chat-message.ai h3 { font-size: 1.05em; }
+.chat-message.ai p { margin: 8px 0; line-height: 1.6; }
+.chat-message.ai ul, .chat-message.ai ol { margin: 8px 0; padding-left: 24px; }
+.chat-message.ai li { margin: 4px 0; line-height: 1.6; }
+.chat-message.ai strong { font-weight: 600; color: #1f2937; }
+.chat-message.ai blockquote {
+    border-left: 4px solid #667eea; padding: 8px 12px; margin: 12px 0;
+    background: #f9fafb; border-radius: 4px;
+}
+.chat-message.ai pre {
+    background: #1f2937; color: #f9fafb; padding: 12px; border-radius: 6px;
+    overflow-x: auto; margin: 12px 0; font-size: 0.9em;
+}
+.chat-message.ai code { font-family: 'Courier New', monospace; font-size: 0.9em; }
+.chat-message.ai code.inline-code {
+    background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #667eea;
 }
 </style>
 

@@ -7,19 +7,15 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/SEOPage.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 
 class SEOController {
     private $seoModel;
-    private $openai;
+    private $aiRouter;
 
     public function __construct() {
         $this->seoModel = new SEOPage();
-        
-        // Initialize OpenAI if available
-        $openaiKey = getenv('OPENAI_API_KEY') ?: $_ENV['OPENAI_API_KEY'] ?? '';
-        if (!empty($openaiKey)) {
-            $this->openai = new OpenAI($openaiKey);
-        }
+        $this->aiRouter = new AIRouter();
     }
 
     /**
@@ -176,44 +172,40 @@ class SEOController {
     }
 
     /**
-     * Generate content using OpenAI
+     * Generate content using AI
      */
     private function generateContentWithAI($data) {
-        if (!$this->openai) {
-            return null;
-        }
-
         $template = $this->seoModel->getTemplate($data['template_name'] ?? 'Grade 12 Math Memorandum Full');
-        
-        $prompt = $this->buildAIPrompt($data, $template);
-        
-        try {
-            $response = $this->openai->chat([
-                'model' => 'gpt-4o-mini',
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => $template['ai_system_prompt'] ?? $this->getDefaultSystemPrompt()
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => $prompt
-                    ]
-                ],
-                'temperature' => 0.7,
-                'max_tokens' => 4000
-            ]);
 
-            $content = $response['choices'][0]['message']['content'] ?? '';
-            
+        $prompt = $this->buildAIPrompt($data, $template);
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => $template['ai_system_prompt'] ?? $this->getDefaultSystemPrompt()
+            ],
+            [
+                'role' => 'user',
+                'content' => $prompt
+            ]
+        ];
+
+        try {
+            // SEO content generation is advanced - use OpenAI
+            $response = $this->aiRouter->makeRequest($messages, 4000, 0.7, 'openai');
+
+            if (!$response) {
+                return null;
+            }
+
             // Parse content and extract Q&A if present
-            $qaContent = $this->parseQAFromContent($content);
-            
+            $qaContent = $this->parseQAFromContent($response);
+
             // Generate schema markup
-            $schema = $this->generateSchemaMarkup($data, $content);
+            $schema = $this->generateSchemaMarkup($data, $response);
 
             return [
-                'content' => $content,
+                'content' => $response,
                 'schema' => json_encode($schema),
                 'qa_content' => $qaContent
             ];
@@ -754,42 +746,5 @@ Curriculum: {curriculum} ({country})";
         header('Content-Length: ' . $resource['file_size']);
         readfile($filePath);
         exit;
-    }
-}
-
-// OpenAI helper class (if not already defined)
-if (!class_exists('OpenAI')) {
-    class OpenAI {
-        private $apiKey;
-        private $apiUrl = 'https://api.openai.com/v1/chat/completions';
-
-        public function __construct($apiKey) {
-            $this->apiKey = $apiKey;
-        }
-
-        public function chat($data) {
-            $ch = curl_init($this->apiUrl);
-            
-            $headers = [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey
-            ];
-
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($httpCode !== 200) {
-                throw new Exception("OpenAI API Error: HTTP {$httpCode}");
-            }
-
-            return json_decode($response, true);
-        }
     }
 }

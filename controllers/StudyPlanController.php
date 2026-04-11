@@ -7,17 +7,17 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/StudyPlan.php';
 require_once __DIR__ . '/../models/StudyReminder.php';
-require_once __DIR__ . '/../helpers/AIHelper.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 
 class StudyPlanController {
     private $studyPlanModel;
     private $studyReminderModel;
-    private $aiHelper;
+    private $aiRouter;
 
     public function __construct() {
         $this->studyPlanModel = new StudyPlan();
         $this->studyReminderModel = new StudyReminder();
-        $this->aiHelper = new AIHelper();
+        $this->aiRouter = new AIRouter();
     }
 
     public function index() {
@@ -58,7 +58,7 @@ class StudyPlanController {
             exit;
         }
 
-        $recitation = $this->aiHelper->reciteStudyPlan($studyPlan['title'], $studyPlan['content']);
+        $recitation = $this->aiRouter->reciteStudyPlan($studyPlan['title'] . "\n\n" . $studyPlan['content']);
 
         header('Content-Type: application/json');
         echo json_encode($recitation);

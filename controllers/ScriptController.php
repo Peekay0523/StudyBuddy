@@ -11,7 +11,7 @@ require_once __DIR__ . '/../models/StudyPlan.php';
 require_once __DIR__ . '/../models/Student.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../helpers/FileHelper.php';
-require_once __DIR__ . '/../helpers/AIHelper.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 require_once __DIR__ . '/../helpers/TesseractHelper.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
@@ -19,14 +19,14 @@ class ScriptController {
     private $scriptModel;
     private $memorandumModel;
     private $studyPlanModel;
-    private $aiHelper;
+    private $aiRouter;
     private $tesseractHelper;
 
     public function __construct() {
         $this->scriptModel = new UploadedScript();
         $this->memorandumModel = new Memorandum();
         $this->studyPlanModel = new StudyPlan();
-        $this->aiHelper = new AIHelper();
+        $this->aiRouter = new AIRouter();
         $this->tesseractHelper = new TesseractHelper();
     }
     
@@ -250,25 +250,25 @@ class ScriptController {
                 }
             }
 
-            // Analyze topics
-            $topics = $this->aiHelper->analyzeDocumentTopics($textContent);
+            // Analyze topics (basic task - can use Grok)
+            $topics = $this->aiRouter->analyzeDocumentTopics($textContent);
             $this->scriptModel->updateProcessedTopics($scriptId, $topics);
 
-            // Identify challenging topics
-            $challengingTopics = $this->aiHelper->identifyChallengingTopics($topics, $textContent);
+            // Identify challenging topics (intermediate task)
+            $challengingTopics = $this->aiRouter->identifyChallengingTopics($topics, $textContent);
             $this->scriptModel->updateChallengingTopics($scriptId, $challengingTopics);
 
-            // Generate memorandum
-            $memorandumContent = $this->aiHelper->generateMemorandum($textContent, $topics);
+            // Generate memorandum (advanced task - uses OpenAI)
+            $memorandumContent = $this->aiRouter->generateMemorandum($textContent, $topics);
             $this->memorandumModel->create($scriptId, $memorandumContent);
 
-            // Generate study plan
+            // Generate study plan (intermediate task - can use Grok)
             $studentModel = new Student();
             $student = $studentModel->findByUserId($script['student_id']);
             $userModel = new User();
             $user = $userModel->findById($student['user_id']);
 
-            $studyPlanData = $this->aiHelper->generateStudyPlan($challengingTopics, $user['username']);
+            $studyPlanData = $this->aiRouter->generateStudyPlan($challengingTopics, $user['username']);
             $studyPlanId = $this->studyPlanModel->create($student['id'], $studyPlanData['title'], $studyPlanData['content']);
             error_log("Study plan created successfully with ID: " . $studyPlanId . " for student: " . $student['id']);
 
@@ -421,12 +421,12 @@ class ScriptController {
                 }
             }
 
-            // Analyze topics
-            $topics = $this->aiHelper->analyzeDocumentTopics($textContent);
+            // Analyze topics (basic task - can use Grok)
+            $topics = $this->aiRouter->analyzeDocumentTopics($textContent);
             $this->scriptModel->updateProcessedTopics($scriptId, $topics);
 
-            // Generate memorandum
-            $memorandumContent = $this->aiHelper->generateMemorandum($textContent, $topics);
+            // Generate memorandum (advanced task - uses OpenAI)
+            $memorandumContent = $this->aiRouter->generateMemorandum($textContent, $topics);
 
             // Save or update memorandum
             $existingMemo = $this->memorandumModel->findByScriptId($scriptId);
@@ -846,12 +846,12 @@ HTML;
             @unlink($imagePath);
             @rmdir($tempDir);
 
-            // Send to OpenAI Vision
-            error_log("Sending image to OpenAI Vision API (" . strlen($base64Image) . " bytes)");
-            $extractedText = $this->aiHelper->extractTextFromImage($imageData, 'image/jpeg');
+            // Send to Vision API (always uses OpenAI since Grok doesn't support Vision)
+            error_log("Sending image to Vision API (" . strlen($base64Image) . " bytes)");
+            $extractedText = $this->aiRouter->extractTextFromImage($imageData, 'image/jpeg');
 
             if ($extractedText) {
-                error_log("OpenAI Vision extracted: " . strlen($extractedText) . " characters");
+                error_log("Vision API extracted: " . strlen($extractedText) . " characters");
                 // Clean up the extracted text - remove any PDF structure artifacts
                 $extractedText = preg_replace('/^[^\w]{0,100}/', '', $extractedText);
                 return trim($extractedText);
@@ -889,8 +889,8 @@ HTML;
                 // Get image blob
                 $imageBlob = $imagick->getImageBlob();
 
-                // Use OpenAI Vision to extract text
-                $extractedText = $this->aiHelper->extractTextFromImage($imageBlob, 'image/jpeg');
+                // Use Vision API to extract text (always OpenAI)
+                $extractedText = $this->aiRouter->extractTextFromImage($imageBlob, 'image/jpeg');
 
                 if ($extractedText) {
                     $fullText .= "\n--- Page " . ($i + 1) . " ---\n";

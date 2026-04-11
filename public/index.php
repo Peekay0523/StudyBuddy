@@ -99,6 +99,42 @@ $router->post('/test-openai', function() {
     require __DIR__ . '/../test-openai.php';
 });
 
+// Test Hybrid AI Models
+$router->get('/test-ai-models', function() {
+    require __DIR__ . '/../test-ai-models.php';
+});
+$router->post('/test-ai-models', function() {
+    require __DIR__ . '/../test-ai-models.php';
+});
+
+// Test Hybrid AI (legacy URL)
+$router->get('/test-hybrid-ai', function() {
+    require __DIR__ . '/../test-hybrid-ai.php';
+});
+$router->post('/test-hybrid-ai', function() {
+    require __DIR__ . '/../test-hybrid-ai.php';
+});
+
+// Diagnose Grok API
+$router->get('/diagnose-grok', function() {
+    require __DIR__ . '/../diagnose-grok.php';
+});
+
+// Test Token Logging
+$router->get('/test-token-logging', function() {
+    require __DIR__ . '/../test-token-logging.php';
+});
+
+// Fix Token Usage
+$router->get('/fix-token-usage', function() {
+    require __DIR__ . '/../fix-token-usage.php';
+});
+
+// Diagnose Groq Tokens
+$router->get('/diagnose-groq-tokens', function() {
+    require __DIR__ . '/../diagnose-groq-tokens.php';
+});
+
 // Simple JSON test endpoint
 $router->get('/test-json', function() {
     header('Content-Type: application/json');

@@ -2,59 +2,38 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 
 /**
  * CareerController - Handles career search and institution lookup
  */
 class CareerController {
-    
+    private $aiRouter;
+
+    public function __construct() {
+        $this->aiRouter = new AIRouter();
+    }
+
     /**
-     * Call OpenAI API for career information
+     * Call AI API for career information (using hybrid routing)
      */
-    private function callOpenAI($prompt) {
-        if (!defined('OPENAI_API_KEY') || OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE') {
-            return null;
-        }
-        
-        $apiUrl = 'https://api.openai.com/v1/chat/completions';
-        $data = [
-            'model' => 'gpt-4o-mini',
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => 'You are a career guidance assistant for South African students. Provide accurate information about careers, including APS requirements and subject prerequisites for South African universities. Return responses in JSON format only.'
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $prompt
-                ]
+    private function callAI($prompt) {
+        // Career information is complex, but Grok/LLaMA can handle it well
+        // Let the AI Router decide based on availability
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a career guidance assistant for South African students. Provide accurate information about careers, including APS requirements and subject prerequisites for South African universities. Return responses in JSON format only.'
             ],
-            'max_tokens' => 2000,
-            'temperature' => 0.7
+            [
+                'role' => 'user',
+                'content' => $prompt
+            ]
         ];
-        
-        $ch = curl_init($apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . OPENAI_API_KEY
-        ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode === 200 && $response) {
-            $result = json_decode($response, true);
-            if (isset($result['choices'][0]['message']['content'])) {
-                return $result['choices'][0]['message']['content'];
-            }
-        }
-        
-        return null;
+
+        // Use AI Router - will use Grok if available, fallback to OpenAI
+        // Career search is intermediate/advanced - router will pick best available model
+        return $this->aiRouter->makeRequest($messages, 2000, 0.7);
     }
     
     /**
@@ -89,7 +68,7 @@ class CareerController {
     }
 
     /**
-     * Search careers by keyword (with AI fallback)
+     * Search careers by keyword (always uses AI for comprehensive results)
      */
     public function search($query = '') {
         header('Content-Type: application/json');
@@ -107,7 +86,10 @@ class CareerController {
 
         try {
             $db = Database::getInstance()->getConnection();
+            $careers = [];
+            $fromAI = false;
 
+            // First, try database search
             $sql = "SELECT c.*,
                     COUNT(ci.institution_id) as institution_count
                     FROM careers c
@@ -135,59 +117,72 @@ class CareerController {
 
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
-            $careers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $dbCareers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Get institutions for each career
-            foreach ($careers as &$career) {
-                $institutionsStmt = $db->prepare("
-                    SELECT i.*, ci.subject_requirements, ci.min_aps_score as required_aps, ci.additional_requirements
-                    FROM institutions i
-                    INNER JOIN career_institutions ci ON i.id = ci.institution_id
-                    WHERE ci.career_id = ?
-                    ORDER BY i.name ASC
-                ");
-                $institutionsStmt->execute([$career['id']]);
-                $career['institutions'] = $institutionsStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($dbCareers)) {
+                foreach ($dbCareers as &$career) {
+                    $institutionsStmt = $db->prepare("
+                        SELECT i.*, ci.subject_requirements, ci.min_aps_score as required_aps, ci.additional_requirements
+                        FROM institutions i
+                        INNER JOIN career_institutions ci ON i.id = ci.institution_id
+                        WHERE ci.career_id = ?
+                        ORDER BY i.name ASC
+                    ");
+                    $institutionsStmt->execute([$career['id']]);
+                    $career['institutions'] = $institutionsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                // Decode JSON subject requirements and extract qualifications
-                foreach ($career['institutions'] as &$institution) {
-                    if ($institution['subject_requirements']) {
-                        $decoded = json_decode($institution['subject_requirements'], true);
-                        if ($decoded) {
-                            // Handle both old format (array) and new format (object with subjects/qualifications)
-                            if (isset($decoded['subjects'])) {
-                                $institution['subject_requirements'] = $decoded['subjects'];
-                                if (isset($decoded['qualifications']) && !empty($decoded['qualifications'])) {
-                                    $institution['qualifications'] = $decoded['qualifications'];
+                    // Decode JSON subject requirements and extract qualifications
+                    foreach ($career['institutions'] as &$institution) {
+                        if ($institution['subject_requirements']) {
+                            $decoded = json_decode($institution['subject_requirements'], true);
+                            if ($decoded) {
+                                if (isset($decoded['subjects'])) {
+                                    $institution['subject_requirements'] = $decoded['subjects'];
+                                    if (isset($decoded['qualifications']) && !empty($decoded['qualifications'])) {
+                                        $institution['qualifications'] = $decoded['qualifications'];
+                                    } else {
+                                        $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
+                                    }
+                                } else if (is_array($decoded)) {
+                                    $institution['subject_requirements'] = $decoded;
+                                    $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
                                 } else {
-                                    // Default qualifications if not specified
+                                    $institution['subject_requirements'] = $decoded;
                                     $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
                                 }
-                            } else if (is_array($decoded)) {
-                                // Old format - just subjects array
-                                $institution['subject_requirements'] = $decoded;
-                                $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
-                            } else {
-                                $institution['subject_requirements'] = $decoded;
-                                $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
                             }
+                        } else {
+                            $institution['subject_requirements'] = [];
+                            $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
                         }
-                    } else {
-                        // No subject requirements in DB, provide defaults
-                        $institution['subject_requirements'] = [];
-                        $institution['qualifications'] = $this->getDefaultQualifications($career['name'], $institution['type']);
                     }
                 }
+                $careers = $dbCareers;
+                error_log("Database returned " . count($dbCareers) . " careers for '{$searchTerm}'");
             }
 
-            // If no results found, use AI to get career information
-            $fromAI = false;
-            if (empty($careers) && !empty($searchTerm)) {
-                $aiResponse = $this->getAICareerInfo($searchTerm);
-                if ($aiResponse && isset($aiResponse['careers']) && !empty($aiResponse['careers'])) {
-                    $careers = $aiResponse['careers'];
-                    $fromAI = true;
+            // ALWAYS use AI to get comprehensive career information
+            // AI will supplement database results or provide results if database is empty
+            error_log("Calling AI for career information for '{$searchTerm}'");
+            $aiResponse = $this->getAICareerInfo($searchTerm);
+            
+            if ($aiResponse && isset($aiResponse['careers']) && !empty($aiResponse['careers'])) {
+                // If database had results, merge with AI (prefer AI for more comprehensive data)
+                if (!empty($careers)) {
+                    // Use AI results as they're typically more comprehensive
+                    error_log("Merging database and AI results, using AI for comprehensive data");
+                } else {
+                    error_log("Database empty, using AI results only");
                 }
+                $careers = $aiResponse['careers'];
+                $fromAI = true;
+            }
+
+            if (empty($careers)) {
+                error_log("No careers found in database or AI for '{$searchTerm}'");
+            } else {
+                error_log("Returning " . count($careers) . " careers for '{$searchTerm}' (from_ai: " . ($fromAI ? 'true' : 'false') . ")");
             }
 
             echo json_encode([
@@ -197,10 +192,12 @@ class CareerController {
                 'from_ai' => $fromAI
             ]);
 
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
+            error_log("Error in career search: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             echo json_encode([
                 'success' => false,
-                'error' => 'Database error: ' . $e->getMessage()
+                'error' => 'Error searching careers: ' . $e->getMessage()
             ]);
         }
     }
@@ -372,8 +369,8 @@ Include subject requirements with levels (Level 3-7, where Level 4 = 50-59%, Lev
 Only return the JSON, no other text.
 PROMPT;
 
-        $aiResponse = $this->callOpenAI($prompt);
-        
+        $aiResponse = $this->callAI($prompt);
+
         if ($aiResponse) {
             $parsed = $this->parseAICareerData($aiResponse, $searchTerm);
             if (isset($parsed['careers']) && !empty($parsed['careers'])) {

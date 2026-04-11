@@ -12,17 +12,17 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/BursaryApplication.php';
 require_once __DIR__ . '/../models/InstitutionApplication.php';
 require_once __DIR__ . '/../helpers/FileHelper.php';
-require_once __DIR__ . '/../helpers/AIHelper.php';
+require_once __DIR__ . '/../helpers/AIRouter.php';
 
 class ReportCardController {
     private $reportCardModel;
     private $careerRecModel;
-    private $aiHelper;
-    
+    private $aiRouter;
+
     public function __construct() {
         $this->reportCardModel = new ReportCard();
         $this->careerRecModel = new CareerRecommendation();
-        $this->aiHelper = new AIHelper();
+        $this->aiRouter = new AIRouter();
     }
     
     public function upload() {
@@ -177,9 +177,9 @@ class ReportCardController {
 
             $this->reportCardModel->updateGradesData($reportCardId, $gradesData);
 
-            // Generate career recommendations
-            $recommendations = $this->aiHelper->generateCareerRecommendations($gradesData);
-            
+            // Generate career recommendations (advanced task - uses OpenAI)
+            $recommendations = $this->aiRouter->generateCareerRecommendations($gradesData);
+
             error_log("Generated recommendations: " . json_encode([
                 'careers_count' => count($recommendations['careers'] ?? []),
                 'aps' => $recommendations['aps'] ?? 0,
@@ -201,13 +201,15 @@ class ReportCardController {
                 return $gradeMap[strtoupper($g[0])] ?? 65;
             }, $gradesData)) / count($gradesData) : 65;
 
-            $bursaries = $this->aiHelper->searchBursaries($subjects, $averageGrade);
+            // Use AIHelper directly for bursary search (not an AI model call)
+            $aiHelper = new AIHelper();
+            $bursaries = $aiHelper->searchBursaries($subjects, $averageGrade);
 
             // Get course information for top careers
             $courses = [];
             if (!empty($recommendations['careers'])) {
                 foreach (array_slice($recommendations['careers'], 0, 3) as $career) {
-                    $careerCourses = $this->aiHelper->getCourseInformation($career, $subjects);
+                    $careerCourses = $aiHelper->getCourseInformation($career, $subjects);
                     $courses = array_merge($courses, $careerCourses);
                 }
             }
@@ -646,17 +648,16 @@ Return ONLY the JSON, no other text.'
 
             error_log("Image created: {$imageInfo[0]}x{$imageInfo[1]} pixels");
 
-            // Read image and send to OpenAI Vision
+            // Read image and send to Vision API
             $imageData = file_get_contents($imagePath);
             @unlink($imagePath);
             @rmdir($tempDir);
 
-            // Use AIHelper to extract text
-            $aiHelper = new AIHelper();
-            $extractedText = $aiHelper->extractTextFromImage($imageData, 'image/jpeg');
+            // Use AI Router to extract text (always OpenAI for Vision)
+            $extractedText = $this->aiRouter->extractTextFromImage($imageData, 'image/jpeg');
 
             if ($extractedText) {
-                error_log("OpenAI Vision extracted: " . strlen($extractedText) . " characters");
+                error_log("Vision API extracted: " . strlen($extractedText) . " characters");
                 return $extractedText;
             }
 
