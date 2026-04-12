@@ -427,24 +427,53 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                         <div class="course-card">
                             <h4><?php echo htmlspecialchars($course['name']); ?></h4>
                             <p class="course-duration"><i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? '3-4 years'); ?></p>
+                            
+                            <!-- Entry Requirements -->
                             <div class="course-requirements">
+                                <?php
+                                $apsRequired = $course['aps_required'] ?? null;
+                                $subjectReqs = $course['subject_requirements'] ?? [];
+                                $studentAps = $careerRec['aps'] ?? 0;
+                                $studentGrades = $reportCard['grades_data'] ?? [];
+                                
+                                // Build clean requirements list
+                                $reqLines = [];
+                                if ($apsRequired) {
+                                    $reqLines[] = "Min APS {$apsRequired}";
+                                }
+                                if (!empty($subjectReqs) && is_array($subjectReqs)) {
+                                    foreach ($subjectReqs as $req) {
+                                        $subj = $req['subject'] ?? '';
+                                        $level = $req['min_level'] ?? 0;
+                                        if ($subj && $level) {
+                                            $reqLines[] = "{$subj} (Level {$level})";
+                                        }
+                                    }
+                                }
+                                ?>
                                 <strong><i class="fas fa-list-check"></i> Entry Requirements:</strong>
-                                <p><?php echo htmlspecialchars($course['requirements'] ?? 'Varies by institution'); ?></p>
+                                <ul class="entry-reqs-list">
+                                    <?php foreach ($reqLines as $reqLine): ?>
+                                        <li><?php echo htmlspecialchars($reqLine); ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
                             </div>
+                            
+                            <!-- Institutions -->
                             <?php if (!empty($course['institutions']) && is_array($course['institutions'])): ?>
                                 <div class="course-institutions">
                                     <strong><i class="fas fa-university"></i> Institutions Offering This Course:</strong>
                                     <ul class="institution-list">
                                         <?php foreach ($course['institutions'] as $inst): ?>
-                                            <?php 
+                                            <?php
                                             $instName = is_array($inst) ? ($inst['name'] ?? null) : $inst;
-                                            $instReq = is_array($inst) ? ($inst['entry_requirements'] ?? null) : null;
+                                            $instAps = is_array($inst) ? ($inst['aps_required'] ?? null) : null;
                                             ?>
                                             <?php if ($instName): ?>
                                                 <li>
-                                                    <strong><?php echo htmlspecialchars($instName); ?></strong>
-                                                    <?php if ($instReq): ?>
-                                                        <br><small style="color: #666;"><i class="fas fa-info-circle"></i> Requires: <?php echo htmlspecialchars($instReq); ?></small>
+                                                    <span class="inst-name"><?php echo htmlspecialchars($instName); ?></span>
+                                                    <?php if ($instAps): ?>
+                                                        <span class="inst-aps">APS <?php echo $instAps; ?></span>
                                                     <?php endif; ?>
                                                 </li>
                                             <?php endif; ?>
@@ -674,8 +703,57 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .course-requirements strong, .course-institutions strong {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     color: #374151;
+}
+
+/* Entry Requirements List */
+.entry-reqs-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+}
+
+.entry-reqs-list li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+    color: #374151;
+    font-size: 14px;
+}
+
+/* Institution List */
+.institution-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+}
+
+.institution-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    flex-wrap: wrap;
+}
+
+.inst-name {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.inst-aps {
+    padding: 4px 10px;
+    background: #667eea;
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .bursaries-list {

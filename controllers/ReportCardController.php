@@ -205,38 +205,35 @@ class ReportCardController {
             $aiHelper = new AIHelper();
             $bursaries = $aiHelper->searchBursaries($subjects, $averageGrade);
 
-            // Get course information for top careers
-            $courses = [];
-            if (!empty($recommendations['careers'])) {
+            // Use courses from AI recommendations if available, otherwise generate them
+            $courses = $recommendations['courses'] ?? [];
+
+            // If AI didn't provide courses, generate them based on recommended careers
+            if (empty($courses) && !empty($recommendations['careers'])) {
                 foreach (array_slice($recommendations['careers'], 0, 3) as $career) {
                     $careerCourses = $aiHelper->getCourseInformation($career, $subjects);
-                    $courses = array_merge($courses, $careerCourses);
+                    if (!empty($careerCourses)) {
+                        $courses = array_merge($courses, $careerCourses);
+                    }
                 }
             }
 
-            // Use fallback courses if none generated
-            if (empty($courses)) {
-                $courses = [
-                    [
-                        'name' => 'Bachelor of Commerce',
-                        'requirements' => 'Mathematics (Level 5), English (Level 5)',
-                        'duration' => '3 years',
-                        'institutions' => ['UCT', 'Wits', 'Stellenbosch', 'UJ', 'UP']
-                    ],
-                    [
-                        'name' => 'Bachelor of Science',
-                        'requirements' => 'Mathematics (Level 5), Physical Sciences (Level 5)',
-                        'duration' => '3 years',
-                        'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
-                    ],
-                    [
-                        'name' => 'Bachelor of Education',
-                        'requirements' => 'English (Level 5), 2 official languages',
-                        'duration' => '4 years',
-                        'institutions' => ['UP', 'UJ', 'Wits', 'UNISA']
-                    ]
-                ];
+            // CRITICAL: Filter courses to only show what student actually qualifies for
+            $courses = $this->filterCoursesByQualifications($courses, $gradesData);
+
+            // If we have fewer than 5 qualifying courses, supplement with appropriate ones
+            if (count($courses) < 5) {
+                $fallbackCourses = $this->getFallbackCoursesForAchievementLevel($gradesData, $recommendations['careers'] ?? []);
+                $courses = $this->mergeAndDeduplicateCourses($courses, $fallbackCourses);
             }
+
+            // Use fallback courses if none generated (after filtering)
+            if (empty($courses)) {
+                $courses = $this->getFallbackCoursesForAchievementLevel($gradesData, $recommendations['careers'] ?? []);
+            }
+
+            // Limit to top 5 courses
+            $courses = array_slice($courses, 0, 5);
 
             $studentModel = new Student();
             $student = $studentModel->findByUserId($reportCard['user_id']);
@@ -308,6 +305,34 @@ class ReportCardController {
             
             // Fetch updated data
             $careerRec = $this->careerRecModel->findByReportCardId($reportCardId);
+        }
+
+        // Decode grades_data from JSON string to array for template use
+        if (isset($reportCard['grades_data']) && is_string($reportCard['grades_data'])) {
+            $reportCard['grades_data'] = json_decode($reportCard['grades_data'], true) ?? [];
+        } elseif (!isset($reportCard['grades_data'])) {
+            $reportCard['grades_data'] = [];
+        }
+
+        // Ensure courses have properly decoded subject_requirements arrays
+        if (!empty($careerRec['courses']) && is_array($careerRec['courses'])) {
+            foreach ($careerRec['courses'] as &$course) {
+                if (isset($course['subject_requirements']) && is_string($course['subject_requirements'])) {
+                    $course['subject_requirements'] = json_decode($course['subject_requirements'], true) ?? [];
+                }
+                if (isset($course['institutions']) && is_array($course['institutions'])) {
+                    foreach ($course['institutions'] as &$inst) {
+                        if (is_array($inst)) {
+                            if (isset($inst['entry_requirements']) && is_string($inst['entry_requirements']) && $inst['entry_requirements'][0] === '{') {
+                                $decoded = json_decode($inst['entry_requirements'], true);
+                                if ($decoded && is_array($decoded)) {
+                                    $inst = array_merge($inst, $decoded);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         include __DIR__ . '/../templates/pages/view_career_recommendations.php';
@@ -1030,5 +1055,965 @@ Return ONLY the JSON, no other text.'
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'error' => 'Failed to delete application']);
         }
+    }
+
+    /**
+     * Filter courses to only show what the student actually qualifies for
+     */
+    private function filterCoursesByQualifications($courses, $gradesData) {
+        if (empty($courses) || empty($gradesData)) {
+            return [];
+        }
+
+        // Build a map of subject => achievement level
+        $subjectLevels = [];
+        foreach ($gradesData as $subject => $grade) {
+            $percentage = $this->extractPercentageFromGrade($grade);
+            $level = $this->percentageToLevel($percentage);
+            $subjectLevels[strtolower($subject)] = [
+                'name' => $subject,
+                'percentage' => $percentage,
+                'level' => $level
+            ];
+        }
+
+        $filteredCourses = [];
+        foreach ($courses as $course) {
+            $requirements = $course['requirements'] ?? '';
+            if ($this->studentMeetsRequirements($requirements, $subjectLevels)) {
+                $filteredCourses[] = $course;
+            }
+        }
+
+        return $filteredCourses;
+    }
+
+    /**
+     * Extract percentage from grade string
+     */
+    private function extractPercentageFromGrade($grade) {
+        if (is_numeric($grade)) {
+            return floatval($grade);
+        }
+        
+        // Extract from percentage like "65%"
+        if (preg_match('/(\d+)%/', $grade, $matches)) {
+            return floatval($matches[1]);
+        }
+        
+        // Extract number from "Level X" format
+        if (preg_match('/[Ll]evel\s*(\d+)/', $grade, $matches)) {
+            $level = intval($matches[1]);
+            $levelMap = [7 => 85, 6 => 75, 5 => 65, 4 => 55, 3 => 45, 2 => 35, 1 => 20];
+            return $levelMap[$level] ?? 65;
+        }
+        
+        // Extract any number
+        if (preg_match('/(\d+)/', $grade, $matches)) {
+            return floatval($matches[1]);
+        }
+        
+        return 65; // Default
+    }
+
+    /**
+     * Convert percentage to NSC Achievement Level
+     */
+    private function percentageToLevel($percentage) {
+        if ($percentage >= 80) return 7;
+        if ($percentage >= 70) return 6;
+        if ($percentage >= 60) return 5;
+        if ($percentage >= 50) return 4;
+        if ($percentage >= 40) return 3;
+        if ($percentage >= 30) return 2;
+        return 1;
+    }
+
+    /**
+     * Check if student meets course requirements
+     */
+    private function studentMeetsRequirements($requirements, $subjectLevels) {
+        if (empty($requirements)) {
+            return true; // No requirements = open entry
+        }
+
+        // Extract required subjects and levels from requirement string
+        // Pattern: "Mathematics (Level 5)", "Physical Sciences (Level 6)", "Mathematics/Math Literacy (Level 4)"
+        preg_match_all('/([A-Za-z\s\/]+?)\(Level\s*(\d+)\)/i', $requirements, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            $requiredSubject = trim(strtolower($match[1]));
+            $requiredLevel = intval($match[2]);
+
+            // Handle "OR" requirements (e.g., "Mathematics (Level 4) or Math Literacy (Level 5)")
+            if (stripos($requiredSubject, ' or ') !== false) {
+                $subjectOptions = preg_split('/\s+or\s+/i', $requiredSubject);
+                $meetsAnyOption = false;
+                
+                foreach ($subjectOptions as $option) {
+                    $option = trim($option);
+                    // Check if student meets this option
+                    foreach ($subjectLevels as $subjKey => $subjData) {
+                        if ($this->subjectMatches($subjKey, $option)) {
+                            if ($subjData['level'] >= $requiredLevel) {
+                                $meetsAnyOption = true;
+                                break;
+                            }
+                        }
+                    }
+                    if ($meetsAnyOption) break;
+                }
+                
+                if (!$meetsAnyOption) {
+                    return false;
+                }
+                continue;
+            }
+
+            // Handle "/" as OR (e.g., "Mathematics/Math Literacy")
+            if (strpos($requiredSubject, '/') !== false) {
+                $subjectOptions = array_map('trim', explode('/', $requiredSubject));
+                $meetsAnyOption = false;
+                
+                foreach ($subjectOptions as $option) {
+                    foreach ($subjectLevels as $subjKey => $subjData) {
+                        if ($this->subjectMatches($subjKey, $option)) {
+                            if ($subjData['level'] >= $requiredLevel) {
+                                $meetsAnyOption = true;
+                                break;
+                            }
+                        }
+                    }
+                    if ($meetsAnyOption) break;
+                }
+                
+                if (!$meetsAnyOption) {
+                    return false;
+                }
+                continue;
+            }
+
+            // Direct subject match
+            $studentLevel = null;
+            foreach ($subjectLevels as $subjKey => $subjData) {
+                if ($this->subjectMatches($subjKey, $requiredSubject)) {
+                    $studentLevel = $subjData['level'];
+                    break;
+                }
+            }
+
+            // If subject not found or level not met, student doesn't qualify
+            if ($studentLevel === null || $studentLevel < $requiredLevel) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if subject names match (flexible matching)
+     */
+    private function subjectMatches($studentSubject, $requiredSubject) {
+        // Normalize subjects for comparison
+        $normalize = function($str) {
+            $str = strtolower($str);
+            $str = preg_replace('/\s+/', ' ', trim($str));
+            
+            // Common variations
+            $replacements = [
+                'maths' => 'mathematics',
+                'math' => 'mathematics',
+                'physical science' => 'physical sciences',
+                'life science' => 'life sciences',
+                'english home language' => 'english',
+                'english first additional language' => 'english',
+                'accounting science' => 'accounting',
+                'business studies' => 'business',
+            ];
+            
+            foreach ($replacements as $from => $to) {
+                $str = str_replace($from, $to, $str);
+            }
+            
+            return $str;
+        };
+
+        return $normalize($studentSubject) === $normalize($requiredSubject);
+    }
+
+    /**
+     * Merge two course arrays and deduplicate by course name
+     */
+    private function mergeAndDeduplicateCourses($existing, $new) {
+        $existingNames = array_map(function($c) { return strtolower($c['name'] ?? ''); }, $existing);
+        
+        foreach ($new as $course) {
+            $name = strtolower($course['name'] ?? '');
+            if (!in_array($name, $existingNames)) {
+                $existing[] = $course;
+                $existingNames[] = $name;
+            }
+        }
+        
+        return $existing;
+    }
+
+    /**
+     * Get fallback courses appropriate for student's achievement level
+     */
+    private function getFallbackCoursesForAchievementLevel($gradesData, $careers = []) {
+        // Calculate average level
+        $totalLevel = 0;
+        $count = 0;
+        $subjectLevels = [];
+        $hasMath = false;
+        $hasScience = false;
+        $hasIT = false;
+        $hasBusiness = false;
+
+        foreach ($gradesData as $subject => $grade) {
+            if (stripos($subject, 'Life Orientation') !== false) continue;
+
+            $percentage = $this->extractPercentageFromGrade($grade);
+            $level = $this->percentageToLevel($percentage);
+            $subjectLevels[strtolower($subject)] = $level;
+            $totalLevel += $level;
+            $count++;
+            
+            $subjLower = strtolower($subject);
+            if (strpos($subjLower, 'math') !== false) $hasMath = true;
+            if (strpos($subjLower, 'science') !== false || strpos($subjLower, 'physics') !== false) $hasScience = true;
+            if (strpos($subjLower, 'computer') !== false || strpos($subjLower, 'it ') !== false) $hasIT = true;
+            if (strpos($subjLower, 'business') !== false || strpos($subjLower, 'commerce') !== false || strpos($subjLower, 'accounting') !== false) $hasBusiness = true;
+        }
+
+        $avgLevel = $count > 0 ? $totalLevel / $count : 4;
+        
+        // Determine career theme for relevant course selection
+        $careerTheme = 'General';
+        if (!empty($careers)) {
+            $careerStr = implode(' ', $careers);
+            if (preg_match('/(software|developer|programmer|it|computer|tech|engineer)/i', $careerStr)) {
+                $careerTheme = 'IT';
+            } elseif (preg_match('/(doctor|medical|nurse|health|hospital|pharma)/i', $careerStr)) {
+                $careerTheme = 'Health';
+            } elseif (preg_match('/(account|finance|business|commerce|economic|manager)/i', $careerStr)) {
+                $careerTheme = 'Business';
+            } elseif (preg_match('/(teach|educat|professor|lecturer)/i', $careerStr)) {
+                $careerTheme = 'Education';
+            } elseif (preg_match('/(engineer|engineering)/i', $careerStr)) {
+                $careerTheme = 'Engineering';
+            } elseif (preg_match('/(science|data|analyst|research)/i', $careerStr)) {
+                $careerTheme = 'Science';
+            } elseif (preg_match('/(art|design|creative|media|communicat|law|attorney)/i', $careerStr)) {
+                $careerTheme = 'Arts';
+            }
+        }
+
+        // Build career-appropriate courses based on achievement level
+        $courses = [];
+
+        if ($avgLevel >= 5) {
+            // High achievers - can do degree programs
+            if ($careerTheme === 'IT') {
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Science in Computer Science',
+                        'aps_required' => 28,
+                        'requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Information Technology',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'NWU', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Software Engineering',
+                        'aps_required' => 28,
+                        'requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Commerce in Information Systems',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), English (Level 4)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Data Science',
+                        'aps_required' => 30,
+                        'requirements' => 'APS 30, Mathematics (Level 6), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 6],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 30, Mathematics (Level 6), Physical Sciences (Level 4)', 'aps_required' => 30],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 32, Mathematics (Level 6), Physical Sciences (Level 5)', 'aps_required' => 32]
+                        ]
+                    ]
+                ];
+            } elseif ($careerTheme === 'Business') {
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Commerce',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Business Administration',
+                        'aps_required' => 24,
+                        'requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'NWU', 'entry_requirements' => 'APS 22, Mathematics (Level 4), English (Level 4)', 'aps_required' => 22],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Accounting Sciences',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), Accounting (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Accounting', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Accounting (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UNISA', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Economics',
+                        'aps_required' => 30,
+                        'requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 5]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 32, Mathematics (Level 6), English (Level 5)', 'aps_required' => 32],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Commerce in Finance',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26]
+                        ]
+                    ]
+                ];
+            } elseif ($careerTheme === 'Science') {
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Science',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Data Science',
+                        'aps_required' => 28,
+                        'requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 30],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 32, Mathematics (Level 6), Physical Sciences (Level 5)', 'aps_required' => 32]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Environmental Science',
+                        'aps_required' => 24,
+                        'requirements' => 'APS 24, Mathematics (Level 4), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 26, Mathematics (Level 4), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 24, Mathematics (Level 4), Physical Sciences (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Statistics',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, Mathematics (Level 5), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'NWU', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Mathematics',
+                        'aps_required' => 30,
+                        'requirements' => 'APS 30, Mathematics (Level 6), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 6],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 32, Mathematics (Level 6), Physical Sciences (Level 5)', 'aps_required' => 32],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 30, Mathematics (Level 6), Physical Sciences (Level 4)', 'aps_required' => 30],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 30, Mathematics (Level 6), Physical Sciences (Level 4)', 'aps_required' => 30]
+                        ]
+                    ]
+                ];
+            } elseif ($careerTheme === 'Health') {
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Health Sciences',
+                        'aps_required' => 28,
+                        'requirements' => 'APS 28, Life Sciences (Level 5), English (Level 4), Mathematics or Mathematical Literacy (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Life Sciences', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Life Sciences (Level 6), English (Level 5), Mathematics (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, Life Sciences (Level 5), English (Level 4), Mathematics (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 28, Life Sciences (Level 5), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Life Sciences (Level 5), English (Level 5)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Nursing',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Life Sciences (Level 4), English (Level 4), Mathematics or Mathematical Literacy (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Life Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Life Sciences (Level 5), English (Level 5), Mathematics (Level 4)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Life Sciences (Level 4), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 26, Life Sciences (Level 4), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UWC', 'entry_requirements' => 'APS 24, Life Sciences (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Pharmacy',
+                        'aps_required' => 30,
+                        'requirements' => 'APS 30, Mathematics (Level 5), Life Sciences (Level 5), English (Level 5), Physical Sciences (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Life Sciences', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 32, Mathematics (Level 6), Life Sciences (Level 5), English (Level 5)', 'aps_required' => 32],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Life Sciences (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Life Sciences (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'NWU', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Life Sciences (Level 5), English (Level 4)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Medical Laboratory Sciences',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Life Sciences (Level 5), Physical Sciences (Level 4), English (Level 4), Mathematics (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Life Sciences', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Life Sciences (Level 6), Physical Sciences (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 26, Life Sciences (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'SMU', 'entry_requirements' => 'APS 24, Life Sciences (Level 5), Physical Sciences (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Physiotherapy',
+                        'aps_required' => 32,
+                        'requirements' => 'APS 32, Life Sciences (Level 6), Mathematics (Level 5), English (Level 5), Physical Sciences (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Life Sciences', 'min_level' => 6],
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 34, Life Sciences (Level 7), Mathematics (Level 5), English (Level 5)', 'aps_required' => 34],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 32, Life Sciences (Level 6), Mathematics (Level 5), English (Level 5)', 'aps_required' => 32],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 32, Life Sciences (Level 6), Mathematics (Level 5), English (Level 5)', 'aps_required' => 32]
+                        ]
+                    ]
+                ];
+            } elseif ($careerTheme === 'Education') {
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Education',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, English (Level 5), Second Language (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Afrikaans', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, English (Level 5), Second Language (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 26, English (Level 5), Second Language (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 28, English (Level 5), Second Language (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UNISA', 'entry_requirements' => 'APS 24, English (Level 5), Second Language (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Arts in Education',
+                        'aps_required' => 24,
+                        'requirements' => 'APS 24, English (Level 5), Second Language (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Afrikaans', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 26, English (Level 5), Afrikaans (Level 5)', 'aps_required' => 26],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 24, English (Level 5), Second Language (Level 4)', 'aps_required' => 24],
+                            ['name' => 'UWC', 'entry_requirements' => 'APS 22, English (Level 4), Second Language (Level 4)', 'aps_required' => 22]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science in Education',
+                        'aps_required' => 24,
+                        'requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 4), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Education (Foundation Phase)',
+                        'aps_required' => 22,
+                        'requirements' => 'APS 22, English (Level 4), Second Language (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Afrikaans', 'min_level' => 3]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'entry_requirements' => 'APS 22, English (Level 4), Second Language (Level 3)', 'aps_required' => 22],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, English (Level 4), Second Language (Level 3)', 'aps_required' => 20],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 20, English (Level 4), Second Language (Level 3)', 'aps_required' => 20]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Education (Senior Phase)',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, English (Level 5), Mathematics (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Mathematics', 'min_level' => 4]
+                        ],
+                        'duration' => '4 years',
+                        'institutions' => [
+                            ['name' => 'UP', 'entry_requirements' => 'APS 28, English (Level 5), Mathematics (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 26, English (Level 5), Mathematics (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, English (Level 5), Mathematics (Level 4)', 'aps_required' => 26]
+                        ]
+                    ]
+                ];
+            } else {
+                // General academic
+                $courses = [
+                    [
+                        'name' => 'Bachelor of Commerce',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), English (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), English (Level 4)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), English (Level 4)', 'aps_required' => 26]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Arts',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, English (Level 5), Second Language (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 5],
+                            ['subject' => 'Afrikaans', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, English (Level 6), Second Language (Level 5)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, English (Level 5), Second Language (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, English (Level 5), Afrikaans (Level 5)', 'aps_required' => 28],
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, English (Level 5), Second Language (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Science',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 5],
+                            ['subject' => 'Physical Sciences', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 26, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, Mathematics (Level 5), Physical Sciences (Level 4)', 'aps_required' => 28]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Business Administration',
+                        'aps_required' => 24,
+                        'requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'UP', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24],
+                            ['name' => 'NWU', 'entry_requirements' => 'APS 22, Mathematics (Level 4), English (Level 4)', 'aps_required' => 22],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 24, Mathematics (Level 4), English (Level 4)', 'aps_required' => 24]
+                        ]
+                    ],
+                    [
+                        'name' => 'Bachelor of Social Science',
+                        'aps_required' => 26,
+                        'requirements' => 'APS 26, English (Level 5)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 5]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UCT', 'entry_requirements' => 'APS 30, English (Level 6)', 'aps_required' => 30],
+                            ['name' => 'Wits', 'entry_requirements' => 'APS 26, English (Level 5)', 'aps_required' => 26],
+                            ['name' => 'Stellenbosch', 'entry_requirements' => 'APS 28, English (Level 5)', 'aps_required' => 28],
+                            ['name' => 'UKZN', 'entry_requirements' => 'APS 26, English (Level 5)', 'aps_required' => 26]
+                        ]
+                    ]
+                ];
+            }
+        } elseif ($avgLevel >= 4) {
+            // Mid-range - diploma programs
+            if ($careerTheme === 'IT') {
+                $courses = [
+                    [
+                        'name' => 'Diploma in Information Technology',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4) or Mathematical Literacy (Level 5), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18],
+                            ['name' => 'MUT', 'entry_requirements' => 'APS 18, Mathematics (Level 3), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Computer Science',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Software Engineering',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'VUT', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'National Diploma in IT',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, Mathematics (Level 3), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 3],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 18, Mathematics (Level 3), English (Level 3)', 'aps_required' => 18],
+                            ['name' => 'MUT', 'entry_requirements' => 'APS 16, Mathematics (Level 3), English (Level 3)', 'aps_required' => 16],
+                            ['name' => 'VUT', 'entry_requirements' => 'APS 16, Mathematics (Level 3), English (Level 3)', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Systems Development',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'NMMU', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ]
+                ];
+            } elseif ($careerTheme === 'Business') {
+                $courses = [
+                    [
+                        'name' => 'National Diploma in Business Studies',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4), Mathematics or Mathematical Literacy (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UJ', 'entry_requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)', 'aps_required' => 18],
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 18, English (Level 4), Mathematical Literacy (Level 3)', 'aps_required' => 18],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)', 'aps_required' => 18],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 16, English (Level 4), Mathematical Literacy (Level 3)', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Accountancy',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Marketing',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)', 'aps_required' => 18],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)', 'aps_required' => 18],
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 16, English (Level 4), Mathematics (Level 3)', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Financial Management',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4],
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'entry_requirements' => 'APS 20, Mathematics (Level 4), English (Level 3)', 'aps_required' => 20],
+                            ['name' => 'VUT', 'entry_requirements' => 'APS 18, Mathematics (Level 4), English (Level 3)', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'National Diploma in Human Resource Management',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'DUT', 'entry_requirements' => 'APS 18, English (Level 4)', 'aps_required' => 18],
+                            ['name' => 'MUT', 'entry_requirements' => 'APS 16, English (Level 4)', 'aps_required' => 16],
+                            ['name' => 'VUT', 'entry_requirements' => 'APS 16, English (Level 4)', 'aps_required' => 16]
+                        ]
+                    ]
+                ];
+            } else {
+                $courses = [
+                    ['name' => 'National Diploma in Business Studies', 'requirements' => 'English (Level 4), Mathematics/Math Literacy (Level 3)', 'duration' => '3 years', 'institutions' => ['UJ', 'TUT', 'CPUT', 'DUT']],
+                    ['name' => 'Diploma in Information Technology', 'requirements' => 'Mathematics (Level 4) or Math Literacy (Level 5)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'DUT', 'MUT']],
+                    ['name' => 'Diploma in Marketing', 'requirements' => 'English (Level 4), Mathematics (Level 3)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'DUT']],
+                    ['name' => 'National Diploma in Public Management', 'requirements' => 'English (Level 4)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'VUT']],
+                    ['name' => 'Diploma in Office Management and Technology', 'requirements' => 'English (Level 3)', 'duration' => '3 years', 'institutions' => ['DUT', 'MUT', 'VUT']]
+                ];
+            }
+        } else {
+            // Lower achievement - certificate/higher certificate
+            if ($careerTheme === 'IT') {
+                $courses = [
+                    ['name' => 'Higher Certificate in Information Technology', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'TUT', 'CPUT']],
+                    ['name' => 'Higher Certificate in Computer Programming', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'VUT', 'TUT']],
+                    ['name' => 'Higher Certificate in Computer Science', 'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ']],
+                    ['name' => 'Certificate in Web Development', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
+                    ['name' => 'Higher Certificate in Systems Support', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'VUT']]
+                ];
+            } elseif ($careerTheme === 'Business') {
+                $courses = [
+                    ['name' => 'Higher Certificate in Business', 'requirements' => 'National Senior Certificate (Level 3 in most subjects)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP', 'NWU']],
+                    ['name' => 'Higher Certificate in Business Management', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']],
+                    ['name' => 'Higher Certificate in Financial Planning', 'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ']],
+                    ['name' => 'Certificate in Entrepreneurship', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
+                    ['name' => 'Higher Certificate in Accounting', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']]
+                ];
+            } else {
+                $courses = [
+                    ['name' => 'Higher Certificate in Business', 'requirements' => 'National Senior Certificate (Level 3 in most subjects)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP', 'NWU']],
+                    ['name' => 'Higher Certificate in Information Technology', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'TUT', 'CPUT']],
+                    ['name' => 'Higher Certificate in Arts', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']],
+                    ['name' => 'Certificate in Communication Skills', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
+                    ['name' => 'Higher Certificate in Law', 'requirements' => 'National Senior Certificate (Level 3), English (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'NWU']]
+                ];
+            }
+        }
+
+        return $courses;
     }
 }

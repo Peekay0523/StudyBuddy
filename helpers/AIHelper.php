@@ -630,16 +630,41 @@ Content to process: " . substr($content, 0, 4000)]
 
 The student's strongest subjects suggest a career theme of: {$careerTheme}
 
-IMPORTANT: All careers and courses must be THEMATICALLY CONSISTENT with the suggested theme above.
+CRITICAL INSTRUCTION - QUALIFICATION CHECKING:
+The grades shown above are the student's ACTUAL achievements. You MUST convert these percentages to NSC Achievement Levels and ONLY recommend courses where the student's levels meet or exceed the entry requirements.
 
-1. 5 recommended careers - ALL from the {$careerTheme} field
-2. 5 suitable bachelor's degree courses - ALL must be {$careerTheme}-related and lead to the careers above, with specific entry requirements for each
+NSC Achievement Level Conversion:
+- Level 7 = 80-100% (Distinction)
+- Level 6 = 70-79% (Merit)
+- Level 5 = 60-69% (Substantial achievement)
+- Level 4 = 50-59% (Adequate achievement)
+- Level 3 = 40-49% (Moderate achievement)
+- Level 2 = 30-39% (Elementary achievement)
+- Level 1 = 0-29% (Not achieved)
+
+EXAMPLE: If Physical Sciences shows 45%, that's Level 3. DO NOT suggest courses requiring Level 5 in Physical Sciences.
+
+IMPORTANT RULES FOR COURSE RECOMMENDATIONS:
+1. Check EACH subject requirement against the student's ACTUAL grade/level
+2. ONLY recommend courses where the student QUALIFIES based on their current levels
+3. If the student doesn't qualify for degree programs, suggest diploma or certificate pathways
+4. Provide alternative courses that match what they DO qualify for
+5. Be realistic - don't suggest Engineering (requires Level 6 Math & Science) to someone with Level 3 in those subjects
+
+REQUIRED OUTPUT - ALL items must be thematically consistent with {$careerTheme}:
+
+1. 5 recommended careers - ALL from the {$careerTheme} field, appropriate for the student's achievement level
+2. 5 suitable bachelor's degree/diploma/certificate courses - ALL must be {$careerTheme}-related, with:
+   - OVERALL APS SCORE REQUIRED for each course
+   - DETAILED SUBJECT REQUIREMENTS listing EACH subject with its minimum level
+   - Include ALL compulsory subjects (Mathematics, Physical Sciences, Life Sciences, English, etc.)
+   - Example: \"APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4), Life Sciences (Level 4)\"
 3. For EACH course, list 3-5 South African institutions that offer it, with their specific entry requirements
 4. 3 bursaries/scholarships related to {$careerTheme}
 
 Return as JSON with keys:
-- careers (array of career names, all from {$careerTheme} field)
-- courses (array with: name, requirements, duration, institutions (array with name, location, website, entry_requirements)) - ALL courses must relate to {$careerTheme}
+- careers (array of career names, all from {$careerTheme} field, appropriate for achievement level)
+- courses (array with: name, aps_required, requirements, subject_requirements (array of {subject, min_level}), duration, institutions (array with name, location, website, entry_requirements, aps_required)) - ONLY courses student qualifies for
 - bursaries (array with: name, provider, eligibility, deadline, apply_url)"]
         ];
 
@@ -814,6 +839,9 @@ Return as JSON with keys:
      * Get course information and requirements
      */
     public function getCourseInformation($careerField, $subjects) {
+        $careerStr = is_array($careerField) ? implode(' ', $careerField) : $careerField;
+        $careerLower = strtolower($careerStr);
+        
         $courses = [
             'Engineering' => [
                 [
@@ -873,7 +901,7 @@ Return as JSON with keys:
                     'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch', 'UKZN']
                 ]
             ],
-            'IT/Computer Science' => [
+            'IT' => [
                 [
                     'name' => 'Bachelor of Science in Computer Science',
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
@@ -886,18 +914,115 @@ Return as JSON with keys:
                     'duration' => '3 years',
                     'institutions' => ['UP', 'UJ', 'NWU']
                 ]
+            ],
+            'Computer Science' => [
+                [
+                    'name' => 'Bachelor of Science in Computer Science',
+                    'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                ],
+                [
+                    'name' => 'Bachelor of Information Technology',
+                    'requirements' => 'Mathematics (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['UP', 'UJ', 'NWU']
+                ]
+            ],
+            'Software' => [
+                [
+                    'name' => 'Bachelor of Science in Software Engineering',
+                    'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'duration' => '4 years',
+                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                ],
+                [
+                    'name' => 'Bachelor of Computer and Information Sciences',
+                    'requirements' => 'Mathematics (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['Wits', 'UP', 'UJ', 'NWU']
+                ]
+            ],
+            'Science' => [
+                [
+                    'name' => 'Bachelor of Science',
+                    'requirements' => 'Mathematics (Level 5), Physical Sciences (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                ],
+                [
+                    'name' => 'Bachelor of Science in Data Science',
+                    'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['Wits', 'UP', 'UCT']
+                ]
+            ],
+            'Health' => [
+                [
+                    'name' => 'Bachelor of Health Sciences',
+                    'requirements' => 'Life Sciences (Level 5), English (Level 5)',
+                    'duration' => '3 years',
+                    'institutions' => ['UCT', 'Wits', 'UKZN', 'Stellenbosch']
+                ],
+                [
+                    'name' => 'Bachelor of Pharmacy',
+                    'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5), Life Sciences (Level 6)',
+                    'duration' => '4 years',
+                    'institutions' => ['Wits', 'UP', 'UKZN', 'NWU']
+                ]
+            ],
+            'Arts' => [
+                [
+                    'name' => 'Bachelor of Arts',
+                    'requirements' => 'English (Level 5), Second Language (Level 4)',
+                    'duration' => '3 years',
+                    'institutions' => ['UCT', 'Wits', 'Stellenbosch', 'UJ']
+                ],
+                [
+                    'name' => 'Bachelor of Fine Arts',
+                    'requirements' => 'Visual Arts/Design (Level 5), Portfolio',
+                    'duration' => '3-4 years',
+                    'institutions' => ['Wits', 'UCT', 'UKZN']
+                ]
             ]
         ];
 
-        // Match career field to courses
+        // Match career field to courses with improved matching
         foreach ($courses as $field => $courseList) {
-            if (stripos(is_array($careerField) ? implode(' ', $careerField) : $careerField, $field) !== false) {
+            if (stripos($careerLower, strtolower($field)) !== false) {
                 return $courseList;
             }
         }
+        
+        // Additional keyword matching for common career terms
+        if (preg_match('/(software|developer|programmer|coding|it|computer|tech)/i', $careerStr)) {
+            return $courses['IT'];
+        }
+        if (preg_match('/(engineer|engineering)/i', $careerStr)) {
+            return $courses['Engineering'];
+        }
+        if (preg_match('/(doctor|medical|nurse|health|hospital)/i', $careerStr)) {
+            return $courses['Medicine'];
+        }
+        if (preg_match('/(account|finance|business|commerce|economic)/i', $careerStr)) {
+            return $courses['Commerce'];
+        }
+        if (preg_match('/(teach|educat|professor|lecturer)/i', $careerStr)) {
+            return $courses['Education'];
+        }
+        if (preg_match('/(law|attorney|advocate|legal)/i', $careerStr)) {
+            return $courses['Law'];
+        }
+        if (preg_match('/(science|data|analyst|research)/i', $careerStr)) {
+            return $courses['Science'];
+        }
+        if (preg_match('/(art|design|creative|media|communicat)/i', $careerStr)) {
+            return $courses['Arts'];
+        }
 
-        // Return general courses if no match
-        return $courses['Commerce'];
+        // Return empty array instead of defaulting to Commerce
+        // This allows the AI-generated courses to be used instead
+        return [];
     }
 
     /**
