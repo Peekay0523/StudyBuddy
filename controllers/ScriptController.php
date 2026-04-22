@@ -1023,6 +1023,15 @@ HTML;
     }
 
     /**
+     * Data Sheets selection page
+     */
+    public function dataSheets() {
+        requireLogin();
+        $pageTitle = "Data Sheets - StudySmart";
+        include __DIR__ . '/../templates/pages/data_sheets.php';
+    }
+
+    /**
      * API endpoint to get scripts by grade
      */
     public function getBrowseScripts($grade) {

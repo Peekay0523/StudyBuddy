@@ -163,6 +163,7 @@ $router->get('/upload-script', 'ScriptController@upload');
 $router->post('/upload-script', 'ScriptController@upload');
 $router->get('/browse-scripts/{grade}', 'ScriptController@browseScripts');
 $router->get('/api/browse-scripts/{grade}', 'ScriptController@getBrowseScripts');
+$router->get('/data-sheets', 'ScriptController@dataSheets');
 
 // View and Download Script files
 $router->get('/view-script/{id}', function($scriptId) {

@@ -874,6 +874,15 @@ include __DIR__ . '/../layouts/header.php';
                 <i class="fas fa-arrow-right" style="font-size: 14px;"></i>
             </a>
         </div>
+        
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
+            <a href="/data-sheets" class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; text-decoration: none; background: #667eea; margin-bottom: 15px;">
+                <i class="fas fa-file-invoice"></i> View Data Sheets
+            </a>
+            <p style="font-size: 13px; color: #64748b; margin-top: 10px;">
+                Need quick reference? Check out our <a href="/data-sheets" style="color: #667eea; font-weight: 600; text-decoration: none;">Mathematics & Science Data Sheets</a>.
+            </p>
+        </div>
     </div>
 </div>
 
