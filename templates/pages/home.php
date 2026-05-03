@@ -359,16 +359,17 @@ include __DIR__ . '/../layouts/header.php';
 @media (max-width: 768px) {
     .sample-results-section {
         padding: 40px 15px;
-        margin: 30px 0;
+        margin: 25px 0;
+        border-radius: 12px;
     }
 
     .section-heading {
-        font-size: 24px;
+        font-size: 26px;
     }
 
     .section-subheading {
         font-size: 14px;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
     }
 
     .sample-testimonials-grid {
@@ -396,19 +397,60 @@ include __DIR__ . '/../layouts/header.php';
 
     .testimonial-text {
         font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .sample-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-top: 35px;
+    }
+
+    .stat-item {
+        padding: 15px 10px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 40px 15px;
+    }
+
+    .hero-section h1 {
+        font-size: 28px !important;
+    }
+
+    .hero-section p {
+        font-size: 15px !important;
     }
 
     .sample-stats-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
     }
-
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        padding: 12px 20px;
+    }
+    
     .stat-value {
-        font-size: 40px;
-    }
-
-    .stat-label {
-        font-size: 14px;
+        font-size: 28px;
+        margin-bottom: 0;
     }
 }
 

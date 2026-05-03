@@ -16,110 +16,197 @@ window.MathJax = {
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
     .datasheet-wrapper {
         max-width: 1200px;
-        margin: 40px auto;
-        padding: 0 20px;
+        margin: 10px auto;
+        padding: 0 12px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
+
     .subject-switcher {
         display: flex;
-        gap: 15px;
-        margin-bottom: 30px;
+        gap: 8px;
+        margin-bottom: 15px;
         background: #f1f5f9;
-        padding: 8px;
-        border-radius: 14px;
-        width: fit-content;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        padding: 4px;
+        border-radius: 12px;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Hide scrollbar for Chrome/Safari */
+        -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
     }
+
+    .subject-switcher::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+
     .switch-btn {
-        padding: 12px 30px;
+        padding: 10px 14px;
+        min-height: 40px;
         border: none;
-        border-radius: 10px;
+        border-radius: 9px;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: center;
+        gap: 6px;
         color: #64748b;
         background: transparent;
-        font-size: 1rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        flex: 1;
+        min-width: fit-content;
     }
+
+    .switch-btn i {
+        font-size: 0.9rem;
+    }
+
     .switch-btn.active.science {
         background: #059669;
         color: white;
-        box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
     }
+
     .switch-btn.active.chemistry {
         background: #dc2626;
         color: white;
-        box-shadow: 0 10px 15px -3px rgba(220, 38, 38, 0.3);
+        box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
     }
+
+    .switch-btn.active.math {
+        background: #4f46e5;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+
     .sheet-card {
         background: white;
-        border-radius: 24px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-radius: 14px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
         overflow: hidden;
         display: none;
+        margin-top: 15px;
     }
+
     .sheet-card.active {
         display: block;
-        animation: slideUp 0.5s ease-out;
+        animation: fadeIn 0.4s ease-out;
     }
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
+
     .sheet-header {
-        padding: 35px 40px;
+        padding: 16px;
+        padding-left: max(16px, calc(16px + env(safe-area-inset-left)));
+        padding-right: max(16px, calc(16px + env(safe-area-inset-right)));
         border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
         background: #fafafa;
     }
-    .sheet-body {
-        padding: 45px 40px;
-    }
-    .formula-section {
-        margin-bottom: 50px;
-    }
-    .section-title {
-        font-size: 1.25rem;
+
+    .sheet-header h2 {
+        font-size: 1.15rem;
+        line-height: 1.2;
+        margin: 0 0 4px 0 !important;
+        color: #1e293b;
         font-weight: 800;
-        margin-bottom: 25px;
+    }
+
+    .sheet-header p {
+        margin: 0 !important;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    .sheet-body {
+        padding: 16px;
+        padding-left: max(16px, calc(16px + env(safe-area-inset-left)));
+        padding-right: max(16px, calc(16px + env(safe-area-inset-right)));
+    }
+
+    .formula-section {
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        letter-spacing: -0.02em;
+        gap: 8px;
     }
-    .science .section-title { color: #059669; }
-    .math .section-title { color: #4f46e5; }
-    .chemistry .section-title { color: #dc2626; }
-    
+
     .formula-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 30px;
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
+
     .formula-item {
         background: white;
-        padding: 24px;
-        border-radius: 16px;
+        padding: 14px;
+        border-radius: 10px;
         border: 1px solid #f1f5f9;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         transition: all 0.2s;
-        position: relative;
-    }
-    .formula-item:hover {
-        border-color: #e2e8f0;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-        transform: translateY(-2px);
         cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        overflow: hidden;
     }
-    
+
+    .formula-math {
+        font-size: 0.95rem;
+        color: #1e293b;
+        line-height: 1.6;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .constants-container {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 12px;
+        border: 1px solid #f1f5f9;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .constants-table {
+        width: 100%;
+        min-width: 280px;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .constants-table td {
+        padding: 10px 8px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
     /* Modal Styles */
     .formula-modal {
         display: none;
@@ -130,149 +217,94 @@ window.MathJax = {
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
-        animation: fadeIn 0.3s ease-out;
+        backdrop-filter: blur(2px);
+        padding: 12px;
+        align-items: center;
+        justify-content: center;
     }
-    
+
     .formula-modal.show {
         display: flex;
-        align-items: center;
-        justify-content: center;
     }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    
+
     .modal-content {
         background-color: white;
-        padding: 40px;
-        border-radius: 20px;
-        max-width: 600px;
-        width: 90%;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: slideUp 0.3s ease-out;
-        max-height: 80vh;
+        padding: 20px;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        max-height: 90vh;
         overflow-y: auto;
     }
-    
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 20px;
+
+    /* Media Queries for larger screens */
+    @media (min-width: 640px) {
+        .datasheet-wrapper {
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .subject-switcher {
+            width: fit-content;
+            margin: 0 auto 25px;
+            padding: 6px;
+        }
+
+        .switch-btn {
+            padding: 12px 24px;
+            font-size: 0.95rem;
+        }
+
+        .formula-grid {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .sheet-header {
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sheet-header h2 {
+            font-size: 1.4rem;
+        }
+
+        .sheet-body {
+            padding: 32px;
+        }
     }
-    
-    .modal-title {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #1e293b;
-        margin: 0;
+
+    @media (min-width: 1024px) {
+        .datasheet-wrapper {
+            max-width: 1100px;
+        }
+
+        .formula-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
-    
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 28px;
-        font-weight: bold;
-        color: #94a3b8;
-        cursor: pointer;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        transition: all 0.2s;
-    }
-    
-    .close-btn:hover {
-        background-color: #f1f5f9;
-        color: #475569;
-    }
-    
-    .modal-section {
-        margin-bottom: 25px;
-    }
-    
-    .modal-section-title {
-        font-size: 0.875rem;
-        color: #94a3b8;
-        margin-bottom: 10px;
-        display: block;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
-    .modal-description {
-        color: #475569;
-        line-height: 1.6;
-        font-size: 1rem;
-        margin-bottom: 15px;
-    }
-    
-    .modal-usage {
-        background: #f8fafc;
-        border-left: 4px solid #667eea;
-        padding: 15px;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        color: #475569;
-        margin-top: 15px;
-    }
-    .formula-label {
-        font-size: 0.75rem;
-        color: #94a3b8;
-        margin-bottom: 12px;
-        display: block;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .formula-math {
-        font-size: 1.3rem;
-        color: #1e293b;
-        line-height: 1.6;
-    }
-    .constants-container {
-        background: #f8fafc;
-        border-radius: 16px;
-        padding: 25px;
-        border: 1px solid #f1f5f9;
-    }
-    .constants-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .constants-table td {
-        padding: 14px 0;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 0.95rem;
-    }
-    .constants-table tr:last-child td { border-bottom: none; }
-    .sym { font-weight: 700; color: #1e293b; width: 60px; font-size: 1.1rem; }
-    .desc { color: #64748b; }
-    .val { text-align: right; font-weight: 600; color: #1e293b; white-space: nowrap; padding-left: 20px; }
 </style>
 
 <div class="datasheet-wrapper">
-    <div style="margin-bottom: 25px;">
-        <a href="/upload-script" class="btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 600;">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
+    <div style="margin-bottom: 15px;">
+        <a href="/upload-script" class="btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; min-height: 44px; padding: 10px 16px;">
+            <i class="fas fa-arrow-left"></i> <span>Back</span>
         </a>
     </div>
 
     <div class="subject-switcher">
         <button onclick="switchTab('science')" id="btn-science" class="switch-btn active science">
-            <i class="fas fa-atom"></i> Physical Science
+            <i class="fas fa-atom"></i> <span>Science</span>
         </button>
         <button onclick="switchTab('chemistry')" id="btn-chemistry" class="switch-btn chemistry">
-            <i class="fas fa-flask"></i> Chemistry
+            <i class="fas fa-flask"></i> <span>Chemistry</span>
         </button>
         <button onclick="switchTab('math')" id="btn-math" class="switch-btn math">
-            <i class="fas fa-calculator"></i> Mathematics
+            <i class="fas fa-calculator"></i> <span>Math</span>
         </button>
     </div>
 
@@ -280,11 +312,11 @@ window.MathJax = {
     <div id="science-sheet" class="sheet-card active science">
         <div class="sheet-header">
             <div>
-                <h2 style="margin: 0; color: #1e293b; font-weight: 800;">Physical Science Data Sheet</h2>
-                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500;">CAPS Curriculum Grade 10-12 Reference</p>
+                <h2 style="margin: 0; color: #1e293b; font-weight: 800; font-size: 1.3rem;">Physical Science Data Sheet</h2>
+                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500; font-size: 0.85rem;">CAPS Curriculum Grade 10-12 Reference</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-secondary" style="padding: 8px 16px;"><i class="fas fa-print"></i> Print</button>
+            <div class="sheet-header-actions">
+                <button class="btn-secondary" style="padding: 8px 12px; font-size: 0.85rem;"><i class="fas fa-print"></i> <span style="display: none;">Print</span></button>
             </div>
         </div>
         <div class="sheet-body">
@@ -389,11 +421,11 @@ window.MathJax = {
     <div id="chemistry-sheet" class="sheet-card chemistry">
         <div class="sheet-header">
             <div>
-                <h2 style="margin: 0; color: #1e293b; font-weight: 800;">Chemistry Data Sheet</h2>
-                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500;">CAPS Curriculum Grade 10-12 Reference</p>
+                <h2 style="margin: 0; color: #1e293b; font-weight: 800; font-size: 1.3rem;">Chemistry Data Sheet</h2>
+                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500; font-size: 0.85rem;">CAPS Curriculum Grade 10-12 Reference</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-secondary" style="padding: 8px 16px;"><i class="fas fa-print"></i> Print</button>
+            <div class="sheet-header-actions">
+                <button class="btn-secondary" style="padding: 8px 12px; font-size: 0.85rem;"><i class="fas fa-print"></i> <span style="display: none;">Print</span></button>
             </div>
         </div>
         <div class="sheet-body">
@@ -514,11 +546,11 @@ window.MathJax = {
     <div id="math-sheet" class="sheet-card math">
         <div class="sheet-header">
             <div>
-                <h2 style="margin: 0; color: #1e293b; font-weight: 800;">Mathematics Data Sheet</h2>
-                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500;">CAPS Curriculum Grade 10-12 Reference</p>
+                <h2 style="margin: 0; color: #1e293b; font-weight: 800; font-size: 1.3rem;">Mathematics Data Sheet</h2>
+                <p style="margin: 5px 0 0; color: #64748b; font-weight: 500; font-size: 0.85rem;">CAPS Curriculum Grade 10-12 Reference</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-secondary" style="padding: 8px 16px;"><i class="fas fa-print"></i> Print</button>
+            <div class="sheet-header-actions">
+                <button class="btn-secondary" style="padding: 8px 12px; font-size: 0.85rem;"><i class="fas fa-print"></i> <span style="display: none;">Print</span></button>
             </div>
         </div>
         <div class="sheet-body">
@@ -632,6 +664,9 @@ window.MathJax = {
 </div>
 
 <script>
+    const isMobile = () => window.innerWidth < 640;
+    const isTablet = () => window.innerWidth >= 640 && window.innerWidth < 1024;
+
     function switchTab(subject) {
         document.getElementById('btn-science').classList.toggle('active', subject === 'science');
         document.getElementById('btn-chemistry').classList.toggle('active', subject === 'chemistry');
@@ -641,10 +676,21 @@ window.MathJax = {
         document.getElementById('chemistry-sheet').classList.toggle('active', subject === 'chemistry');
         document.getElementById('math-sheet').classList.toggle('active', subject === 'math');
         
+        // Scroll to the active sheet on mobile
+        if (isMobile()) {
+            setTimeout(() => {
+                const activeSheet = document.querySelector('.sheet-card.active');
+                if (activeSheet) {
+                    activeSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+        
         if (window.MathJax && window.MathJax.typesetPromise) {
             MathJax.typesetPromise();
         }
-    }    
+    }
+
     function openFormulaModal(element) {
         const title = element.getAttribute('data-title');
         const formula = element.getAttribute('data-formula');
@@ -659,6 +705,9 @@ window.MathJax = {
         const modal = document.getElementById('formulaModal');
         modal.classList.add('show');
         
+        // Prevent body scroll on mobile when modal is open
+        document.body.style.overflow = 'hidden';
+        
         // Reprocess MathJax for the new content
         if (window.MathJax && window.MathJax.typesetPromise) {
             MathJax.typesetPromise();
@@ -667,23 +716,47 @@ window.MathJax = {
     
     function closeFormulaModal() {
         document.getElementById('formulaModal').classList.remove('show');
+        document.body.style.overflow = '';
     }
     
-    // Close modal when clicking outside the content
     document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('formulaModal');
-        window.addEventListener('click', function(event) {
+        
+        // Close modal when clicking outside the content
+        modal.addEventListener('click', function(event) {
             if (event.target === modal) {
                 closeFormulaModal();
             }
         });
         
-        // Allow Escape key to close modal
+        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeFormulaModal();
             }
         });
-    });</script>
+        
+        // Improve touch handling for formula items on mobile
+        const formulaItems = document.querySelectorAll('.formula-item');
+        formulaItems.forEach(item => {
+            item.addEventListener('touchend', function(e) {
+                // Prevent double-tap issues on mobile
+                if (e.target === this || this.contains(e.target)) {
+                    e.preventDefault();
+                    openFormulaModal(this);
+                }
+            });
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    MathJax.typesetPromise();
+                }
+            }, 100);
+        });
+    });
+</script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

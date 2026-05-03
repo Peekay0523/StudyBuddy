@@ -137,6 +137,10 @@ document.addEventListener('keydown', function(e) {
     .dashboard-invite-card {
         min-width: 100% !important;
     }
+    .stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+    }
 }
 </style>
 
@@ -215,46 +219,6 @@ document.addEventListener('keydown', function(e) {
             </div>
         </div>
 
-        <!-- Score Breakdown -->
-        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
-            <h4 style="margin: 0 0 15px 0; font-size: 14px; opacity: 0.9;"><i class="fas fa-calculator"></i> Score Breakdown:</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
-                        <i class="fas fa-file-upload"></i> Scripts
-                    </div>
-                    <div style="font-size: 20px; font-weight: 700;"><?php echo $scriptsCount; ?></div>
-                </div>
-                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
-                        <i class="fas fa-calendar-check"></i> Study Plans
-                    </div>
-                    <div style="font-size: 20px; font-weight: 700;"><?php echo $plansCount; ?></div>
-                </div>
-                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; position: relative; overflow: hidden;">
-                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
-                        <i class="fas fa-fire-alt"></i> Login Streak
-                    </div>
-                    <div style="font-size: 20px; font-weight: 700;"><?php echo $loginStreakPoints; ?></div>
-                    <?php if ($loginStreak > 0): ?>
-                        <div style="font-size: 10px; opacity: 0.7; margin-top: 4px;">
-                            <i class="fas fa-chart-line"></i> <?php echo $loginStreak; ?> day streak
-                        </div>
-                        <?php if ($loginStreak % 3 !== 0): ?>
-                            <div style="font-size: 10px; opacity: 0.7; margin-top: 2px;">
-                                <i class="fas fa-gift"></i> <?php echo $nextRewardAt; ?> more to earn point
-                            </div>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                </div>
-                <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
-                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 5px;">
-                        <i class="fas fa-plus-circle"></i> Total
-                    </div>
-                    <div style="font-size: 20px; font-weight: 700;"><?php echo $activityScore; ?></div>
-                </div>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -266,6 +230,7 @@ document.addEventListener('keydown', function(e) {
     <a href="/study-plan" class="action orange"><i class="fas fa-calendar-check icon-sm"></i> Study Planner</a>
     <a href="/upload-report-card" class="action green"><i class="fas fa-compass icon-sm"></i> Career Guide</a>
     <a href="/ai-chat" class="action purple"><i class="fas fa-robot icon-sm"></i> AI Assistant</a>
+    <a href="/simulate" class="action yellow"><i class="fas fa-vial icon-sm"></i> Simulate</a>
 </section>
 
 <!-- Invite Friends Modal -->

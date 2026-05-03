@@ -19,16 +19,30 @@ foreach ($staticPaths as $path) {
         // error_log("Looking for file: " . $file . " exists: " . (file_exists($file) ? 'yes' : 'no'));
         
         if (file_exists($file)) {
-            // Set correct MIME type for service worker and manifest
-            if (pathinfo($file, PATHINFO_EXTENSION) === 'json') {
-                header('Content-Type: application/json');
-            } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'js' && basename($file) === 'service-worker.js') {
-                header('Content-Type: application/javascript');
-            } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'png') {
-                header('Content-Type: image/png');
+            // Set correct MIME type
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+            $mimeTypes = [
+                'css' => 'text/css',
+                'js' => 'application/javascript',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'svg' => 'image/svg+xml',
+                'ico' => 'image/x-icon',
+                'json' => 'application/json',
+                'woff' => 'font/woff',
+                'woff2' => 'font/woff2',
+                'ttf' => 'font/ttf',
+                'otf' => 'font/otf'
+            ];
+
+            if (isset($mimeTypes[$ext])) {
+                header('Content-Type: ' . $mimeTypes[$ext]);
             }
             return false; // PHP serves it directly
-        } else {
+        }
+ else {
             // File doesn't exist - return 404
             http_response_code(404);
             echo "404 - File not found: " . $file;

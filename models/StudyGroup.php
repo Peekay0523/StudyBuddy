@@ -61,6 +61,26 @@ class StudyGroup {
     }
 
     /**
+     * Get top active available study groups
+     */
+    public function getTopActiveAvailable($userId, $limit = 5) {
+        $stmt = $this->db->prepare("
+            SELECT sg.*, u.username as creator_name,
+                   (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.study_group_id = sg.id) as member_count,
+                   (SELECT COUNT(*) FROM study_group_scripts sgs WHERE sgs.study_group_id = sg.id) as script_count
+            FROM study_groups sg
+            JOIN users u ON sg.creator_user_id = u.id
+            WHERE sg.is_active = 1 
+            AND sg.id NOT IN (SELECT study_group_id FROM study_group_members WHERE user_id = ?)
+            AND sg.creator_user_id != ?
+            ORDER BY script_count DESC, sg.created_at DESC
+            LIMIT ?
+        ");
+        $stmt->execute([$userId, $userId, $limit]);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Get study groups created by a user
      */
     public function findByCreator($userId) {

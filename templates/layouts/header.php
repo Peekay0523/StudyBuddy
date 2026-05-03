@@ -67,6 +67,7 @@
                         <?php endif; ?>
                     </a>
                     <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+                    <a href="/simulate" class="<?php echo ($currentPage ?? '') === 'simulate' ? 'active' : ''; ?>"><i class="fas fa-vial icon-sm"></i> Simulate</a>
                     <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
                 <?php endif; ?>
             <?php else: ?>

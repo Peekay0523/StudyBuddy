@@ -89,6 +89,38 @@ class UserActivity {
     }
 
     /**
+     * Get top students based on activity and points
+     */
+    public function getTopStudents($limit = 2) {
+        $stmt = $this->db->prepare("
+            SELECT 
+                u.id,
+                u.username,
+                u.email,
+                ua.last_active,
+                ua.is_online,
+                ua.grade_level,
+                p.points,
+                s.plan as subscription_plan,
+                (SELECT COUNT(*) FROM scripts sc WHERE sc.user_id = u.id) as scripts_uploaded,
+                (SELECT COUNT(*) FROM study_group_members sgm WHERE sgm.user_id = u.id) as groups_count
+            FROM users u
+            LEFT JOIN user_activity ua ON u.id = ua.user_id
+            LEFT JOIN user_points p ON u.id = p.user_id
+            LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+            WHERE u.role = 'student'
+            ORDER BY 
+                CASE WHEN s.plan IS NOT NULL AND s.plan != 'free' THEN 0 ELSE 1 END,
+                p.points DESC,
+                scripts_uploaded DESC,
+                ua.last_active DESC
+            LIMIT ?
+        ");
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Get online students available for study help
      */
     public function getStudyBuddies($currentUserId, $limit = 5) {

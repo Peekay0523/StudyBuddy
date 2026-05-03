@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<?php
+include __DIR__ . '/../layouts/header.php';
+?>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Lab - Science & Maths App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        /* Global Responsive Adjustments */
+:root {
+    --primary-color: #6366f1;
+    --secondary-color: #9333ea;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.container {
+    max-width: 1200px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+.card {
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: none;
+    border-radius: 12px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Touch-friendly buttons */
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.thin-btn {
+    font-size: 0.9rem;
+    border-radius: 8px !important;
+    margin-bottom: 8px;
+    border: 1px solid #e9ecef !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fff;
+    padding: 12px 15px !important;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.thin-btn:hover {
+    background-color: #f1f3f5;
+    transform: translateX(5px);
+}
+
+.thin-btn.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-color: #007bff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+}
+
+/* Custom Range Styling */
+.form-range {
+    height: 1.5rem;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    background: #e9ecef;
+    height: 8px;
+    border-radius: 4px;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #007bff;
+    margin-top: -6px;
+    height: 20px;
+    width: 20px;
+    transition: transform 0.1s;
+}
+
+.form-range::-webkit-slider-thumb:active {
+    transform: scale(1.3);
+}
+
+/* Canvas Responsiveness */
+canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+}
+
+#geometry-canvas-container, #pendulum-container, #freefall-container, #projectile-container, 
+#physics-canvas-container, #chemistry-canvas-container, #organic-canvas-container,
+.simulation-box {
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100% !important;
+    position: relative;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+section h2 {
+    border-left: 4px solid #007bff;
+    padding-left: 15px;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+@media (max-width: 576px) {
+    section h2 {
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+    }
+    section {
+        margin-bottom: 2rem !important;
+    }
+}
+
+/* Element Buttons - Scrollable on Mobile */
+.element-scroll-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    padding: 6px 0 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar */
+    justify-content: center; /* Center buttons */
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    width: 100%;
+    white-space: nowrap;
+}
+
+.element-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .element-scroll-container {
+        justify-content: flex-start; /* Start from left to allow scrolling */
+        padding-left: 70px; /* Space for arrows */
+        padding-right: 70px;
+        gap: 10px;
+    }
+
+    .element-btn {
+        flex: 0 0 auto !important;
+        min-width: 58px;
+        max-width: 90px !important;
+        width: auto !important;
+        padding: 8px 12px !important;
+        font-size: 0.85rem;
+        white-space: nowrap !important;
+    }
+}
+
+.element-nav-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 0 8px;
+}
+
+.element-btn {
+    flex: 0 0 auto !important;
+    min-width: 45px;
+    max-width: 90px !important;
+    width: auto !important; /* Override .thin-btn width: 100% */
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    scroll-snap-align: start;
+    white-space: nowrap !important;
+}
+
+.scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(221,221,221,0.8);
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    display: none; /* Hidden by default, show on mobile */
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.92;
+}
+
+@media (max-width: 768px) {
+    .scroll-arrow {
+        display: flex;
+    }
+}
+
+.left-arrow { left: 5px; }
+.right-arrow { right: 5px; }
+
+.element-btn {
+    flex: 0 0 auto;
+    min-width: 45px;
+    width: auto !important; /* Override .thin-btn width: 100% */
+    scroll-snap-align: start;
+}
+
+/* Simulation Buttons - Scrollable on Mobile */
+@media (max-width: 768px) {
+    .simulation-scroll-container {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    }
+    .simulation-scroll-container::-webkit-scrollbar {
+        display: none;
+    }
+    .simulation-scroll-container .list-group-item {
+        flex: 0 0 auto;
+        width: auto !important;
+        white-space: nowrap;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        margin-bottom: 0;
+    }
+    .simulation-scroll-container .thin-btn {
+        padding: 8px 15px !important;
+    }
+}
+
+/* REACTION SIMULATOR RESPONSIVE GRID */
+.reaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid #eee;
+    background: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.reaction-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.reaction-actions button {
+    margin-left: 10px;
+}
+
+.btn-gradient {
+    background: linear-gradient(135deg, #6366f1, #9333ea);
+    color: white;
+    border: none;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(135deg, #5558e3, #8224db);
+    color: white;
+}
+
+.reaction-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to stack for mobile */
+    gap: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+@media (min-width: 992px) {
+    .reaction-container {
+        grid-template-columns: 320px 1fr;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .reaction-container {
+        grid-template-columns: 1fr 1fr;
+    }
+    .simulation-box {
+        grid-column: span 2;
+        order: -1;
+    }
+}
+
+.reactant-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.reactant-item input {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.simulation-box {
+    height: 400px;
+    border-radius: 16px;
+    background: radial-gradient(circle, #f1f5f9, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.controls-slider {
+    margin-bottom: 20px;
+}
+
+.controls-slider label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.reaction-progress {
+    height: 10px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.reaction-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Info Overlay Styles */
+.info-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+}
+
+.info-overlay.hidden {
+    display: none !important;
+}
+
+.info-dialog {
+    background: white;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.info-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.info-content {
+    padding: 25px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.info-card {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    border-left: 4px solid #6366f1;
+}
+
+.info-card h6 {
+    color: #4338ca;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.info-card p {
+    font-size: 0.9rem;
+    color: #475569;
+    margin: 0;
+}
+
+.info-tips {
+    background: #f0fdf4;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #bbf7d0;
+}
+
+.info-tips h6 {
+    color: #166534;
+    font-weight: 700;
+}
+
+.info-tips ul {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    color: #166534;
+}
+
+.info-footer {
+    padding: 15px 25px;
+    border-top: 1px solid #eee;
+    text-align: right;
+}
+
+/* Mobile Specific Tweaks */
+@media (max-width: 576px) {
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    
+    .navbar-brand {
+        font-size: 1rem;
+    }
+
+    .reaction-header {
+        padding: 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .reaction-actions {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+    }
+    
+    .reaction-actions button {
+        margin: 0;
+        flex: 1 1 auto;
+        font-size: 0.75rem;
+    }
+
+    .simulation-box {
+        height: 250px !important;
+        min-height: 250px !important;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+
+    .list-group-item {
+        padding: 10px 12px;
+    }
+}
+
+
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="simulate"><i class="fas fa-arrow-left me-2"></i>Back to Simulations</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4 pb-5">
+        <h1 class="text-center mb-4">Physics Simulator</h1>
+
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm border-0 bg-white p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h2 class="h4 mb-0">Simulation Lab</h2>
+                            <p class="text-muted small mb-0">Select a topic to start experimenting.</p>
+                        </div>
+                        <div class="col-md-8">
+                            <select id="physics-topic-select" class="form-select form-select-lg shadow-sm border-primary">
+                                <option value="pendulum">Simple Pendulum</option>
+                                <option value="freefall">Free Fall</option>
+                                <option value="projectile">Projectile Motion</option>
+                                <option value="doppler">Doppler Effect</option>
+                                <option value="newton1">Newton's 1st Law</option>
+                                <option value="newton2">Newton's 2nd Law</option>
+                                <option value="newton3">Newton's 3rd Law</option>
+                                <option value="gravity">Gravitation</option>
+                                <option value="coulomb">Coulomb's Law</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Viewport -->
+            <div class="col-md-12">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-0">
+                        <div id="physics-canvas-container" class="text-center bg-white d-flex justify-content-center align-items-center" style="min-height: 500px; height: auto;">
+                            <!-- p5.js canvas -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls & Calculations Card -->
+                <div class="card shadow-sm border-0 bg-white p-3 mb-4">
+                    <div id="physics-top-buttons"></div>
+
+                    <div id="physics-formula-display" class="bg-light p-3 rounded mb-3 text-center border" style="cursor: pointer;" title="Click for details">
+                        <!-- Formula injected here -->
+                        <div class="fw-bold text-primary h5 mb-1" id="active-formula">T = 2π√(L/g)</div>
+                        <div class="text-muted small" id="formula-desc">Period of a Pendulum</div>
+                        <div class="text-primary mt-2" style="font-size: 0.7rem;"><i class="fas fa-info-circle"></i> Click for details</div>
+                    </div>
+
+                    <div id="physics-controls">
+                        <!-- Dynamic sliders injected here -->
+                    </div>
+                </div>
+
+                <div class="mt-3 text-muted small text-center" id="interaction-hint">
+                    <i class="fas fa-mouse me-1"></i> Use your mouse to interact with the simulation.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Law Details Modal -->
+    <div class="modal fade" id="lawModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lawTitle">Law Definition</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="lawDefinition" class="mb-3 lead small"></div>
+                    <h6 class="border-bottom pb-2">Symbols:</h6>
+                    <ul id="lawSymbols" class="list-group list-group-flush small"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/physics_lab.js"></script>
+</body>
+</html>

@@ -14,70 +14,6 @@ include __DIR__ . '/../layouts/header.php';
     </button>
 </div>
 
-<!-- Study Buddies Section -->
-<section style="margin-bottom: 40px;">
-    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px;">
-        <h2 style="margin: 0 0 20px 0; color: #166534; font-size: 20px;">
-            <i class="fas fa-user-friends" style="color: #22c55e;"></i> Find Study Buddies
-        </h2>
-        <p style="color: #166534; font-size: 14px; margin-bottom: 20px;">
-            Connect with active students who can help you with academic assistance
-        </p>
-
-        <?php if (empty($studyBuddies)): ?>
-            <div style="text-align: center; padding: 30px; color: #64748b;">
-                <i class="fas fa-users-slash" style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                <p>No study buddies available at the moment. Check back later!</p>
-            </div>
-        <?php else: ?>
-            <div class="study-buddies-list">
-                <?php foreach ($studyBuddies as $buddy): ?>
-                    <div class="buddy-item" style="background: white; border: 1px solid #86efac; border-radius: 10px; padding: 15px 20px 18px 20px; margin-bottom: 21px; display: flex; align-items: center; gap: 20px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(34, 197, 94, 0.1);">
-                        <!-- Avatar & Name -->
-                        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 200px;">
-                            <div style="flex-shrink: 0; display: flex; align-items: center;">
-                                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 18px;">
-                                    <?php echo strtoupper(substr($buddy['username'], 0, 1)); ?>
-                                </div>
-                            </div>
-                            <div style="min-width: 0;">
-                                <h3 style="margin: 0; font-size: 16px; color: #1e293b; font-weight: 600;">
-                                    <?php echo htmlspecialchars($buddy['username']); ?>
-                                </h3>
-                                <p style="margin: 3px 0 0 0; font-size: 12px; color: <?php echo $buddy['is_online'] ? '#22c55e' : '#64748b'; ?>; font-weight: 500;">
-                                    <i class="fas fa-circle" style="font-size: 6px;"></i> <?php echo $buddy['is_online'] ? 'Active now' : 'Last active: ' . date('M d, H:i', strtotime($buddy['last_active'])); ?>
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Stats -->
-                        <div style="display: flex; gap: 15px; flex-shrink: 0;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 18px; font-weight: 700; color: #166534;"><?php echo $buddy['scripts_uploaded'] ?? 0; ?></div>
-                                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">scripts</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 18px; font-weight: 700; color: #0369a1;"><?php echo $buddy['groups_count'] ?? 0; ?></div>
-                                <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">groups</div>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
-                            <a href="mailto:<?php echo htmlspecialchars($buddy['email']); ?>" style="color: #0ea5e9; font-size: 18px; transition: all 0.2s ease;" title="Ask for Help" onmouseover="this.style.color='#0284c7';this.style.transform='scale(1.1)'" onmouseout="this.style.color='#0ea5e9';this.style.transform='scale(1)'">
-                                <i class="fas fa-envelope"></i>
-                            </a>
-                            <button onclick="inviteToGroupModal('<?php echo htmlspecialchars($buddy['username']); ?>')" style="color: #64748b; font-size: 18px; background: none; border: none; cursor: pointer; transition: all 0.2s ease;" title="Invite" onmouseover="this.style.color='#475569';this.style.transform='scale(1.1)'" onmouseout="this.style.color='#64748b';this.style.transform='scale(1)'">
-                                <i class="fas fa-user-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-</section>
-
 <style>
 .study-buddies-list {
     display: flex;
@@ -455,12 +391,12 @@ include __DIR__ . '/../layouts/header.php';
                         <?php echo htmlspecialchars(substr($group['description'] ?? 'No description', 0, 100)); ?>
                         <?php if (strlen($group['description'] ?? '') > 100): ?>...<?php endif; ?>
                     </p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #94a3b8;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #94a3b8; margin-bottom: 15px;">
                         <span>
                             <i class="fas fa-users"></i> <?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members
                         </span>
-                        <span>
-                            <i class="fas fa-file-upload"></i> <?php echo $group['script_count'] ?? 0; ?> scripts
+                        <span style="background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ffedd5;">
+                            <i class="fas fa-file-upload" style="color: #f97316;"></i> <?php echo $group['script_count'] ?? 0; ?> activity
                         </span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
@@ -478,11 +414,18 @@ include __DIR__ . '/../layouts/header.php';
 <!-- Available Study Groups Section -->
 <section style="margin-bottom: 40px;">
     <h2 style="font-size: 20px; margin-bottom: 20px; color: #1e293b;">
-        <i class="fas fa-globe" style="color: #22c55e;"></i> Available Study Groups
+        <i class="fas fa-fire" style="color: #ef4444;"></i> Top 5 Most Active Study Groups
     </h2>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 20px; margin-top: -15px;">
+        Join these highly active groups to access more shared study materials and discussions!
+    </p>
     
     <?php if (empty($availableGroups)): ?>
-
+        <div style="background: #f8fafc; border-radius: 12px; padding: 40px; text-align: center; border: 1px dashed #cbd5e1;">
+            <i class="fas fa-users-slash" style="font-size: 48px; color: #cbd5e1; margin-bottom: 15px;"></i>
+            <p style="color: #64748b; font-size: 16px;">No other study groups available right now.</p>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">Why not create your own study group?</p>
+        </div>
     <?php else: ?>
         <div class="features-section" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
             <?php foreach ($availableGroups as $group): ?>
@@ -505,8 +448,8 @@ include __DIR__ . '/../layouts/header.php';
                         <span>
                             <i class="fas fa-users"></i> <?php echo $group['member_count']; ?>/<?php echo $group['max_members']; ?> members
                         </span>
-                        <span>
-                            <i class="fas fa-file-upload"></i> <?php echo $group['script_count'] ?? 0; ?> scripts
+                        <span style="background: #fff7ed; color: #c2410c; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ffedd5;">
+                            <i class="fas fa-file-upload" style="color: #f97316;"></i> <?php echo $group['script_count'] ?? 0; ?> activity
                         </span>
                     </div>
                     

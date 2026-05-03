@@ -38,19 +38,10 @@ class StudyGroupController {
         $isFreeUser = ($currentPlan === 'free');
 
         // Free users can view the page but with limited functionality
-        $allGroups = $this->studyGroupModel->getAllActive();
         $myGroups = $this->studyGroupModel->findByMember($user['id']);
-
-        // Get IDs of groups user has already joined
-        $joinedGroupIds = array_column($myGroups, 'id');
-
-        // Filter out groups user has already joined from available groups
-        $availableGroups = array_filter($allGroups, function($group) use ($joinedGroupIds, $user) {
-            return !in_array($group['id'], $joinedGroupIds) && $group['creator_user_id'] != $user['id'];
-        });
-
-        // Get potential study buddies
-        $studyBuddies = $activityModel->getStudyBuddies($user['id'], 5);
+        
+        // Show top 5 most active available groups
+        $availableGroups = $this->studyGroupModel->getTopActiveAvailable($user['id'], 5);
 
         include __DIR__ . '/../templates/pages/study_group.php';
     }

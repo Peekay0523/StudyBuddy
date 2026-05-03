@@ -273,6 +273,66 @@ $router->post('/api/delete-institution-application', 'ReportCardController@delet
 $router->get('/ai-chat', 'AIChatController@index');
 $router->post('/api/chatbot', 'AIChatController@chat');
 
+// Simulation
+$router->get('/simulate', function() {
+    requireStudent();
+    $pageTitle = 'Simulation - StudySmart';
+    $currentPage = 'simulate';
+    include __DIR__ . '/../templates/pages/simulate.php';
+});
+
+// Maths Lab
+$router->get('/math.php', function() {
+    requireStudent();
+    $pageTitle = 'Mathematics Lab - StudySmart';
+    $currentPage = 'math';
+    include __DIR__ . '/../templates/pages/math.php';
+});
+$router->get('/math', function() {
+    requireStudent();
+    $pageTitle = 'Mathematics Lab - StudySmart';
+    $currentPage = 'math';
+    include __DIR__ . '/../templates/pages/math.php';
+});
+
+// Physics Lab
+$router->get('/physics.php', function() {
+    requireStudent();
+    $pageTitle = 'Physics Lab - StudySmart';
+    $currentPage = 'physics';
+    include __DIR__ . '/../templates/pages/physics.php';
+});
+$router->get('/physics', function() {
+    requireStudent();
+    $pageTitle = 'Physics Lab - StudySmart';
+    $currentPage = 'physics';
+    include __DIR__ . '/../templates/pages/physics.php';
+});
+
+// Chemistry Lab
+$router->get('/chemistry.php', function() {
+    requireStudent();
+    $pageTitle = 'Chemistry Lab - StudySmart';
+    $currentPage = 'chemistry';
+    include __DIR__ . '/../templates/pages/chemistry.php';
+});
+$router->get('/chemistry', function() {
+    requireStudent();
+    $pageTitle = 'Chemistry Lab - StudySmart';
+    $currentPage = 'chemistry';
+    include __DIR__ . '/../templates/pages/chemistry.php';
+});
+
+// Redirect index.php to dashboard for backward compatibility in links
+$router->get('/index.php', function() {
+    if (isLoggedIn()) {
+        header('Location: /dashboard');
+    } else {
+        header('Location: /');
+    }
+    exit;
+});
+
 // Study Groups
 $router->get('/study-group', 'StudyGroupController@index');
 $router->post('/study-group/create', 'StudyGroupController@create');
@@ -768,7 +828,8 @@ if (isset($_SERVER['REQUEST_URI'])) {
                 'jpeg' => 'image/jpeg',
                 'gif' => 'image/gif',
                 'svg' => 'image/svg+xml',
-                'ico' => 'image/x-icon'
+                'ico' => 'image/x-icon',
+                'json' => 'application/json'
             ];
 
             if (isset($mimeTypes[$ext])) {
