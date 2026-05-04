@@ -352,6 +352,7 @@ include __DIR__ . '/../layouts/header.php';
         width: 100%;
     }
 }
+
 </style>
 
 <!-- My Study Groups Section -->

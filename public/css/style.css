@@ -457,7 +457,10 @@ body {
 .card.orange { background: linear-gradient(135deg, #f97316, #ea580c); }
 .card.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .card.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
-
+.action.orange {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
 .card p {
     font-size: 14px;
     opacity: 0.9;

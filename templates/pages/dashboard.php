@@ -104,7 +104,7 @@ document.addEventListener('keydown', function(e) {
         </p>
     </div>
 
-    <!-- Right: Invite Friends Card -->
+    <!-- Right: Invite Friends Card 
     <div class="dashboard-invite-card" style="flex-shrink: 0;">
         <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15); min-width: 320px;">
             <div style="display: flex; align-items: flex-start; gap: 15px;">
@@ -126,10 +126,11 @@ document.addEventListener('keydown', function(e) {
             </div>
         </div>
     </div>
+    -->
 </div>
 
 <!-- Responsive Styles -->
-<style>
+<style> 
 @media (max-width: 900px) {
     .dashboard-header-grid {
         grid-template-columns: 1fr !important;
@@ -142,26 +143,91 @@ document.addEventListener('keydown', function(e) {
         gap: 15px !important;
     }
 }
+/* === DECORATIONS ONLY (no layout changes) === */
+.action.orange {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
+.stats .card {
+    position: relative !important;
+    overflow: hidden !important;
+}
+.card h2,
+.card h2::before,
+.card h2::after {
+    border-left: none !important;
+    content: none !important;
+}
+/* Big soft circle (top right) */
+
+
+/* Smaller shape (bottom right) */
+.stats .card::before {
+    content: "" !important;
+    position: absolute !important;
+    bottom: -30px !important;
+    right: -20px !important;
+    width: 100px !important;
+    height: 100px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50% !important;
+}
+
+/* Optional glow line (like the vertical accent) */
+.stats .card span.accent-line {
+    position: absolute !important;
+    left: 15px !important;
+    top: 25px !important;
+    width: 3px !important;
+    height: 50px !important;
+    background: rgba(255,255,255,0.6) !important;
+    border-radius: 2px !important;
+}
+/* === BACKGROUND ICONS INSIDE CARDS === */
+
+.stats .card i.bg-icon {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    font-size: 50px !important;
+    opacity: 0.49 !important;
+    color: #ffffff !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+/* Make sure text stays above icon */
+.stats .card p,
+.stats .card h2,
+.stats .card span {
+    position: relative !important;
+    z-index: 2 !important;
+}
 </style>
 
 <!-- STATS -->
 <section class="stats">
     <div class="card blue">
+        <i class="fas fa-file-alt bg-icon"></i>
         <p>Scripts Uploaded</p>
         <h2><?php echo $scriptsCount ?? 0; ?></h2>
     </div>
 
     <div class="card orange">
+        <i class="fas fa-layer-group bg-icon"></i>
         <p>Active Plans</p>
         <h2><?php echo $plansCount ?? 0; ?></h2>
     </div>
 
     <div class="card green">
+        <i class="fas fa-chart-line bg-icon"></i>
+
         <p>Report Cards</p>
         <h2><?php echo $reportsCount ?? 0; ?></h2>
     </div>
 
     <div class="card purple">
+        <i class="fas fa-brain bg-icon"></i>
         <p>Topics Mastered</p>
         <h2><?php echo $topicsCount ?? 0; ?></h2>
     </div>
