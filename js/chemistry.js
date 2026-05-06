@@ -25,13 +25,65 @@ const chemistrySketch = (p) => {
         let canvas = p.createCanvas(w, h);
         canvas.parent('chemistry-canvas-container');
         
-        // Ensure buttons work correctly
+        // === CUSTOM DROPDOWN LOGIC ===
+        const dropdown = document.getElementById('element-dropdown');
+        const menu = document.getElementById('element-menu');
+        const options = document.querySelectorAll('#element-menu .option');
         const elBtns = document.querySelectorAll('.element-btn');
+
+        if (dropdown && menu) {
+            dropdown.onclick = (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('show');
+                dropdown.classList.toggle('active');
+            };
+
+            options.forEach(option => {
+                option.onclick = () => {
+                    currentElement = option.dataset.element;
+                    
+                    // Update UI parts
+                    options.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    const selectedIcon = dropdown.querySelector('.selected i');
+                    const selectedText = dropdown.querySelector('.selected span');
+                    const optionIcon = option.querySelector('i');
+                    
+                    selectedIcon.className = optionIcon.className;
+                    selectedText.textContent = option.dataset.element;
+                    
+                    menu.classList.remove('show');
+                    dropdown.classList.remove('active');
+
+                    // Sync with horizontal buttons if they exist
+                    elBtns.forEach(b => {
+                        b.classList.toggle('active', b.dataset.element === currentElement);
+                    });
+                };
+            });
+
+            document.addEventListener('click', () => {
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
+            });
+        }
+        
+        // Sync original horizontal nav buttons
         elBtns.forEach(btn => {
             btn.onclick = (e) => {
                 currentElement = e.target.dataset.element;
                 elBtns.forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                
+                // Sync with dropdown
+                const matchingOption = document.querySelector(`#element-menu .option[data-element="${currentElement}"]`);
+                if (matchingOption) {
+                    options.forEach(opt => opt.classList.remove('active'));
+                    matchingOption.classList.add('active');
+                    dropdown.querySelector('.selected span').textContent = currentElement;
+                    dropdown.querySelector('.selected i').className = matchingOption.querySelector('i').className;
+                }
             };
         });
 
@@ -41,6 +93,9 @@ const chemistrySketch = (p) => {
         const scrollRightBtn = document.getElementById('el-scroll-right');
 
         if (scrollLeftBtn && scrollRightBtn && scrollContainer) {
+            // Force reset scroll to start on load
+            scrollContainer.scrollLeft = 0;
+            
             const scrollStep = () => Math.max(120, Math.round(scrollContainer.offsetWidth * 0.75));
 
             scrollLeftBtn.onclick = () => {
@@ -149,13 +204,6 @@ const chemistrySketch = (p) => {
         p.textStyle(p.NORMAL);
         p.text(`Shells: ${numShells}`, 15, 45);
         p.text(`Total Electrons: ${data.electrons.reduce((a,b)=>a+b,0)}`, 15, 65);
-    };
-
-    p.touchStarted = () => {
-        if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-            // No specific touch logic needed for viewer, but we prevent default scroll if touching canvas
-            return false;
-        }
     };
 };
 

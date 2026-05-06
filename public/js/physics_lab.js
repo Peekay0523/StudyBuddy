@@ -1493,21 +1493,55 @@ function bindEvents() {
     }
 }
 
-    // Handle simulation switching via dropdown
-    const topicSelect = document.getElementById('physics-topic-select');
-    if (topicSelect) {
-        topicSelect.onchange = (e) => {
-            activeSim = e.target.value;
-            updateUI();
+    // === CUSTOM DROPDOWN LOGIC ===
+    const dropdown = document.getElementById('physics-dropdown');
+    const menu = document.getElementById('physics-menu');
+    const options = document.querySelectorAll('.option');
+
+    if (dropdown && menu) {
+        dropdown.onclick = (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('show');
+            dropdown.classList.toggle('active');
         };
+
+        options.forEach(option => {
+            option.onclick = () => {
+                activeSim = option.dataset.sim;
+                
+                // Update UI parts
+                options.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                const selectedIcon = dropdown.querySelector('.selected i');
+                const selectedText = dropdown.querySelector('.selected span');
+                const optionIcon = option.querySelector('i');
+                const optionText = option.querySelector('strong');
+                
+                selectedIcon.className = optionIcon.className;
+                selectedText.textContent = optionText.textContent;
+                
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
+                
+                updateUI();
+            };
+        });
+
+        document.addEventListener('click', () => {
+            menu.classList.remove('show');
+            dropdown.classList.remove('active');
+        });
     }
 
     // Keep the old button logic just in case there are any other .physics-btn in the footer
     document.querySelectorAll('.physics-btn').forEach(btn => {
         btn.onclick = (e) => {
             activeSim = e.target.closest('.physics-btn').dataset.sim;
-            if (topicSelect) topicSelect.value = activeSim;
-            updateUI();
+            // Update custom dropdown if needed
+            const matchingOption = document.querySelector(`.option[data-sim="${activeSim}"]`);
+            if (matchingOption) matchingOption.click();
+            else updateUI();
         };
     });
 

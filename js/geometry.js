@@ -22,15 +22,44 @@ const geometrySketch = (p) => {
         points.push({ label: 'D', angle: p.PI * 1.2, color: '#2ed573' });
         points.push({ label: 'O', angle: 0, isCenter: true, color: '#ffa502' });
 
-        // Bind buttons
-        const btnGroup = document.querySelectorAll('.theorem-btn');
-        btnGroup.forEach(btn => {
-            btn.onclick = (e) => {
-                currentTheorem = e.target.closest('.theorem-btn').dataset.theorem;
-                btnGroup.forEach(b => b.classList.remove('active'));
-                e.target.closest('.theorem-btn').classList.add('active');
+        // === CUSTOM DROPDOWN LOGIC ===
+        const dropdown = document.getElementById('geometry-dropdown');
+        const menu = document.getElementById('geometry-menu');
+        const options = document.querySelectorAll('#geometry-menu .option');
+
+        if (dropdown && menu) {
+            dropdown.onclick = (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('show');
+                dropdown.classList.toggle('active');
             };
-        });
+
+            options.forEach(option => {
+                option.onclick = () => {
+                    currentTheorem = option.dataset.theorem;
+                    
+                    // Update UI parts
+                    options.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    const selectedIcon = dropdown.querySelector('.selected i');
+                    const selectedText = dropdown.querySelector('.selected span');
+                    const optionIcon = option.querySelector('i');
+                    const optionText = option.querySelector('strong');
+                    
+                    selectedIcon.className = optionIcon.className;
+                    selectedText.textContent = optionText.textContent;
+                    
+                    menu.classList.remove('show');
+                    dropdown.classList.remove('active');
+                };
+            });
+
+            document.addEventListener('click', () => {
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
+            });
+        }
     };
 
     p.windowResized = () => {
@@ -182,15 +211,15 @@ const geometrySketch = (p) => {
 
     p.touchStarted = () => {
         p.mousePressed();
-        if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-            return false; // Prevent scrolling
+        if (activePoint) {
+            return false; // Only block scroll if dragging a point
         }
     };
 
     p.touchMoved = () => {
         p.mouseDragged();
-        if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-            return false; // Prevent scrolling
+        if (activePoint) {
+            return false; // Only block scroll if dragging a point
         }
     };
 

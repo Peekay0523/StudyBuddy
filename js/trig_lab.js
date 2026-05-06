@@ -48,16 +48,48 @@ function initTrigLab() {
         el.addEventListener('input', updateTrigGraph);
     });
 
-    document.querySelectorAll('.trig-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            currentTrigType = e.target.closest('.trig-btn').dataset.type;
-            document.querySelectorAll('.trig-btn').forEach(b => b.classList.remove('active'));
-            e.target.closest('.trig-btn').classList.add('active');
-            
-            updateTrigVisibility();
-            updateTrigGraph();
+    // === CUSTOM DROPDOWN LOGIC ===
+    const dropdown = document.getElementById('trig-dropdown');
+    const menu = document.getElementById('trig-menu');
+    const options = document.querySelectorAll('#trig-menu .option');
+
+    if (dropdown && menu) {
+        dropdown.onclick = (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('show');
+            dropdown.classList.toggle('active');
+        };
+
+        options.forEach(option => {
+            option.onclick = () => {
+                currentTrigType = option.dataset.type;
+                
+                // Update UI parts
+                options.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                const selectedIcon = dropdown.querySelector('.selected i');
+                const selectedText = dropdown.querySelector('.selected span');
+                const optionIcon = option.querySelector('i');
+                const optionText = option.querySelector('strong');
+                
+                selectedIcon.className = optionIcon.className;
+                selectedIcon.style.transform = optionIcon.style.transform;
+                selectedText.textContent = optionText.textContent;
+                
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
+                
+                updateTrigVisibility();
+                updateTrigGraph();
+            };
         });
-    });
+
+        document.addEventListener('click', () => {
+            menu.classList.remove('show');
+            dropdown.classList.remove('active');
+        });
+    }
 
     updateTrigVisibility();
     updateTrigGraph();

@@ -24,20 +24,28 @@ function initAlgLab() {
             scales: {
                 x: { 
                     type: 'linear',
-                    position: 'center',
-                    title: { display: true, text: 'x' }, 
-                    grid: { color: '#e0e0e0', lineWidth: 1 },
-                    border: { display: true, color: '#000', width: 3 },
-                    min: -10,
-                    max: 10
+                    position: 'bottom',
+                    title: { display: true, text: 'x-axis', font: { weight: 'bold', size: 14 } }, 
+                    grid: { 
+                        color: (context) => context.tick.value === 0 ? '#000' : '#e0e0e0',
+                        lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                    },
+                    border: { display: false },
+                    min: -5,
+                    max: 5,
+                    ticks: { stepSize: 1 }
                 },
                 y: { 
-                    position: 'center',
-                    title: { display: true, text: 'y' }, 
-                    grid: { color: '#e0e0e0', lineWidth: 1 }, 
-                    border: { display: true, color: '#000', width: 3 },
-                    min: -10, 
-                    max: 10 
+                    position: 'left',
+                    title: { display: true, text: 'y-axis', font: { weight: 'bold', size: 14 } }, 
+                    grid: { 
+                        color: (context) => context.tick.value === 0 ? '#000' : '#e0e0e0',
+                        lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+                    }, 
+                    border: { display: false },
+                    min: -5, 
+                    max: 5,
+                    ticks: { stepSize: 1 }
                 }
             },
             plugins: {
@@ -50,16 +58,47 @@ function initAlgLab() {
         el.addEventListener('input', updateAlgGraph);
     });
 
-    document.querySelectorAll('.alg-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            currentAlgType = e.target.closest('.alg-btn').dataset.type;
-            document.querySelectorAll('.alg-btn').forEach(b => b.classList.remove('active'));
-            e.target.closest('.alg-btn').classList.add('active');
-            
-            updateAlgVisibility();
-            updateAlgGraph();
+    // === CUSTOM DROPDOWN LOGIC ===
+    const dropdown = document.getElementById('alg-dropdown');
+    const menu = document.getElementById('alg-menu');
+    const options = document.querySelectorAll('#alg-menu .option');
+
+    if (dropdown && menu) {
+        dropdown.onclick = (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('show');
+            dropdown.classList.toggle('active');
+        };
+
+        options.forEach(option => {
+            option.onclick = () => {
+                currentAlgType = option.dataset.type;
+                
+                // Update UI parts
+                options.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                const selectedIcon = dropdown.querySelector('.selected i');
+                const selectedText = dropdown.querySelector('.selected span');
+                const optionIcon = option.querySelector('i');
+                const optionText = option.querySelector('strong');
+                
+                selectedIcon.className = optionIcon.className;
+                selectedText.textContent = optionText.textContent;
+                
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
+                
+                updateAlgVisibility();
+                updateAlgGraph();
+            };
         });
-    });
+
+        document.addEventListener('click', () => {
+            menu.classList.remove('show');
+            dropdown.classList.remove('active');
+        });
+    }
 
     updateAlgVisibility();
     updateAlgGraph();
@@ -86,7 +125,8 @@ function updateAlgGraph() {
     const data = [];
     let formulaText = "";
 
-    for (let x = -10; x <= 10; x += 0.1) {
+    // Plot within the visible range (-5 to 5)
+    for (let x = -5; x <= 5; x += 0.05) {
         let y = null;
         if (currentAlgType === 'linear') {
             y = m * x + q;

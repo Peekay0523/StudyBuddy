@@ -16,7 +16,7 @@ const ReactionSimulator = {
 
     reactions: {
         h2o: {
-            name: '2H₂ + O₂ → 2H₂O',
+            name: 'Water Synthesis',
             equation: '2H₂ + O₂ → 2H₂O',
             reactant1: { symbol: 'H₂', atoms: ['H', 'H'], color: '#ddd', inputId: 'h2-amount' },
             reactant2: { symbol: 'O₂', atoms: ['O', 'O'], color: '#ff6b6b', inputId: 'o2-amount' },
@@ -25,7 +25,7 @@ const ReactionSimulator = {
             enthalpy: -483.6
         },
         hcl: {
-            name: 'H₂ + Cl₂ → 2HCl',
+            name: 'HCl Synthesis',
             equation: 'H₂ + Cl₂ → 2HCl',
             reactant1: { symbol: 'H₂', atoms: ['H', 'H'], color: '#ddd', inputId: 'h2-amount' },
             reactant2: { symbol: 'Cl₂', atoms: ['Cl', 'Cl'], color: '#90EE90', inputId: 'cl2-amount' },
@@ -34,7 +34,7 @@ const ReactionSimulator = {
             enthalpy: -92.3
         },
         nh3: {
-            name: 'N₂ + 3H₂ → 2NH₃',
+            name: 'Haber Process',
             equation: 'N₂ + 3H₂ → 2NH₃',
             reactant1: { symbol: 'N₂', atoms: ['N', 'N'], color: '#9370DB', inputId: 'n2-amount' },
             reactant2: { symbol: 'H₂', atoms: ['H', 'H'], color: '#ddd', inputId: 'h2-amount' },
@@ -43,7 +43,7 @@ const ReactionSimulator = {
             enthalpy: -92.4
         },
         co2_comb: {
-            name: 'CH₄ + 2O₂ → CO₂ + 2H₂O',
+            name: 'Combustion',
             equation: 'CH₄ + 2O₂ → CO₂ + 2H₂O',
             reactant1: { symbol: 'CH₄', atoms: ['C', 'H', 'H', 'H', 'H'], color: '#2f3542', inputId: 'ch4-amount' },
             reactant2: { symbol: 'O₂', atoms: ['O', 'O'], color: '#ff6b6b', inputId: 'o2-amount' },
@@ -53,7 +53,7 @@ const ReactionSimulator = {
             enthalpy: -890.3
         },
         nacl: {
-            name: '2Na + Cl₂ → 2NaCl',
+            name: 'Salt Formation',
             equation: '2Na + Cl₂ → 2NaCl',
             reactant1: { symbol: 'Na', atoms: ['Na'], color: '#ced6e0', inputId: 'na-amount' },
             reactant2: { symbol: 'Cl₂', atoms: ['Cl', 'Cl'], color: '#90EE90', inputId: 'cl2-amount' },
@@ -62,7 +62,7 @@ const ReactionSimulator = {
             enthalpy: -411.1
         },
         co2: {
-            name: 'C + O₂ → CO₂',
+            name: 'CO₂ Formation',
             equation: 'C + O₂ → CO₂',
             reactant1: { symbol: 'C', atoms: ['C'], color: '#2f3542', inputId: 'c-amount' },
             reactant2: { symbol: 'O₂', atoms: ['O', 'O'], color: '#ff6b6b', inputId: 'o2-amount' },
@@ -91,13 +91,47 @@ const ReactionSimulator = {
     },
 
     setupEventListeners() {
-        const reactionSelect = document.getElementById('reaction-type');
-        if (reactionSelect) {
-            reactionSelect.addEventListener('change', (e) => {
-                this.state.reactionType = e.target.value;
-                this.updateEquation();
-                this.updateReactantUI();
-                this.reset();
+        // === CUSTOM DROPDOWN LOGIC ===
+        const dropdown = document.getElementById('reaction-dropdown');
+        const menu = document.getElementById('reaction-menu');
+        const options = document.querySelectorAll('#reaction-menu .option');
+
+        if (dropdown && menu) {
+            dropdown.onclick = (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('show');
+                dropdown.classList.toggle('active');
+            };
+
+            options.forEach(option => {
+                option.onclick = () => {
+                    this.state.reactionType = option.dataset.reaction;
+                    
+                    // Update UI parts
+                    options.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    const selectedIcon = dropdown.querySelector('.selected i');
+                    const selectedText = dropdown.querySelector('.selected span');
+                    const optionIcon = option.querySelector('i');
+                    const smallText = option.querySelector('small');
+                    
+                    selectedIcon.className = optionIcon.className;
+                    selectedText.textContent = smallText.textContent;
+                    
+                    menu.classList.remove('show');
+                    dropdown.classList.remove('active');
+
+                    // Reset and update
+                    this.updateEquation();
+                    this.updateReactantUI();
+                    this.reset();
+                };
+            });
+
+            document.addEventListener('click', () => {
+                menu.classList.remove('show');
+                dropdown.classList.remove('active');
             });
         }
 
@@ -116,7 +150,6 @@ const ReactionSimulator = {
             saveBtn.addEventListener('click', () => this.saveExperiment());
         }
 
-        // Custom popup handler - no Bootstrap modal interference
         const learnMoreBtn = document.getElementById('learnmore-btn');
         const infoOverlay = document.getElementById('infoOverlay');
         const infoCloseBtn = document.getElementById('infoCloseBtn');
@@ -181,29 +214,7 @@ const ReactionSimulator = {
     },
 
     updateReactantUI() {
-        const reaction = this.reactions[this.state.reactionType];
-        
-        const containers = [
-            'h2-container', 'o2-container', 'cl2-container', 
-            'n2-container', 'ch4-container', 'na-container', 'c-container'
-        ];
-
-        containers.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-
-        if (reaction.reactant1.inputId) {
-            const id1 = reaction.reactant1.inputId.replace('-amount', '-container');
-            const el1 = document.getElementById(id1);
-            if (el1) el1.style.display = 'flex';
-        }
-
-        if (reaction.reactant2.inputId) {
-            const id2 = reaction.reactant2.inputId.replace('-amount', '-container');
-            const el2 = document.getElementById(id2);
-            if (el2) el2.style.display = 'flex';
-        }
+        // No specific reactant amount inputs needed for new dropdown
     },
 
     startReaction() {
@@ -218,7 +229,6 @@ const ReactionSimulator = {
         const reaction = this.reactions[this.state.reactionType];
         this.state.molecules = [];
         
-        // Use the stoichiometric ratio of molecules as requested
         const r1Count = reaction.ratio[0];
         const r2Count = reaction.ratio[1];
         
@@ -278,7 +288,7 @@ const ReactionSimulator = {
                 p.fill(150);
                 p.textAlign(p.CENTER, p.CENTER);
                 p.textSize(14);
-                p.text('Select reactants and click "Start Reaction"', p.width / 2, p.height / 2);
+                p.text('Select a reaction and click "Start Simulation"', p.width / 2, p.height / 2);
                 return;
             }
 
@@ -292,18 +302,6 @@ const ReactionSimulator = {
         p.windowResized = () => {
             const container = document.getElementById('reaction-sim');
             if (container) p.resizeCanvas(container.offsetWidth, 300);
-        };
-
-        p.touchStarted = () => {
-            if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-                return false; // Prevent scrolling
-            }
-        };
-
-        p.touchMoved = () => {
-            if (p.mouseX >= 0 && p.mouseX <= p.width && p.mouseY >= 0 && p.mouseY <= p.height) {
-                return false; // Prevent scrolling
-            }
         };
     },
 
@@ -359,16 +357,13 @@ const ReactionSimulator = {
         const r1Needed = reaction.ratio[0];
         const r2Needed = reaction.ratio[1];
         
-        // Find ALL available reactants
         const availableR1 = this.state.molecules.filter(m => m.type === 'reactant1' && !m.reacted);
         const availableR2 = this.state.molecules.filter(m => m.type === 'reactant2' && !m.reacted);
 
         if (availableR1.length >= r1Needed && availableR2.length >= r2Needed) {
-            // Mark the specific colliding molecules as reacted first to ensure they disappear
             m1.reacted = true;
             m2.reacted = true;
 
-            // Mark the REMAINING needed molecules as reacted
             let r1ToMark = r1Needed - (m1.type === 'reactant1' ? 1 : 0) - (m2.type === 'reactant1' ? 1 : 0);
             let r2ToMark = r2Needed - (m1.type === 'reactant2' ? 1 : 0) - (m2.type === 'reactant2' ? 1 : 0);
 
@@ -386,7 +381,6 @@ const ReactionSimulator = {
             const midX = (m1.x + m2.x) / 2;
             const midY = (m1.y + m2.y) / 2;
 
-            // Create main product
             const p1Count = reaction.ratio[2];
             for (let k = 0; k < p1Count; k++) {
                 this.state.molecules.push({
@@ -402,7 +396,6 @@ const ReactionSimulator = {
                 });
             }
 
-            // Create second product if exists
             if (reaction.product2) {
                 const p2Count = reaction.ratio[3];
                 for (let k = 0; k < p2Count; k++) {
@@ -427,7 +420,6 @@ const ReactionSimulator = {
     drawMolecule(p, mol) {
         p.push();
         p.translate(mol.x, mol.y);
-        
         const atomRad = 28;
         const offset = 22;
 
@@ -440,34 +432,13 @@ const ReactionSimulator = {
             this.drawAtom(p, -offset, 0, mol.atoms[0], this.colors[mol.atoms[0]] || mol.color, atomRad);
             this.drawAtom(p, offset, 0, mol.atoms[1], this.colors[mol.atoms[1]] || mol.color, atomRad);
         } else if (mol.atoms.length === 3) {
-            if (mol.name === 'CO₂') {
-                p.stroke(100);
-                p.strokeWeight(3);
-                p.line(-offset * 1.5, 0, offset * 1.5, 0);
-                this.drawAtom(p, 0, 0, mol.atoms[0], this.colors[mol.atoms[0]], atomRad);
-                this.drawAtom(p, -offset * 1.5, 0, mol.atoms[1], this.colors[mol.atoms[1]], atomRad);
-                this.drawAtom(p, offset * 1.5, 0, mol.atoms[2], this.colors[mol.atoms[2]], atomRad);
-            } else {
-                p.stroke(100);
-                p.strokeWeight(3);
-                p.line(0, 0, -offset, offset);
-                p.line(0, 0, offset, offset);
-                this.drawAtom(p, 0, 0, mol.atoms[0], this.colors[mol.atoms[0]], atomRad);
-                this.drawAtom(p, -offset, offset, mol.atoms[1], this.colors[mol.atoms[1]], atomRad);
-                this.drawAtom(p, offset, offset, mol.atoms[2], this.colors[mol.atoms[2]], atomRad);
-            }
-        } else if (mol.atoms.length === 4) {
             p.stroke(100);
             p.strokeWeight(3);
-            for (let i = 0; i < 3; i++) {
-                let a = i * p.TWO_PI / 3;
-                p.line(0, 0, offset * 1.2 * p.cos(a), offset * 1.2 * p.sin(a));
-            }
+            p.line(0, 0, -offset, offset);
+            p.line(0, 0, offset, offset);
             this.drawAtom(p, 0, 0, mol.atoms[0], this.colors[mol.atoms[0]], atomRad);
-            for (let i = 0; i < 3; i++) {
-                let a = i * p.TWO_PI / 3;
-                this.drawAtom(p, offset * 1.2 * p.cos(a), offset * 1.2 * p.sin(a), mol.atoms[i+1], this.colors[mol.atoms[i+1]], atomRad);
-            }
+            this.drawAtom(p, -offset, offset, mol.atoms[1], this.colors[mol.atoms[1]], atomRad);
+            this.drawAtom(p, offset, offset, mol.atoms[2], this.colors[mol.atoms[2]], atomRad);
         } else if (mol.atoms.length === 5) {
             p.stroke(100);
             p.strokeWeight(3);
@@ -481,42 +452,7 @@ const ReactionSimulator = {
                 this.drawAtom(p, offset * 1.4 * p.cos(a), offset * 1.4 * p.sin(a), mol.atoms[i+1], this.colors[mol.atoms[i+1]], atomRad);
             }
         }
-        
         p.pop();
-    },
-
-    updateModalContent() {
-        const reaction = this.reactions[this.state.reactionType];
-        const area = document.getElementById('modal-content-area');
-        if (!area) return;
-
-        area.innerHTML = `
-            <div class="mb-4">
-                <h5 class="text-primary fw-bold mb-1">${reaction.name}</h5>
-                <p class="text-muted small">Chemical equation showing the formation of products.</p>
-            </div>
-            
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="p-3 rounded bg-light border-start border-primary border-4 h-100 shadow-sm">
-                        <h6 class="fw-bold small text-dark"><i class="fas fa-temperature-high me-2 text-danger"></i>Temperature</h6>
-                        <p class="small mb-0 text-secondary">Higher temperature increases <strong>Kinetic Energy</strong>. This causes faster, non-linear movement (Brownian motion) and more energetic collisions.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="p-3 rounded bg-light border-start border-success border-4 h-100 shadow-sm">
-                        <h6 class="fw-bold small text-dark"><i class="fas fa-compress-alt me-2 text-success"></i>Pressure</h6>
-                        <p class="small mb-0 text-secondary">Increasing pressure forces molecules into a smaller volume. This increases <strong>concentration</strong> and the frequency of successful collisions.</p>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="p-3 rounded bg-light border-start border-info border-4 shadow-sm">
-                        <h6 class="fw-bold small text-dark"><i class="fas fa-vial me-2 text-info"></i>Reactant Concentration</h6>
-                        <p class="small mb-0 text-secondary">According to <strong>Le Chatelier's Principle</strong>, adding more reactants shifts the equilibrium to favor products, increasing the reaction yield shown in the results panel.</p>
-                    </div>
-                </div>
-            </div>
-        `;
     },
 
     drawAtom(p, x, y, symbol, color, rad) {
@@ -535,19 +471,14 @@ const ReactionSimulator = {
     updateYield() {
         const totalPossible = this.state.totalReactants;
         if (totalPossible === 0) return;
-        
         const products = this.state.molecules.filter(m => m.type === 'product' || m.type === 'product2').length;
         const reaction = this.reactions[this.state.reactionType];
         const productRatio = reaction.ratio[2] + (reaction.ratio[3] || 0);
         const reactantRatio = reaction.ratio[0] + reaction.ratio[1];
-        
         const maxProducts = (this.state.totalReactants / reactantRatio) * productRatio;
-        
         this.state.yield = Math.min(Math.round((products / maxProducts) * 100), 100);
-        
         const yieldEl = document.getElementById('reaction-yield');
         if (yieldEl) yieldEl.textContent = this.state.yield;
-        
         const yieldBar = document.getElementById('reaction-yield-bar');
         if (yieldBar) yieldBar.style.width = this.state.yield + '%';
     },
@@ -558,115 +489,23 @@ const ReactionSimulator = {
         const reaction = this.reactions[this.state.reactionType];
         const timestamp = new Date().toLocaleString();
         
-        // --- Helper for Chemical Formulas (Subscripts) ---
-        const drawChemicalText = (text, x, y, size) => {
-            // Replace Unicode arrow and subscripts with standard chars for processing
-            let clean = text.replace(/→/g, "->")
-                           .replace(/₂/g, "2")
-                           .replace(/₃/g, "3")
-                           .replace(/₄/g, "4");
-            
-            let currentX = x;
-            doc.setFontSize(size);
-            
-            for (let i = 0; i < clean.length; i++) {
-                let char = clean[i];
-                // Check if it's a digit that should be a subscript
-                // (Digit after a letter, or digit after another digit that followed a letter)
-                let isSub = false;
-                if (/[0-9]/.test(char) && i > 0) {
-                    let prev = clean[i-1];
-                    if (/[A-Za-z]/.test(prev) || (/[0-9]/.test(prev) && i > 1 && /[A-Za-z]/.test(clean[i-2]))) {
-                        isSub = true;
-                    }
-                }
-
-                if (isSub) {
-                    doc.setFontSize(size * 0.6);
-                    doc.text(char, currentX, y + (size * 0.15));
-                    currentX += doc.getTextWidth(char) + 0.5;
-                } else {
-                    doc.setFontSize(size);
-                    doc.text(char, currentX, y);
-                    currentX += doc.getTextWidth(char);
-                }
-            }
-        };
-
-        // --- PDF Styling ---
-        const primaryColor = [0, 123, 255]; // Bootstrap primary blue
-        const textColor = [50, 50, 50];
-        
-        // Header
-        doc.setFillColor(...primaryColor);
+        doc.setFillColor(0, 123, 255);
         doc.rect(0, 0, 210, 40, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);
-        doc.setFont("helvetica", "bold");
         doc.text("CHEMISTRY EXPERIMENT REPORT", 105, 25, { align: "center" });
         
-        // Date & Reaction Info
-        doc.setTextColor(...textColor);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Generated on: ${timestamp}`, 190, 50, { align: "right" });
-        
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("1. Experiment Overview", 20, 65);
-        doc.line(20, 67, 190, 67);
-        
+        doc.setTextColor(50, 50, 50);
         doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Reaction Name:`, 25, 75);
-        drawChemicalText(reaction.name, 60, 75, 12);
+        doc.text(`Generated on: ${timestamp}`, 20, 50);
+        doc.text(`Reaction Name: ${reaction.name}`, 20, 60);
+        doc.text(`Equation: ${reaction.equation}`, 20, 70);
+        doc.text(`Temperature: ${this.state.temperature} K`, 20, 80);
+        doc.text(`Pressure: ${this.state.pressure} atm`, 20, 90);
+        doc.text(`FINAL YIELD: ${this.state.yield}%`, 20, 100);
         
-        doc.text(`Chemical Equation:`, 25, 82);
-        drawChemicalText(reaction.equation, 65, 82, 12);
-        
-        // Conditions Section
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("2. Experimental Conditions", 20, 100);
-        doc.line(20, 102, 190, 102);
-        
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-        doc.text(`• Temperature: ${this.state.temperature} K`, 30, 110);
-        doc.text(`• Pressure: ${this.state.pressure} atm`, 30, 117);
-        doc.text(`• Stoichiometric Ratio: ${reaction.ratio[0]} : ${reaction.ratio[1]}`, 30, 124);
-        
-        // Results Section
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("3. Simulation Results", 20, 142);
-        doc.line(20, 144, 190, 144);
-        
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(...primaryColor);
-        doc.text(`FINAL YIELD: ${this.state.yield}%`, 30, 155);
-        doc.setTextColor(...textColor);
-        doc.text(`Enthalpy Change (ΔH): ${reaction.enthalpy} kJ/mol`, 30, 162);
-        
-        // Summary / Conclusion
-        doc.setFillColor(245, 245, 245);
-        doc.rect(20, 180, 170, 30, 'F');
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(10);
-        doc.text("The experiment was conducted in a controlled virtual environment. The yield reflects", 105, 190, { align: "center" });
-        doc.text("the successful molecular collisions based on the kinetic theory of gases.", 105, 195, { align: "center" });
-        
-        // Footer
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text("Science & Maths Practical App - Laboratory Module", 105, 285, { align: "center" });
-
-        // Save the PDF
-        doc.save(`Chemistry_Report_${this.state.reactionType}_${Date.now()}.pdf`);
-        
-        alert("Experiment report has been professionally saved as a PDF!");
+        doc.save(`Chemistry_Report_${Date.now()}.pdf`);
+        alert("Experiment report saved!");
     }
 };
 

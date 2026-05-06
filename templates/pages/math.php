@@ -2,55 +2,85 @@
 <?php
 include __DIR__ . '/../layouts/header.php';
 ?>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mathematics - Science & Maths App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-            color: #333 !important;
-        }
-    </style>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="simulate"><i class="fas fa-arrow-left me-2"></i>Back to Simulations</a>
+    
+        <div class="btn-secondary" style="padding: 8px 16px;">
+            <a class="navbar-brand" href="index.php"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
         </div>
-    </nav>
+    
 
     <div class="container mt-4 pb-5">
         <h1 class="text-center mb-4">Mathematics Lab</h1>
 
-        <!-- Euclidean Geometry Section -->
+        <!-- 1. Euclidean Geometry Section -->
         <section class="mb-5">
-            <h2 class="h4">1. Euclidean Geometry</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <p class="text-muted small">Select a theorem and drag points on the circle!</p>
-                    <div class="list-group list-group-flush mb-4 shadow-sm rounded">
-                        <button class="list-group-item list-group-item-action theorem-btn active thin-btn" data-theorem="same_segment">
-                            <i class="fas fa-circle-notch me-2 text-primary"></i>Angles in same segment
-                        </button>
-                        <button class="list-group-item list-group-item-action theorem-btn thin-btn" data-theorem="center_circumference">
-                            <i class="fas fa-dot-circle me-2 text-primary"></i>Angle at center vs circumference
-                        </button>
-                        <button class="list-group-item list-group-item-action theorem-btn thin-btn" data-theorem="semicircle">
-                            <i class="fas fa-adjust me-2 text-primary"></i>Angle in semi-circle
-                        </button>
-                        <button class="list-group-item list-group-item-action theorem-btn thin-btn" data-theorem="cyclic_quad">
-                            <i class="fas fa-draw-polygon me-2 text-primary"></i>Cyclic Quadrilateral
-                        </button>
+            <div class="top-card">
+                <div class="lab-info">
+                    <div class="icon-box">
+                        <i class="fas fa-shapes"></i>
+                    </div>
+                    <div>
+                        <h3>Euclidean Geometry</h3>
+                        <p>Select a theorem and drag points on the circle!</p>
                     </div>
                 </div>
-                <div class="col-md-8">
+
+                <div class="dropdown-container">
+                    <div class="custom-select" id="geometry-dropdown">
+                        <div class="selected">
+                            <i class="fas fa-circle-notch"></i>
+                            <span>Angles in same segment</span>
+                        </div>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+
+                    <div class="dropdown-menu" id="geometry-menu">
+                        <div class="option active" data-theorem="same_segment">
+                            <i class="fas fa-circle-notch"></i>
+                            <div>
+                                <strong>Same Segment</strong>
+                                <small>Angles subtended by the same arc</small>
+                            </div>
+                        </div>
+                        <div class="option" data-theorem="center_circumference">
+                            <i class="fas fa-dot-circle"></i>
+                            <div>
+                                <strong>Center vs Circumference</strong>
+                                <small>Angle at center is twice circumference</small>
+                            </div>
+                        </div>
+                        <div class="option" data-theorem="semicircle">
+                            <i class="fas fa-adjust"></i>
+                            <div>
+                                <strong>Semi-circle</strong>
+                                <small>Angle in a semi-circle is 90°</small>
+                            </div>
+                        </div>
+                        <div class="option" data-theorem="cyclic_quad">
+                            <i class="fas fa-draw-polygon"></i>
+                            <div>
+                                <strong>Cyclic Quadrilateral</strong>
+                                <small>Opposite angles are supplementary</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
                     <div class="card shadow-sm border-0">
                         <div id="geometry-canvas-container" class="text-center bg-white" style="min-height: 400px;"></div>
                     </div>
@@ -58,24 +88,56 @@ include __DIR__ . '/../layouts/header.php';
             </div>
         </section>
 
-        <!-- Trigonometry Section -->
+        <!-- 2. Trigonometry Section -->
         <section class="mb-5">
-            <h2 class="h4">2. Trigonometry Lab</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <p class="text-muted small">Explore waves and their properties.</p>
-                    <div class="list-group list-group-flush mb-4 shadow-sm rounded">
-                        <button class="list-group-item list-group-item-action trig-btn active thin-btn" data-type="sin">
-                            <i class="fas fa-wave-square me-2 text-info"></i>Sine: y = a sin(bx) + q
-                        </button>
-                        <button class="list-group-item list-group-item-action trig-btn thin-btn" data-type="cos">
-                            <i class="fas fa-wave-square me-2 text-info" style="transform: rotate(90deg);"></i>Cosine: y = a cos(bx) + q
-                        </button>
-                        <button class="list-group-item list-group-item-action trig-btn thin-btn" data-type="log">
-                            <i class="fas fa-stream me-2 text-secondary"></i>Logarithmic: y = log<sub>b</sub>(x)
-                        </button>
+            <div class="top-card">
+                <div class="lab-info">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #17a2b8, #117a8b);">
+                        <i class="fas fa-wave-square"></i>
+                    </div>
+                    <div>
+                        <h3>Trigonometry Lab</h3>
+                        <p>Explore waves and their properties.</p>
+                    </div>
+                </div>
+
+                <div class="dropdown-container">
+                    <div class="custom-select" id="trig-dropdown">
+                        <div class="selected">
+                            <i class="fas fa-wave-square"></i>
+                            <span>Sine: y = a sin(bx) + q</span>
+                        </div>
+                        <i class="fas fa-chevron-down arrow"></i>
                     </div>
 
+                    <div class="dropdown-menu" id="trig-menu">
+                        <div class="option active" data-type="sin">
+                            <i class="fas fa-wave-square"></i>
+                            <div>
+                                <strong>Sine Function</strong>
+                                <small>y = a sin(bx) + q</small>
+                            </div>
+                        </div>
+                        <div class="option" data-type="cos">
+                            <i class="fas fa-wave-square" style="transform: rotate(90deg);"></i>
+                            <div>
+                                <strong>Cosine Function</strong>
+                                <small>y = a cos(bx) + q</small>
+                            </div>
+                        </div>
+                        <div class="option" data-type="log">
+                            <i class="fas fa-stream"></i>
+                            <div>
+                                <strong>Logarithmic Function</strong>
+                                <small>y = log<sub>b</sub>(x)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
                     <div class="card shadow-sm border-0 bg-white p-3 mb-4">
                         <div class="text-center p-2 bg-light rounded mb-3">
                             <span class="text-muted small d-block mb-1">Generated Formula</span>
@@ -111,27 +173,63 @@ include __DIR__ . '/../layouts/header.php';
             </div>
         </section>
 
-        <!-- Algebra & Graphs Section -->
+        <!-- 3. Algebra & Graphs Section -->
         <section class="mb-5">
-            <h2 class="h4">3. Algebra & Graphs Lab</h2>
-            <div class="row">
-                <div class="col-md-4">
-                    <p class="text-muted small">Explore linear, quadratic, and other functions.</p>
-                    <div class="list-group list-group-flush mb-4 shadow-sm rounded">
-                        <button class="list-group-item list-group-item-action alg-btn active thin-btn" data-type="linear">
-                            <i class="fas fa-slash me-2 text-success"></i>Straight Line: y = mx + c
-                        </button>
-                        <button class="list-group-item list-group-item-action alg-btn thin-btn" data-type="parabola">
-                            <i class="fas fa-chart-area me-2 text-warning"></i>Parabola: y = a(x-p)² + q
-                        </button>
-                        <button class="list-group-item list-group-item-action alg-btn thin-btn" data-type="hyperbola">
-                            <i class="fas fa-bezier-curve me-2 text-danger"></i>Hyperbola: y = a/(x-p) + q
-                        </button>
-                        <button class="list-group-item list-group-item-action alg-btn thin-btn" data-type="exponential">
-                            <i class="fas fa-chart-line me-2 text-primary"></i>Exponential: y = a·b^(x-p) + q
-                        </button>
+            <div class="top-card">
+                <div class="lab-info">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #28a745, #1e7e34);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h3>Algebra & Graphs Lab</h3>
+                        <p>Explore linear, quadratic, and other functions.</p>
+                    </div>
+                </div>
+
+                <div class="dropdown-container">
+                    <div class="custom-select" id="alg-dropdown">
+                        <div class="selected">
+                            <i class="fas fa-slash"></i>
+                            <span>Straight Line: y = mx + c</span>
+                        </div>
+                        <i class="fas fa-chevron-down arrow"></i>
                     </div>
 
+                    <div class="dropdown-menu" id="alg-menu">
+                        <div class="option active" data-type="linear">
+                            <i class="fas fa-slash"></i>
+                            <div>
+                                <strong>Straight Line</strong>
+                                <small>y = mx + c</small>
+                            </div>
+                        </div>
+                        <div class="option" data-type="parabola">
+                            <i class="fas fa-chart-area"></i>
+                            <div>
+                                <strong>Parabola</strong>
+                                <small>y = a(x-p)² + q</small>
+                            </div>
+                        </div>
+                        <div class="option" data-type="hyperbola">
+                            <i class="fas fa-bezier-curve"></i>
+                            <div>
+                                <strong>Hyperbola</strong>
+                                <small>y = a/(x-p) + q</small>
+                            </div>
+                        </div>
+                        <div class="option" data-type="exponential">
+                            <i class="fas fa-chart-line"></i>
+                            <div>
+                                <strong>Exponential</strong>
+                                <small>y = a·b^(x-p) + q</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
                     <div class="card shadow-sm border-0 bg-white p-3 mb-4">
                         <div class="text-center p-2 bg-light rounded mb-3">
                             <span class="text-muted small d-block mb-1">Generated Formula</span>
@@ -172,8 +270,8 @@ include __DIR__ . '/../layouts/header.php';
         </section>
     </div>
 
-    <script src="/js/geometry.js"></script>
-    <script src="/js/trig_lab.js"></script>
-    <script src="/js/algebra_lab.js"></script>
+    <script src="js/geometry.js"></script>
+    <script src="js/trig_lab.js"></script>
+    <script src="js/algebra_lab.js"></script>
 </body>
 </html>
