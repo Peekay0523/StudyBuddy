@@ -1,28 +1,32 @@
-<!DOCTYPE html>
 <?php
+$pageTitle = 'Mathematics Laboratory - StudySmart';
+$currentPage = 'math';
+
+// Extra styles for this page
+$extraHead = '
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        @media (max-width: 768px) {
+            .container { padding-left: 10px; padding-right: 10px; }
+            .top-card { padding: 15px; }
+            .icon-box { width: 45px; height: 45px; font-size: 18px; }
+            #geometry-canvas-container { min-height: 300px !important; }
+            .card { height: auto !important; }
+            #trigChart, #algChart { min-height: 300px; }
+        }
+    </style>
+';
+
 include __DIR__ . '/../layouts/header.php';
 ?>
 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mathematics - Science & Maths App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-</head>
-<body class="bg-light">
-    
-        <div class="btn-secondary" style="padding: 8px 16px;">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
-        </div>
-    
-
     <div class="container mt-4 pb-5">
-        <h1 class="text-center mb-4">Mathematics Lab</h1>
+        <div class="d-flex align-items-center mb-4">
+            <a href="/simulate" class="btn btn-outline-secondary btn-sm me-3"><i class="fas fa-arrow-left"></i></a>
+            <h1 class="h3 mb-0">Mathematics Laboratory</h1>
+        </div>
 
         <!-- 1. Euclidean Geometry Section -->
         <section class="mb-5">
@@ -33,7 +37,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Euclidean Geometry</h3>
-                        <p>Select a theorem and drag points on the circle!</p>
+                        <p class="d-none d-sm-block">Select a theorem and drag points on the circle!</p>
                     </div>
                 </div>
 
@@ -81,7 +85,7 @@ include __DIR__ . '/../layouts/header.php';
 
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card shadow-sm border-0">
+                    <div class="card shadow-sm border-0 overflow-hidden">
                         <div id="geometry-canvas-container" class="text-center bg-white" style="min-height: 400px;"></div>
                     </div>
                 </div>
@@ -97,7 +101,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Trigonometry Lab</h3>
-                        <p>Explore waves and their properties.</p>
+                        <p class="d-none d-sm-block">Explore waves and their properties.</p>
                     </div>
                 </div>
 
@@ -136,10 +140,10 @@ include __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="card shadow-sm border-0 bg-white p-3 mb-4">
-                        <div class="text-center p-2 bg-light rounded mb-3">
+                    <div class="card shadow-sm border-0 bg-white p-3 h-100">
+                        <div class="text-center p-2 bg-light rounded mb-3 border">
                             <span class="text-muted small d-block mb-1">Generated Formula</span>
                             <div id="trig-formula" class="fw-bold text-primary h5 mb-0">y = 1 sin(1x) + 0</div>
                         </div>
@@ -164,9 +168,9 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <div class="card shadow-sm border-0" style="height: 400px;">
+                    <div class="card shadow-sm border-0 h-100">
                         <div class="card-body">
-                            <canvas id="trigChart"></canvas>
+                            <canvas id="trigChart" style="max-height: 400px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -182,7 +186,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Algebra & Graphs Lab</h3>
-                        <p>Explore linear, quadratic, and other functions.</p>
+                        <p class="d-none d-sm-block">Explore linear, quadratic, and other functions.</p>
                     </div>
                 </div>
 
@@ -228,10 +232,10 @@ include __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="card shadow-sm border-0 bg-white p-3 mb-4">
-                        <div class="text-center p-2 bg-light rounded mb-3">
+                    <div class="card shadow-sm border-0 bg-white p-3 h-100">
+                        <div class="text-center p-2 bg-light rounded mb-3 border">
                             <span class="text-muted small d-block mb-1">Generated Formula</span>
                             <div id="alg-formula" class="fw-bold text-success h5 mb-0">y = 1x + 0</div>
                         </div>
@@ -260,9 +264,9 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <div class="card shadow-sm border-0" style="height: 400px;">
+                    <div class="card shadow-sm border-0 h-100">
                         <div class="card-body">
-                            <canvas id="algChart"></canvas>
+                            <canvas id="algChart" style="max-height: 400px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -270,8 +274,13 @@ include __DIR__ . '/../layouts/header.php';
         </section>
     </div>
 
-    <script src="js/geometry.js"></script>
-    <script src="js/trig_lab.js"></script>
-    <script src="js/algebra_lab.js"></script>
-</body>
-</html>
+<?php
+$extraScripts = '
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/geometry.js"></script>
+    <script src="/js/trig_lab.js"></script>
+    <script src="/js/algebra_lab.js"></script>
+';
+
+include __DIR__ . '/../layouts/footer.php';
+?>

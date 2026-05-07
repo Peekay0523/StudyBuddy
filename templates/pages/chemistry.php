@@ -1,15 +1,10 @@
-<!DOCTYPE html>
 <?php
-include __DIR__ . '/../layouts/header.php';
-?>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chemistry - Science & Maths App</title>
+$pageTitle = 'Chemistry Laboratory - StudySmart';
+$currentPage = 'chemistry';
+
+// Extra styles for this page
+$extraHead = '
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
         .animate-fade { animation: fadeIn 0.5s; }
@@ -29,18 +24,61 @@ include __DIR__ . '/../layouts/header.php';
         .modal-dialog { pointer-events: auto; }
         .modal-content { pointer-events: auto; }
         /* Canvas Interactivity */
-        canvas { touch-action: manipulation; }
+        canvas { touch-action: manipulation; max-width: 100% !important; height: auto !important; }
+        .top-card { z-index: 5 !important; } /* Fix: Lower z-index so it does not overlap sidebar/topnav */
+        
+        @media (max-width: 768px) {
+            .container { padding-left: 12px; padding-right: 12px; }
+            .top-card { 
+                padding: 12px; 
+                flex-direction: column; 
+                align-items: stretch; 
+                gap: 12px; 
+                border-radius: 12px;
+                background: white; /* More solid background for mobile */
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+            .lab-info { gap: 10px; }
+            .lab-info h3 { font-size: 1.1rem; }
+            .dropdown-container { width: 100% !important; }
+            .custom-select { width: 100% !important; padding: 8px 12px; border-radius: 10px; }
+            .icon-box { width: 40px; height: 40px; font-size: 16px; border-radius: 8px; }
+            #chemistry-canvas-container, #organic-canvas-container { min-height: 220px !important; }
+            .simulation-box { min-height: 200px !important; height: 200px !important; }
+            .reaction-container { grid-template-columns: 1fr !important; padding: 8px !important; }
+            .reaction-header { flex-direction: column; align-items: center; text-align: center; padding: 12px !important; gap: 8px; }
+            .reaction-title { font-size: 16px !important; }
+            .reaction-actions { width: 100%; justify-content: center; display: flex; flex-wrap: wrap; gap: 4px; }
+            .reaction-actions .btn { flex: 1 1 auto; min-width: 70px; padding: 5px 2px; font-size: 9px; margin: 0 !important; }
+            .reaction-equation { font-size: 1rem !important; }
+            .h-100 { height: auto !important; }
+            .dropdown-menu { 
+                width: 100% !important; 
+                left: 0 !important; 
+                right: 0 !important; 
+                position: absolute !important; 
+                z-index: 1050 !important; /* Above canvas but below top nav if scrolled past? No, top nav is 100. */
+            }
+            #alkane-controls { padding: 15px !important; }
+        }
+         @media screen and (max-width: 770px) {
+
+    * {
+        max-width: 110% !important;
+        box-sizing: border-box !important;
+    }
+}   
     </style>
-</head>
-<body class="bg-light">
-    <nav class="btn-secondary" style="padding: 8px 16px;">
-        <div class="container">
-            <a class="navbar-brand" href="index.php"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
-        </div>
-    </nav>
+';
+
+include __DIR__ . '/../layouts/header.php';
+?>
 
     <div class="container mt-4 pb-5">
-        <h1 class="text-center mb-4">Chemistry Laboratory</h1>
+        <div class="d-flex align-items-center mb-4">
+            <a href="/simulate" class="btn btn-outline-secondary btn-sm me-3"><i class="fas fa-arrow-left"></i></a>
+            <h1 class="h3 mb-0">Chemistry Laboratory</h1>
+        </div>
 
         <!-- 1. Element Viewer -->
         <section class="mb-5">
@@ -51,7 +89,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Element Viewer</h3>
-                        <p>Explore atomic structures with interactive Bohr models.</p>
+                        <p class="d-none d-sm-block">Explore atomic structures with interactive Bohr models.</p>
                     </div>
                 </div>
                 
@@ -109,9 +147,9 @@ include __DIR__ . '/../layouts/header.php';
             </div>
 
             <div class="row justify-content-center">
-                <div class="col-md-8 text-center">
-                    <div class="card shadow-sm border-0">
-                        <div id="chemistry-canvas-container" class="bg-white rounded" style="min-height: 400px;"></div>
+                <div class="col-lg-10 col-md-12 text-center">
+                    <div class="card shadow-sm border-0 overflow-hidden">
+                        <div id="chemistry-canvas-container" class="bg-white" style="min-height: 400px;"></div>
                     </div>
                 </div>
             </div>
@@ -126,7 +164,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Organic Chemistry Lab</h3>
-                        <p>Learn about Carbon bonding and Hydrocarbons.</p>
+                        <p class="d-none d-sm-block">Learn about Carbon bonding and Hydrocarbons.</p>
                     </div>
                 </div>
 
@@ -155,20 +193,24 @@ include __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-4">
-                    <div id="alkane-controls" class="card shadow-sm p-4 bg-white border-0 mb-4">
+                    <div id="alkane-controls" class="card shadow-sm p-4 bg-white border-0 h-100">
                         <h6 class="fw-bold mb-3">Hydrocarbon: <span id="org-name" class="text-primary">Methane</span></h6>
                         <p class="small text-muted mb-4">Formula: <span id="org-formula" class="fw-bold text-dark">CH<sub>4</sub></span></p>
                         <div class="d-grid gap-2">
                             <button id="add-carbon" class="btn btn-success btn-sm">+ Add Carbon</button>
                             <button id="remove-carbon" class="btn btn-danger btn-sm">- Remove Carbon</button>
                         </div>
+                        <div class="mt-4 p-3 bg-light rounded small border">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Carbon atoms form 4 bonds. In alkanes, all bonds are single.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-8">
-                    <div class="card shadow-sm border-0">
-                        <div id="organic-canvas-container" class="bg-white rounded" style="min-height: 300px;"></div>
+                    <div class="card shadow-sm border-0 overflow-hidden h-100">
+                        <div id="organic-canvas-container" class="bg-white" style="min-height: 350px;"></div>
                     </div>
                 </div>
             </div>
@@ -183,16 +225,16 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Common Exam Reactions</h3>
-                        <p>Essential balanced equations for your studies.</p>
+                        <p class="d-none d-sm-block">Essential balanced equations for your studies.</p>
                     </div>
                 </div>
             </div>
 
             <div class="row justify-content-center">
-                <div class="col-md-10">
+                <div class="col-lg-10 col-md-12">
                     <div class="card shadow-sm border-0 reaction-card">
-                        <button class="btn nav-btn nav-left" id="prev-reaction"><i class="fas fa-chevron-left"></i></button>
-                        <button class="btn nav-btn nav-right" id="next-reaction"><i class="fas fa-chevron-right"></i></button>
+                        <button class="btn nav-btn nav-left" id="prev-reaction" aria-label="Previous reaction"><i class="fas fa-chevron-left"></i></button>
+                        <button class="btn nav-btn nav-right" id="next-reaction" aria-label="Next reaction"><i class="fas fa-chevron-right"></i></button>
                         <div class="card-body py-5" id="reaction-display-area">
                             <div class="text-center"><div class="spinner-border text-primary"></div></div>
                         </div>
@@ -210,7 +252,7 @@ include __DIR__ . '/../layouts/header.php';
                     </div>
                     <div>
                         <h3>Molecular Simulator</h3>
-                        <p>Visualize chemical reactions at the molecular level.</p>
+                        <p class="d-none d-sm-block">Visualize chemical reactions at the molecular level.</p>
                     </div>
                 </div>
 
@@ -270,28 +312,39 @@ include __DIR__ . '/../layouts/header.php';
                                     <div class="controls-slider mb-4">
                                         <label>Temperature</label>
                                         <input type="range" id="temp-slider" class="form-range" min="0" max="500" value="298">
-                                        <small class="text-muted"><span id="temp-value">298</span>K</small>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0K</small>
+                                            <small class="text-primary fw-bold"><span id="temp-value">298</span>K</small>
+                                            <small class="text-muted">500K</small>
+                                        </div>
                                     </div>
                                     <div class="controls-slider mb-4">
                                         <label>Pressure</label>
                                         <input type="range" id="pressure-slider" class="form-range" min="0" max="10" step="0.1" value="1">
-                                        <small class="text-muted"><span id="pressure-value">1.0</span> atm</small>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">0 atm</small>
+                                            <small class="text-primary fw-bold"><span id="pressure-value">1.0</span> atm</small>
+                                            <small class="text-muted">10 atm</small>
+                                        </div>
                                     </div>
                                     <button class="btn btn-gradient w-100 btn-sm mb-4" id="reaction-start">
                                         <i class="fas fa-play-circle me-1"></i> Start Simulation
                                     </button>
                                     <hr>
                                     <h5 class="card-title mb-3">Metrics</h5>
-                                    <p class="mb-1"><strong>Yield:</strong> <span id="reaction-yield">0</span>%</p>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong>Yield:</strong>
+                                        <span id="reaction-yield" class="fw-bold">0</span>%
+                                    </div>
                                     <div class="reaction-progress mb-3"><div class="reaction-progress-bar" id="reaction-yield-bar"></div></div>
-                                    <p class="small text-muted"><strong>Enthalpy (ΔH):</strong> <span id="reaction-enthalpy">-483.6</span> kJ/mol</p>
+                                    <p class="small text-muted mb-0"><strong>Enthalpy (ΔH):</strong> <span id="reaction-enthalpy">-483.6</span> kJ/mol</p>
                                 </div>
                             </div>
                             <div class="card border-0">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title text-start mb-3">Molecular View</h5>
+                                <div class="card-body text-center p-0 p-sm-3">
+                                    <h5 class="card-title text-start mb-3 d-none d-sm-block">Molecular View</h5>
                                     <div class="simulation-box" id="reaction-sim"></div>
-                                    <div class="mt-4 p-3 bg-light rounded">
+                                    <div class="mt-4 p-3 bg-light rounded border mx-2 mx-sm-0">
                                         <strong id="reaction-equation" class="h5">2H₂ + O₂ → 2H₂O</strong>
                                     </div>
                                 </div>
@@ -307,8 +360,8 @@ include __DIR__ . '/../layouts/header.php';
     <div class="info-overlay hidden" id="infoOverlay">
         <div class="info-dialog">
             <div class="info-header">
-                <h5><i class="fas fa-flask-vial me-2"></i>How Reactions Work</h5>
-                <button class="info-close" id="infoCloseBtn">&times;</button>
+                <h5 class="mb-0"><i class="fas fa-flask-vial me-2"></i>How Reactions Work</h5>
+                <button class="info-close" id="infoCloseBtn" aria-label="Close">&times;</button>
             </div>
             <div class="info-content">
                 <div class="info-grid">
@@ -321,26 +374,31 @@ include __DIR__ . '/../layouts/header.php';
                         <p>Increasing pressure raises concentration and collision frequency, leading to higher reaction rates.</p>
                     </div>
                 </div>
-                <div class="info-tips">
+                <div class="info-tips mt-4">
                     <h6><i class="fas fa-lightbulb me-2"></i>Experiment Tips</h6>
-                    <ul>
+                    <ul class="mb-0">
                         <li>Increase temperature to see faster molecular movement</li>
                         <li>Watch how yield changes with different conditions</li>
+                        <li>Reset the simulation to try different reactions</li>
                     </ul>
                 </div>
             </div>
             <div class="info-footer">
-                <button class="btn btn-primary btn-sm" id="infoGotItBtn">Got It!</button>
+                <button class="btn btn-primary btn-sm px-4" id="infoGotItBtn">Got It!</button>
             </div>
         </div>
     </div>
 
+<?php
+$extraScripts = '
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="js/chemistry.js"></script>
-    <script src="js/organic_chem.js"></script>
-    <script src="js/reactions.js"></script>
-    <script src="js/simple_reaction_sim.js"></script>
-    <script src="js/reaction_simulator.js"></script>
-</body>
-</html>
+    <script src="/js/chemistry.js"></script>
+    <script src="/js/organic_chem.js"></script>
+    <script src="/js/reactions.js"></script>
+    <script src="/js/simple_reaction_sim.js"></script>
+    <script src="/js/reaction_simulator.js"></script>
+';
+
+include __DIR__ . '/../layouts/footer.php';
+?>

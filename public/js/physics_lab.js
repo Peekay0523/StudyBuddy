@@ -302,8 +302,32 @@ const physicsLab = (p) => {
     }
 
     function drawProjectile() {
+        // Calculate required scale to fit the whole trajectory
+        let v0 = p.projectile.v0;
+        let ang = p.radians(p.projectile.angle);
+        let g = p.gravity;
+        
+        // Horizontal range in pixels (R = v0^2 * sin(2*theta) / g)
+        let R = (v0 * v0 * p.sin(2 * ang)) / g;
+        // Max height in pixels (H = v0^2 * sin^2(theta) / (2*g))
+        let H = (v0 * v0 * p.pow(p.sin(ang), 2)) / (2 * g);
+        
+        let margin = 60;
+        let availableW = p.width - margin * 2;
+        let availableH = p.projectile.y - margin; // Space above ground
+        
+        // Scale factor: how much to shrink the trajectory to fit available space
+        let viewScale = 1.0;
+        if (R > availableW) viewScale = p.min(viewScale, availableW / R);
+        if (H > availableH) viewScale = p.min(viewScale, availableH / H);
+
+        // Mapping functions for scaled coordinates (relative to launch point)
+        let drawX = (x) => p.projectile.x + (x - p.projectile.x) * viewScale;
+        let drawY = (y) => p.projectile.y - (p.projectile.y - y) * viewScale;
+
         p.stroke(220);
         p.line(0, p.projectile.y, p.width, p.projectile.y);
+        
         let currentHeight = 0;
         if (p.projectile.isFlying) {
             let vx = p.projectile.v0 * p.cos(p.radians(p.projectile.angle));
@@ -319,7 +343,7 @@ const physicsLab = (p) => {
                 }
                 p.fill(40, 167, 69);
                 p.noStroke();
-                p.circle(curX, curY, 15);
+                p.circle(drawX(curX), drawY(curY), 15);
             } else {
                 p.projectile.isFlying = false;
                 p.projectile.landed = true;
@@ -330,27 +354,35 @@ const physicsLab = (p) => {
         p.textAlign(p.CENTER);
         p.textSize(14);
         p.text(`Height: ${currentHeight.toFixed(2)}m  |  Gravity: ${p.gravity} m/s²`, p.width / 2, 30);
+        if (viewScale < 1.0) {
+            p.textSize(10);
+            p.text(`(View Scaled: ${(viewScale * 100).toFixed(0)}%)`, p.width / 2, 45);
+        }
+
         p.noFill();
         p.stroke(40, 167, 69, 150);
         p.strokeWeight(2);
         p.beginShape();
-        p.projectile.path.forEach(pt => p.vertex(pt.x, pt.y));
+        p.projectile.path.forEach(pt => p.vertex(drawX(pt.x), drawY(pt.y)));
         p.endShape();
         if (p.projectile.landed || (!p.projectile.isFlying && p.projectile.path.length > 0)) {
             p.fill(0);
             p.noStroke();
             p.textSize(12);
             p.textAlign(p.LEFT);
-            p.text(`v₀: ${p.projectile.v0} m/s`, p.projectile.x, p.projectile.y + 20);
+            // Initial velocity at far left
+            p.text(`v₀: ${p.projectile.v0} m/s`, 20, p.projectile.y + 20);
+            
             p.textAlign(p.CENTER);
             p.stroke(0, 100);
-            p.line(p.projectile.peak.x, p.projectile.peak.y, p.projectile.peak.x, p.projectile.y);
+            p.line(drawX(p.projectile.peak.x), drawY(p.projectile.peak.y), drawX(p.projectile.peak.x), p.projectile.y);
             p.noStroke();
-            p.text(`Max Height: ${p.projectile.peak.h.toFixed(2)}m`, p.projectile.peak.x, p.projectile.peak.y - 10);
+            p.text(`Max Height: ${p.projectile.peak.h.toFixed(2)}m`, drawX(p.projectile.peak.x), drawY(p.projectile.peak.y) - 10);
+            
             if (p.projectile.path.length > 0) {
-                let last = p.projectile.path[p.projectile.path.length - 1];
                 p.textAlign(p.RIGHT);
-                p.text(`v_final: ${p.projectile.v0} m/s`, last.x, p.projectile.y + 20);
+                // Final velocity at far right
+                p.text(`v_final: ${p.projectile.v0} m/s`, p.width - 20, p.projectile.y + 20);
             }
         }
         if (!p.projectile.isFlying && p.projectile.path.length === 0) {
@@ -939,8 +971,11 @@ const physicsLab = (p) => {
     }
 
     p.mousePressed = () => {
+        let s = p.canvasScale || 1;
         if (activeSim === 'pendulum') {
-            if (p.mouseX < 60 || p.mouseX > p.width - 60) {
+            // Navigation Arrows - Only trigger if clicking near the arrows at p.height / 2
+            if ((p.mouseX < 60 || p.mouseX > p.width - 60) && 
+                p.mouseY > p.height / 2 - 50 && p.mouseY < p.height / 2 + 50) {
                 p.pendulum.mode = p.pendulum.mode === 'single' ? 'double' : 'single';
                 updateUI();
                 return;
@@ -957,14 +992,14 @@ const physicsLab = (p) => {
                 p.newton1.dragging = true;
             }
         } else if (activeSim === 'newton2') {
-            // Navigation Arrows
-            if (p.mouseX < 60) {
+            // Navigation Arrows - Only trigger if clicking near the arrows at p.height / 2
+            if (p.mouseX < 60 && p.mouseY > p.height / 2 - 50 && p.mouseY < p.height / 2 + 50) {
                 p.newton2.mode = p.newton2.mode === 'incline' ? 'pulley' : 'incline';
                 p.newton2.x = 0; p.newton2.v = 0;
                 updateUI();
                 return;
             }
-            if (p.mouseX > p.width - 60) {
+            if (p.mouseX > p.width - 60 && p.mouseY > p.height / 2 - 50 && p.mouseY < p.height / 2 + 50) {
                 p.newton2.mode = p.newton2.mode === 'incline' ? 'pulley' : 'incline';
                 p.newton2.x = 0; p.newton2.v = 0;
                 updateUI();
@@ -1144,6 +1179,19 @@ function updateUI() {
     const formulaDesc = document.getElementById('formula-desc');
     const controls = document.getElementById('physics-controls');
     const topButtons = document.getElementById('physics-top-buttons');
+    
+    // Show/Hide Navigation Arrows for modes
+    const prevBtn = document.getElementById('prev-sim-mode');
+    const nextBtn = document.getElementById('next-sim-mode');
+    if (prevBtn && nextBtn) {
+        if (activeSim === 'pendulum' || activeSim === 'newton2') {
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+        } else {
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+        }
+    }
 
     const configs = {
         'pendulum': {
@@ -1490,6 +1538,23 @@ function bindEvents() {
             p.coulomb.q2 = parseInt(e.target.value);
             document.getElementById('cq2-val').innerText = e.target.value;
         };
+    }
+
+    // Navigation Buttons (HTML)
+    const prevBtn = document.getElementById('prev-sim-mode');
+    const nextBtn = document.getElementById('next-sim-mode');
+    if (prevBtn && nextBtn) {
+        prevBtn.onclick = () => {
+            if (activeSim === 'pendulum') {
+                p.pendulum.mode = p.pendulum.mode === 'single' ? 'double' : 'single';
+                updateUI();
+            } else if (activeSim === 'newton2') {
+                p.newton2.mode = p.newton2.mode === 'incline' ? 'pulley' : 'incline';
+                p.newton2.x = 0; p.newton2.v = 0;
+                updateUI();
+            }
+        };
+        nextBtn.onclick = prevBtn.onclick; // Toggles for both
     }
 }
 

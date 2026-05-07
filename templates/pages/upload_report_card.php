@@ -854,7 +854,7 @@ include __DIR__ . '/../layouts/header.php';
         <form method="post" action="/upload-report-card" enctype="multipart/form-data">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Report Card File (PDF, DOCX, JPG, PNG)</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Report Card File</label>
                 <label for="report_card_file" class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease; display: block;">
                     <input type="file" id="report_card_file" name="report_card_file" accept=".pdf,.docx,.jpg,.jpeg,.png" style="display: none;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px; display: block;"></i>

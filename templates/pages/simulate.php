@@ -1,152 +1,113 @@
 <?php
-$pageTitle = 'Science & Maths Practical App';
+$pageTitle = 'Science & Maths Simulations - StudySmart';
 $currentPage = 'simulate';
+
+// Extra styles for this page
+$extraHead = '
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .simulation-container .card {
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: none;
+            overflow: hidden;
+        }
+        .simulation-container .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+        .simulation-container .icon-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 32px;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .bg-math { background: linear-gradient(135deg, #4e73df, #224abe); }
+        .bg-physics { background: linear-gradient(135deg, #1cc88a, #13855c); }
+        .bg-chemistry { background: linear-gradient(135deg, #e74a3b, #c0392b); }
+        
+        @media (max-width: 768px) {
+            .simulation-container .icon-circle { width: 60px; height: 60px; font-size: 24px; margin-bottom: 15px; }
+            .simulation-container h3 { font-size: 1.25rem; }
+        }
+    </style>
+';
+
 include __DIR__ . '/../layouts/header.php';
 ?>
-<style>
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-    background-color: #f5f7fb !important;
-}
 
-/* FORCE proper row layout */
-.simulation-container .row {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-}
+<div class="container mt-4 pb-5 simulation-container">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold mb-3">Laboratory Simulators</h1>
+        
+    </div>
 
-/* FORCE equal columns */
-.simulation-container .col-md-4 {
-    flex: 0 0 28% !important;
-    max-width: 28% !important;
-    display: flex !important;
-    margin: 0 10px !important;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .simulation-container .col-md-4 {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-        margin: 0 0 20px 0 !important;
-    }
-}
-
-/* CARD FIX */
-.simulation-container .card {
-    width: 100% !important;
-    border-radius: 12px !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
-    transition: all 0.3s ease !important;
-    padding: 5px !important;
-}
-
-/* Hover effect */
-.simulation-container .card:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-}
-
-/* CARD BODY */
-.simulation-container .card-body {
-    text-align: center !important;
-    padding: 15px 10px !important;
-}
-
-/* ICON FIX */
-.simulation-container .card i {
-    font-size: 24px !important;
-    color: white !important;
-    background: linear-gradient(135deg, #4e73df, #224abe) !important;
-    padding: 15px !important;
-    border-radius: 50% !important;
-    margin-bottom: 12px !important;
-}
-
-/* Different icon colors */
-.simulation-container .col-md-4:nth-child(2) i {
-    background: linear-gradient(135deg, #1cc88a, #13855c) !important;
-}
-
-.simulation-container .col-md-4:nth-child(3) i {
-    background: linear-gradient(135deg, #e74a3b, #c0392b) !important;
-}
-
-/* TITLE */
-.simulation-container .card-title {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    margin-bottom: 8px !important;
-}
-
-/* TEXT */
-.simulation-container .card-text {
-    font-size: 13px !important;
-    color: #666 !important;
-    min-height: 50px !important;
-    margin-bottom: 15px !important;
-}
-
-/* BUTTON */
-.simulation-container .btn {
-    border-radius: 8px !important;
-    padding: 8px !important;
-    font-weight: 500 !important;
-    font-size: 14px !important;
-}
-.btn-success {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
-    color: #ffffff !important;
-}
-
-.btn-success:hover {
-    background-color: #218838 !important;
-    border-color: #1e7e34 !important;
-}
-
-/* Remove weird inherited spacing */
-.simulation-container .mb-3,
-.simulation-container .mb-md-4 {
-    margin-bottom: 0 !important;
-}
-    </style>
-<div class="container mt-4 mt-md-5 simulation-container">
-    <div class="row text-center">
-        <div class="col-12 col-md-4 mb-3 mb-md-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <i class="fas fa-square-root-variable"></i>
-                    <h3 class="card-title h4 fw-bold">Mathematics</h3>
-                    <p class="card-text text-muted small">Explore Euclidean Geometry, Trigonometry, and algebraic functions with interactive graphs.</p>
-                    <a href="math" class="btn btn-primary w-100 thin-btn mt-2">Open Maths Lab</a>
+    <div class="row g-4 justify-content-center">
+        <!-- Mathematics Card -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-circle bg-math">
+                        <i class="fas fa-square-root-variable"></i>
+                    </div>
+                    <h3 class="card-title fw-bold mb-3">Mathematics</h3>
+                    <p class="card-text text-muted mb-4">
+                        Explore Euclidean Geometry theorems, Trigonometric waves, and Algebraic functions with real-time interactive graphs.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="/math" class="btn btn-primary w-100 py-2 fw-bold">Open Maths Lab</a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4 mb-3 mb-md-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <i class="fas fa-atom"></i>
 
-                    <h3 class="card-title h4 fw-bold">Physics</h3>
-                    <p class="card-text text-muted small">Simulate pendulums, free fall, and projectile motion with real-time calculations.</p>
-                    <a href="physics" class="btn btn-success w-100 thin-btn mt-2">Open Physics Lab</a>
+        <!-- Physics Card -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-circle bg-physics">
+                        <i class="fas fa-atom"></i>
+                    </div>
+                    <h3 class="card-title fw-bold mb-3">Physics</h3>
+                    <p class="card-text text-muted mb-4">
+                        Simulate pendulums, free fall, projectile motion, and Doppler effect with dynamic calculations and visualisations.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="/physics" class="btn btn-success w-100 py-2 fw-bold">Open Physics Lab</a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4 mb-3 mb-md-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <i class="fas fa-vial"></i>
-                    <h3 class="card-title h4 fw-bold">Chemistry</h3>
-                    <p class="card-text text-muted small">Visualize Bohr models, hydrocarbon bonding, and common chemical reactions.</p>
-                    <a href="chemistry" class="btn btn-danger w-100 thin-btn mt-2">Open Chemistry Lab</a>
+
+        <!-- Chemistry Card -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-circle bg-chemistry">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <h3 class="card-title fw-bold mb-3">Chemistry</h3>
+                    <p class="card-text text-muted mb-4">
+                        Visualize Bohr atomic models, organic hydrocarbon bonding (alkanes, alkenes, alkynes), and common exam reactions.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="/chemistry" class="btn btn-danger w-100 py-2 fw-bold">Open Chemistry Lab</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php include __DIR__ . '/../layouts/footer.php'; ?>
+<?php
+$extraScripts = '
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+';
+include __DIR__ . '/../layouts/footer.php';
+?>
