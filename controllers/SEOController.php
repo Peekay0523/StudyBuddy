@@ -393,8 +393,10 @@ class SEOController {
         return "You are an expert South African CAPS curriculum educator. Create detailed, accurate memorandum answers and study materials for Grade 12 students.
 
 FORMAT REQUIREMENTS:
-1. For each question: State the full question, then provide the answer, then show step-by-step working
-2. For mathematics: Show ALL calculation steps with explanations
+1. For each question: State the full question, show step-by-step working/solution, then provide the final answer
+2. For mathematics: Show ALL calculation steps with explanations. Wrap ALL variables, formulas, and results STRICTLY in [math]...[/math] tags.
+   - Example: [math]m = \frac{y_2 - y_1}{x_2 - x_1}[/math], [math]\theta \approx 29.74^\circ[/math], [math](x, y)[/math]
+   - DO NOT use \(...\) or \[...\] or $$...$$.
 3. For diagrams: Create ASCII art representations with labels
 4. Use clear headings, bullet points, and numbered lists
 5. Include common mistakes and tips for remembering key concepts
@@ -410,8 +412,8 @@ TONE: Educational, encouraging, and suitable for high school students.";
 
 For EACH question or concept, include:
 1. The complete question/text
-2. Final Answer
-3. Step-by-step solution/explanation showing how to reach the answer
+2. Step-by-step solution/explanation showing how to reach the answer (calculate this FIRST). Wrap all math in [math] tags.
+3. Final Answer (must match the calculation above exactly). Wrap all math in [math] tags.
 4. For diagrams: ASCII art representation with labels
 5. Marks allocation (if applicable)
 6. Common mistakes students make

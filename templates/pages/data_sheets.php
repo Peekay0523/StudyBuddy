@@ -175,6 +175,13 @@ window.MathJax = {
         flex-direction: column;
         justify-content: center;
         overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .formula-item:active {
+        background-color: #f8fafc;
+        transform: scale(0.98);
     }
 
     .formula-math {
@@ -361,7 +368,7 @@ window.MathJax = {
             <div class="formula-section">
                 <div class="section-title"><i class="fas fa-running"></i> Mechanics</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Motion Equations" data-formula="$v_f = v_i + at$ | $\Delta x = v_i t + \frac{1}{2}at^2$ | $v_f^2 = v_i^2 + 2a\Delta x$" data-description="These equations describe how objects move under constant acceleration. v_f is final velocity, v_i is initial velocity, a is acceleration, t is time, and Δx is displacement." data-usage="Use these when solving kinematics problems involving constant acceleration, such as free fall, projectile motion, or objects moving with constant acceleration.">
+                    <div class="formula-item" data-title="Motion Equations" data-formula="$v_f = v_i + at$ | $\Delta x = v_i t + \frac{1}{2}at^2$ | $v_f^2 = v_i^2 + 2a\Delta x$" data-description="These equations describe how objects move under constant acceleration. v_f is final velocity, v_i is initial velocity, a is acceleration, t is time, and Δx is displacement." data-usage="Use these when solving kinematics problems involving constant acceleration, such as free fall, projectile motion, or objects moving with constant acceleration.">
                         <span class="formula-label">Motion Equations</span>
                         <div class="formula-math">
                             $v_f = v_i + a \Delta t$<br>
@@ -369,7 +376,7 @@ window.MathJax = {
                             $v_f^2 = v_i^2 + 2 a \Delta x$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Force & Momentum" data-formula="$F_{net} = ma$ | $p = mv$ | $F_{net}\Delta t = \Delta p$" data-description="Newton's second law relates net force to mass and acceleration. Momentum (p) is the product of mass and velocity. The impulse-momentum theorem states that the change in momentum equals the impulse (force × time)." data-usage="Use F=ma to find forces or accelerations. Use momentum equations when analyzing collisions, explosions, or conservation of momentum problems.">
+                    <div class="formula-item" data-title="Force & Momentum" data-formula="$F_{net} = ma$ | $p = mv$ | $F_{net}\Delta t = \Delta p$" data-description="Newton's second law relates net force to mass and acceleration. Momentum (p) is the product of mass and velocity. The impulse-momentum theorem states that the change in momentum equals the impulse (force × time)." data-usage="Use F=ma to find forces or accelerations. Use momentum equations when analyzing collisions, explosions, or conservation of momentum problems.">
                         <span class="formula-label">Force & Momentum</span>
                         <div class="formula-math">
                             $F_{net} = m a$<br>
@@ -377,7 +384,7 @@ window.MathJax = {
                             $F_{net} \Delta t = \Delta p$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Work & Energy" data-formula="$W = F\Delta x\cos\theta$ | $E_k = \frac{1}{2}mv^2$ | $E_p = mgh$" data-description="Work is the product of force and displacement in the direction of the force. Kinetic energy is the energy of motion. Potential energy is energy stored due to position or height." data-usage="Calculate work when analyzing energy transfers. Use kinetic and potential energy in conservation of energy problems or when finding velocities and heights.">
+                    <div class="formula-item" data-title="Work & Energy" data-formula="$W = F\Delta x\cos\theta$ | $E_k = \frac{1}{2}mv^2$ | $E_p = mgh$" data-description="Work is the product of force and displacement in the direction of the force. Kinetic energy is the energy of motion. Potential energy is energy stored due to position or height." data-usage="Calculate work when analyzing energy transfers. Use kinetic and potential energy in conservation of energy problems or when finding velocities and heights.">
                         <span class="formula-label">Work & Energy</span>
                         <div class="formula-math">
                             $W = F \Delta x \cos \theta$<br>
@@ -391,21 +398,21 @@ window.MathJax = {
             <div class="formula-section" style="margin-bottom: 0;">
                 <div class="section-title"><i class="fas fa-bolt"></i> Electricity & Waves</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Electrostatics" data-formula="$F = \frac{kQ_1Q_2}{r^2}$ | $E = \frac{kQ}{r^2} = \frac{F}{q}$" data-description="Coulomb's law describes the electrostatic force between two charged objects. Electric field strength is the force per unit charge." data-usage="Use Coulomb's law to find forces between charges or to analyze electric fields around point charges.">
+                    <div class="formula-item" data-title="Electrostatics" data-formula="$F = \frac{kQ_1Q_2}{r^2}$ | $E = \frac{kQ}{r^2} = \frac{F}{q}$" data-description="Coulomb's law describes the electrostatic force between two charged objects. Electric field strength is the force per unit charge." data-usage="Use Coulomb's law to find forces between charges or to analyze electric fields around point charges.">
                         <span class="formula-label">Electrostatics</span>
                         <div class="formula-math">
                             $F = \frac{k Q_1 Q_2}{r^2}$<br>
                             $E = \frac{k Q}{r^2} = \frac{F}{q}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Electric Circuits" data-formula="$V = IR$ | $P = VI = I^2R = \frac{V^2}{R}$" data-description="Ohm's law relates voltage, current, and resistance. Power is the rate of energy transfer, and can be calculated three equivalent ways." data-usage="Use Ohm's law to find unknown values in circuits. Use power equations when analyzing energy consumption and heat generation in resistors.">
+                    <div class="formula-item" data-title="Electric Circuits" data-formula="$V = IR$ | $P = VI = I^2R = \frac{V^2}{R}$" data-description="Ohm's law relates voltage, current, and resistance. Power is the rate of energy transfer, and can be calculated three equivalent ways." data-usage="Use Ohm's law to find unknown values in circuits. Use power equations when analyzing energy consumption and heat generation in resistors.">
                         <span class="formula-label">Electric Circuits</span>
                         <div class="formula-math">
                             $V = I R$<br>
                             $P = V I = I^2 R = \frac{V^2}{R}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Waves & Light" data-formula="$v = f\lambda$ | $E = hf = \frac{hc}{\lambda}$" data-description="The wave equation relates velocity, frequency, and wavelength. Energy of a photon is proportional to its frequency." data-usage="Use wave equations to analyze wave properties like speed and wavelength. Use photon energy for electromagnetic radiation problems.">
+                    <div class="formula-item" data-title="Waves & Light" data-formula="$v = f\lambda$ | $E = hf = \frac{hc}{\lambda}$" data-description="The wave equation relates velocity, frequency, and wavelength. Energy of a photon is proportional to its frequency." data-usage="Use wave equations to analyze wave properties like speed and wavelength. Use photon energy for electromagnetic radiation problems.">
                         <span class="formula-label">Waves & Light</span>
                         <div class="formula-math">
                             $v = f \lambda$<br>
@@ -465,19 +472,19 @@ window.MathJax = {
             <div class="formula-section">
                 <div class="section-title"><i class="fas fa-wind"></i> Gas Laws</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Ideal Gas Law" data-formula="$PV = nRT$" data-description="The ideal gas law relates pressure (P), volume (V), amount of gas (n), gas constant (R), and temperature (T) for an ideal gas." data-usage="Use this law to calculate any one variable when the other four are known. Remember to convert temperature to Kelvin and use consistent units.">
+                    <div class="formula-item" data-title="Ideal Gas Law" data-formula="$PV = nRT$" data-description="The ideal gas law relates pressure (P), volume (V), amount of gas (n), gas constant (R), and temperature (T) for an ideal gas." data-usage="Use this law to calculate any one variable when the other four are known. Remember to convert temperature to Kelvin and use consistent units.">
                         <span class="formula-label">Ideal Gas Law</span>
                         <div class="formula-math">
                             $PV = nRT$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Boyle's Law" data-formula="$P_1V_1 = P_2V_2$" data-description="At constant temperature, the pressure and volume of a gas are inversely proportional." data-usage="Use when temperature is constant and you need to find pressure or volume changes.">
+                    <div class="formula-item" data-title="Boyle's Law" data-formula="$P_1V_1 = P_2V_2$" data-description="At constant temperature, the pressure and volume of a gas are inversely proportional." data-usage="Use when temperature is constant and you need to find pressure or volume changes.">
                         <span class="formula-label">Boyle's Law</span>
                         <div class="formula-math">
                             $P_1 V_1 = P_2 V_2$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Charles's Law" data-formula="$V_1/T_1 = V_2/T_2$" data-description="At constant pressure, the volume of a gas is directly proportional to its temperature in Kelvin." data-usage="Use when pressure is constant and you need to find volume or temperature changes. Remember to use Kelvin temperatures.">
+                    <div class="formula-item" data-title="Charles's Law" data-formula="$V_1/T_1 = V_2/T_2$" data-description="At constant pressure, the volume of a gas is directly proportional to its temperature in Kelvin." data-usage="Use when pressure is constant and you need to find volume or temperature changes. Remember to use Kelvin temperatures.">
                         <span class="formula-label">Charles's Law</span>
                         <div class="formula-math">
                             $\frac{V_1}{T_1} = \frac{V_2}{T_2}$
@@ -489,7 +496,7 @@ window.MathJax = {
             <div class="formula-section">
                 <div class="section-title"><i class="fas fa-balance-scale"></i> Acids & Bases</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="pH & pOH" data-formula="$pH = -\log[H^+]$ | $pOH = -\log[OH^-]$ | $pH + pOH = 14$" data-description="pH measures hydrogen ion concentration. pOH measures hydroxide ion concentration. Their sum equals 14 at 25°C." data-usage="Use to calculate pH from [H⁺], or vice versa. Use the relationship pH + pOH = 14 for basic solutions.">
+                    <div class="formula-item" data-title="pH & pOH" data-formula="$pH = -\log[H^+]$ | $pOH = -\log[OH^-]$ | $pH + pOH = 14$" data-description="pH measures hydrogen ion concentration. pOH measures hydroxide ion concentration. Their sum equals 14 at 25°C." data-usage="Use to calculate pH from [H⁺], or vice versa. Use the relationship pH + pOH = 14 for basic solutions.">
                         <span class="formula-label">pH & pOH</span>
                         <div class="formula-math">
                             $pH = -\log [H^+]$<br>
@@ -497,14 +504,14 @@ window.MathJax = {
                             $pH + pOH = 14$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Acid Dissociation" data-formula="$K_a = \frac{[H^+][A^-]}{[HA]}$ | $pK_a = -\log K_a$" data-description="Ka is the acid dissociation constant, measuring acid strength. pKa is the negative log of Ka." data-usage="Use Ka to compare acid strengths. Use pKa for buffer calculations and acid-base equilibria.">
+                    <div class="formula-item" data-title="Acid Dissociation" data-formula="$K_a = \frac{[H^+][A^-]}{[HA]}$ | $pK_a = -\log K_a$" data-description="Ka is the acid dissociation constant, measuring acid strength. pKa is the negative log of Ka." data-usage="Use Ka to compare acid strengths. Use pKa for buffer calculations and acid-base equilibria.">
                         <span class="formula-label">Acid Dissociation</span>
                         <div class="formula-math">
                             $K_a = \frac{[H^+][A^-]}{[HA]}$<br>
                             $pK_a = -\log K_a$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Henderson-Hasselbalch" data-formula="$pH = pK_a + \log \frac{[A^-]}{[HA]}$" data-description="This equation calculates the pH of a buffer solution from the pKa and the ratio of conjugate base to acid concentrations." data-usage="Use for buffer solutions to find pH or to determine the ratio of components needed for a specific pH.">
+                    <div class="formula-item" data-title="Henderson-Hasselbalch" data-formula="$pH = pK_a + \log \frac{[A^-]}{[HA]}$" data-description="This equation calculates the pH of a buffer solution from the pKa and the ratio of conjugate base to acid concentrations." data-usage="Use for buffer solutions to find pH or to determine the ratio of components needed for a specific pH.">
                         <span class="formula-label">Henderson-Hasselbalch</span>
                         <div class="formula-math">
                             $pH = pK_a + \log \frac{[A^-]}{[HA]}$
@@ -516,21 +523,21 @@ window.MathJax = {
             <div class="formula-section" style="margin-bottom: 0;">
                 <div class="section-title"><i class="fas fa-bolt"></i> Electrochemistry</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Cell Potential" data-formula="$E_{cell} = E_{cathode} - E_{anode}$ | $E_{cell} = E^\circ_{cell} - \frac{RT}{nF} \ln Q$" data-description="Cell potential is the difference between cathode and anode potentials. The Nernst equation relates cell potential to standard potential and reaction quotient." data-usage="Use the first equation for standard conditions. Use the Nernst equation for non-standard conditions.">
+                    <div class="formula-item" data-title="Cell Potential" data-formula="$E_{cell} = E_{cathode} - E_{anode}$ | $E_{cell} = E^\circ_{cell} - \frac{RT}{nF} \ln Q$" data-description="Cell potential is the difference between cathode and anode potentials. The Nernst equation relates cell potential to standard potential and reaction quotient." data-usage="Use the first equation for standard conditions. Use the Nernst equation for non-standard conditions.">
                         <span class="formula-label">Cell Potential</span>
                         <div class="formula-math">
                             $E_{cell} = E_{cathode} - E_{anode}$<br>
                             $E_{cell} = E^\circ_{cell} - \frac{RT}{nF} \ln Q$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Gibbs Free Energy" data-formula="$\Delta G = -nFE_{cell}$ | $\Delta G^\circ = -RT \ln K$" data-description="Gibbs free energy change is related to cell potential and the equilibrium constant K." data-usage="Use to find spontaneity (negative ΔG means spontaneous) or to calculate equilibrium constants from standard potentials.">
+                    <div class="formula-item" data-title="Gibbs Free Energy" data-formula="$\Delta G = -nFE_{cell}$ | $\Delta G^\circ = -RT \ln K$" data-description="Gibbs free energy change is related to cell potential and the equilibrium constant K." data-usage="Use to find spontaneity (negative ΔG means spontaneous) or to calculate equilibrium constants from standard potentials.">
                         <span class="formula-label">Gibbs Free Energy</span>
                         <div class="formula-math">
                             $\Delta G = -n F E_{cell}$<br>
                             $\Delta G^\circ = -R T \ln K$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Equilibrium Constant" data-formula="$K = \frac{[products]}{[reactants]}$ | $K_c = \frac{[C]^c[D]^d}{[A]^a[B]^b}$" data-description="The equilibrium constant K expresses the ratio of product concentrations to reactant concentrations at equilibrium." data-usage="Use to determine reaction direction and calculate concentrations at equilibrium.">
+                    <div class="formula-item" data-title="Equilibrium Constant" data-formula="$K = \frac{[products]}{[reactants]}$ | $K_c = \frac{[C]^c[D]^d}{[A]^a[B]^b}$" data-description="The equilibrium constant K expresses the ratio of product concentrations to reactant concentrations at equilibrium." data-usage="Use to determine reaction direction and calculate concentrations at equilibrium.">
                         <span class="formula-label">Equilibrium Constant</span>
                         <div class="formula-math">
                             $K = \frac{[products]}{[reactants]}$<br>
@@ -557,13 +564,13 @@ window.MathJax = {
             <div class="formula-section">
                 <div class="section-title"><i class="fas fa-calculator"></i> Algebra & Finance</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Quadratic Formula" data-formula="$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$" data-description="This formula finds the solutions (roots) of any quadratic equation ax² + bx + c = 0. The ± symbol means there are typically two solutions." data-usage="Use this when you need to solve quadratic equations, especially when factoring is difficult or impossible.">
+                    <div class="formula-item" data-title="Quadratic Formula" data-formula="$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$" data-description="This formula finds the solutions (roots) of any quadratic equation ax² + bx + c = 0. The ± symbol means there are typically two solutions." data-usage="Use this when you need to solve quadratic equations, especially when factoring is difficult or impossible.">
                         <span class="formula-label">Quadratic Formula</span>
                         <div class="formula-math">
                             $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Sequences & Series" data-formula="$T_n = a + (n-1)d$ | $S_n = \frac{n}{2}[2a+(n-1)d]$ | $T_n = ar^{n-1}$" data-description="Arithmetic sequence: Tₙ finds the nth term, Sₙ finds the sum. Geometric sequence: each term is found by multiplying by a common ratio r." data-usage="Use these for arithmetic and geometric sequence problems, finding missing terms or sums.">
+                    <div class="formula-item" data-title="Sequences & Series" data-formula="$T_n = a + (n-1)d$ | $S_n = \frac{n}{2}[2a+(n-1)d]$ | $T_n = ar^{n-1}$" data-description="Arithmetic sequence: Tₙ finds the nth term, Sₙ finds the sum. Geometric sequence: each term is found by multiplying by a common ratio r." data-usage="Use these for arithmetic and geometric sequence problems, finding missing terms or sums.">
                         <span class="formula-label">Sequences & Series</span>
                         <div class="formula-math">
                             $T_n = a + (n-1)d$<br>
@@ -571,7 +578,7 @@ window.MathJax = {
                             $T_n = ar^{n-1}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Finance" data-formula="$A = P(1+i)^n$ | $F = \frac{x[(1+i)^n-1]}{i}$" data-description="First formula: compound interest where A is final amount, P is principal. Second formula: future value of an annuity." data-usage="Use for investment, loan, and annuity calculations involving compound interest.">
+                    <div class="formula-item" data-title="Finance" data-formula="$A = P(1+i)^n$ | $F = \frac{x[(1+i)^n-1]}{i}$" data-description="First formula: compound interest where A is final amount, P is principal. Second formula: future value of an annuity." data-usage="Use for investment, loan, and annuity calculations involving compound interest.">
                         <span class="formula-label">Finance</span>
                         <div class="formula-math">
                             $A = P(1 + i)^n$<br>
@@ -584,21 +591,21 @@ window.MathJax = {
             <div class="formula-section">
                 <div class="section-title"><i class="fas fa-chart-line"></i> Calculus & Geometry</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Differentiation" data-formula="$f'(x) = \lim_{h \to 0} \frac{f(x+h)-f(x)}{h}$ | $\frac{d}{dx}[x^n] = nx^{n-1}$" data-description="First formula: the definition of derivative as the limit. Second: power rule for finding derivatives quickly." data-usage="Use to find slopes of curves, rates of change, and critical points in calculus problems.">
+                    <div class="formula-item" data-title="Differentiation" data-formula="$f'(x) = \lim_{h \to 0} \frac{f(x+h)-f(x)}{h}$ | $\frac{d}{dx}[x^n] = nx^{n-1}$" data-description="First formula: the definition of derivative as the limit. Second: power rule for finding derivatives quickly." data-usage="Use to find slopes of curves, rates of change, and critical points in calculus problems.">
                         <span class="formula-label">Differentiation</span>
                         <div class="formula-math">
                             $f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}$<br>
                             $\frac{d}{dx}[x^n] = nx^{n-1}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Analytical Geometry" data-formula="$d = \sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$ | $M(\frac{x_1+x_2}{2};\frac{y_1+y_2}{2})$" data-description="Distance formula calculates the distance between two points. Midpoint formula finds the coordinates of the point halfway between two points." data-usage="Use for finding distances between coordinates and locating midpoints in coordinate geometry.">
+                    <div class="formula-item" data-title="Analytical Geometry" data-formula="$d = \sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$ | $M(\frac{x_1+x_2}{2};\frac{y_1+y_2}{2})$" data-description="Distance formula calculates the distance between two points. Midpoint formula finds the coordinates of the point halfway between two points." data-usage="Use for finding distances between coordinates and locating midpoints in coordinate geometry.">
                         <span class="formula-label">Analytical Geometry</span>
                         <div class="formula-math">
                             $d = \sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}$<br>
                             $M(\frac{x_1+x_2}{2} ; \frac{y_1+y_2}{2})$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Straight Line" data-formula="$y - y_1 = m(x-x_1)$ | $m = \tan\theta$" data-description="Point-slope form finds the equation of a line given a point and slope. Slope is the tangent of the angle the line makes with the x-axis." data-usage="Use to find linear equations and analyze slopes in coordinate geometry.">
+                    <div class="formula-item" data-title="Straight Line" data-formula="$y - y_1 = m(x-x_1)$ | $m = \tan\theta$" data-description="Point-slope form finds the equation of a line given a point and slope. Slope is the tangent of the angle the line makes with the x-axis." data-usage="Use to find linear equations and analyze slopes in coordinate geometry.">
                         <span class="formula-label">Straight Line</span>
                         <div class="formula-math">
                             $y - y_1 = m(x - x_1)$<br>
@@ -611,21 +618,21 @@ window.MathJax = {
             <div class="formula-section" style="margin-bottom: 0;">
                 <div class="section-title"><i class="fas fa-shapes"></i> Trigonometry</div>
                 <div class="formula-grid">
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Identities" data-formula="$\sin^2\theta + \cos^2\theta = 1$ | $\tan\theta = \frac{\sin\theta}{\cos\theta}$" data-description="Pythagorean identity: fundamental relationship between sine and cosine. Tangent definition: the ratio of sine to cosine." data-usage="Use these fundamental trigonometric identities to simplify expressions and solve trigonometric equations.">
+                    <div class="formula-item" data-title="Identities" data-formula="$\sin^2\theta + \cos^2\theta = 1$ | $\tan\theta = \frac{\sin\theta}{\cos\theta}$" data-description="Pythagorean identity: fundamental relationship between sine and cosine. Tangent definition: the ratio of sine to cosine." data-usage="Use these fundamental trigonometric identities to simplify expressions and solve trigonometric equations.">
                         <span class="formula-label">Identities</span>
                         <div class="formula-math">
                             $\sin^2 \theta + \cos^2 \theta = 1$<br>
                             $\tan \theta = \frac{\sin \theta}{\cos \theta}$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Double Angles" data-formula="$\sin 2\alpha = 2\sin\alpha\cos\alpha$ | $\cos 2\alpha = \cos^2\alpha - \sin^2\alpha$" data-description="These formulas express trigonometric functions of double angles in terms of single angles." data-usage="Use when simplifying trigonometric expressions or solving equations involving double angles.">
+                    <div class="formula-item" data-title="Double Angles" data-formula="$\sin 2\alpha = 2\sin\alpha\cos\alpha$ | $\cos 2\alpha = \cos^2\alpha - \sin^2\alpha$" data-description="These formulas express trigonometric functions of double angles in terms of single angles." data-usage="Use when simplifying trigonometric expressions or solving equations involving double angles.">
                         <span class="formula-label">Double Angles</span>
                         <div class="formula-math">
                             $\sin 2\alpha = 2\sin \alpha \cos \alpha$<br>
                             $\cos 2\alpha = \cos^2 \alpha - \sin^2 \alpha$
                         </div>
                     </div>
-                    <div class="formula-item" onclick="openFormulaModal(this)" data-title="Triangle Rules" data-formula="$\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C}$ | $a^2 = b^2 + c^2 - 2bc\cos A$" data-description="Sine rule relates sides and angles in any triangle. Cosine rule (law of cosines) is a generalization of Pythagorean theorem." data-usage="Use sine rule when you know an angle and its opposite side. Use cosine rule when you know two sides and the included angle.">
+                    <div class="formula-item" data-title="Triangle Rules" data-formula="$\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C}$ | $a^2 = b^2 + c^2 - 2bc\cos A$" data-description="Sine rule relates sides and angles in any triangle. Cosine rule (law of cosines) is a generalization of Pythagorean theorem." data-usage="Use sine rule when you know an angle and its opposite side. Use cosine rule when you know two sides and the included angle.">
                         <span class="formula-label">Triangle Rules</span>
                         <div class="formula-math">
                             $\frac{a}{\sin A} = \frac{b}{\sin B} = \frac{c}{\sin C}$<br>
@@ -736,13 +743,34 @@ window.MathJax = {
             }
         });
         
-        // Improve touch handling for formula items on mobile
+        // Improve touch handling for formula items on mobile to prevent accidental clicks while scrolling
         const formulaItems = document.querySelectorAll('.formula-item');
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const moveThreshold = 10; // pixels
+
         formulaItems.forEach(item => {
+            // Deskstop Click (for non-touch devices)
+            item.addEventListener('click', function(e) {
+                if (window.matchMedia("(pointer: coarse)").matches) return;
+                openFormulaModal(this);
+            });
+
+            // Mobile Touch Handling
+            item.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
             item.addEventListener('touchend', function(e) {
-                // Prevent double-tap issues on mobile
-                if (e.target === this || this.contains(e.target)) {
-                    e.preventDefault();
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                
+                const deltaX = Math.abs(touchEndX - touchStartX);
+                const deltaY = Math.abs(touchEndY - touchStartY);
+                
+                // Only open modal if the user didn't move their finger much (intentional tap, not a scroll)
+                if (deltaX < moveThreshold && deltaY < moveThreshold) {
                     openFormulaModal(this);
                 }
             });

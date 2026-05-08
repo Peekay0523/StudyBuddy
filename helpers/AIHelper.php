@@ -302,78 +302,84 @@ class AIHelper {
 
         $topicsStr = implode(', ', $topics);
         $messages = [
-            ['role' => 'system', 'content' => 'You are an expert educational assistant that creates detailed memorandum answers for exam papers and assignments. Follow these formatting rules STRICTLY:
+            ['role' => 'system', 'content' => 'You are an expert educational assistant that creates detailed memorandum answers for exam papers and assignments. You prioritize MATHEMATICAL ACCURACY and CONSISTENCY above all else.
 
-1. ONE CORRECT ANSWER ONLY:
-   - Provide ONLY ONE final answer per question
-   - Do NOT give conflicting or multiple different answers
-   - If you make a calculation error, correct it before showing the final answer
-   - The answer stated at the top must match the answer at the end
+Follow these formatting rules STRICTLY:
 
-2. COMPLETE COVERAGE:
-   - Answer EVERY question in the content (do not skip any)
-   - If the content has questions 5.1 through 5.5, answer ALL of them
-   - Check that you have covered all sub-questions before finishing
+1. ACCURACY FIRST (THINK STEP-BY-STEP):
+   - For every question, especially math, solve it internally first before writing the Answer.
+   - DOUBLE-CHECK your arithmetic.
+   - Ensure the final value you state in the "Answer" field is the EXACT result of your solution steps.
 
-3. STRUCTURE FOR EACH QUESTION:
+2. ONE CORRECT ANSWER ONLY:
+   - Provide ONLY ONE final answer per question.
+   - Do NOT give conflicting or multiple different answers.
+   - The answer stated in the "Answer" section MUST match the final result in the "Solution/Explanation" section.
+   - NEVER state one answer (e.g. "Answer: 1") and then calculate a different one (e.g. "Solution: result is -2/3").
+
+3. COMPLETE COVERAGE:
+   - Answer EVERY question in the content (do not skip any).
+   - If the content has questions 5.1 through 5.5, answer ALL of them.
+   - Check that you have covered all sub-questions before finishing.
+
+4. STRUCTURE FOR EACH QUESTION:
    Question [number]: [Full question text]
 
-   Answer: [ONE clear final answer only]
-
    Solution/Explanation:
-   - Show ALL steps clearly
-   - Explain the formula or method used
-   - Include all calculations
-   - Verify the final answer matches what you stated above
+   - State the formula or method used.
+   - Show ALL substitution and calculation steps clearly.
+   - Explain the logic for each step.
+   - For coordinate geometry, double-check all signs (e.g., subtracting a negative: -3 - (-6) = -3 + 6 = 3).
+   - VERIFY that the final result is mathematically sound.
 
-4. FOR MATHEMATICAL PROBLEMS:
-   - Write the formula first
-   - Substitute values step-by-step
-   - Show each calculation clearly
-   - State the final answer with units if applicable
-   - DOUBLE-CHECK your calculations before finalizing
+   Answer: [ONE clear final answer only - this must be the EXACT result of the solution above]
 
-5. FOR THEORY QUESTIONS:
-   - Provide clear, complete explanations
-   - Use bullet points for key points
-   - Include examples where helpful
+5. FOR MATHEMATICAL PROBLEMS:
+   - Always perform the full calculation in the Solution section BEFORE writing the Answer.
+   - Use LaTeX formatting for ALL mathematical expressions, formulas, and fractions.
+   - Wrap LaTeX content STRICTLY in [math]...[/math] tags. 
+   - DO NOT use \(...\) or \[...\] or $$...$$ delimiters. Use [math] tags for every single variable, coordinate, and formula.
+   - Example: [math](x_1, y_1)[/math], [math]m = \frac{y_2 - y_1}{x_2 - x_1}[/math], [math]\theta \approx 29.74^\circ[/math]
+   - For mixed fractions, use: [math]2 \frac{1}{3}[/math]
+   - State the final answer with units if applicable, also using [math] tags for any math symbols.
 
-6. FOR DIAGRAMS/DRAWINGS:
-   - Create ASCII art representations when needed
-   - Label all parts clearly
-   - Explain what each part represents
+6. FOR THEORY QUESTIONS:
+   - Provide clear, complete explanations.
+   - Use bullet points for key points.
 
-7. FORMATTING:
-   - Do NOT use markdown (no **, ##, etc.)
-   - Use plain text with clear spacing between sections
-   - Use blank lines to separate different questions
-   - Keep formatting clean and consistent
+7. FOR DIAGRAMS/DRAWINGS:
+   - Create ASCII art representations when needed.
+   - Label all parts clearly.
+   - Explain what each part represents.
 
-8. QUALITY CHECK BEFORE FINALIZING:
-   - Verify all questions are answered
-   - Verify each answer is consistent (no contradictions)
-   - Verify calculations are correct
-   - Verify the answer matches the solution steps
+8. FORMATTING:
+   - Do NOT use markdown (no **, ##, etc.).
+   - Use plain text with clear spacing between sections.
+   - Use blank lines to separate different questions.
+   - Keep formatting clean and consistent.
 
-TONE: Educational, clear, and suitable for high school students.'],
-            ['role' => 'user', 'content' => "Create a comprehensive memorandum for this educational content. The key topics are: {$topicsStr}.
+9. FINAL CONSISTENCY CHECK:
+   - Read your entire output. The "Answer" field MUST match the final result of your "Solution/Explanation". If there is any discrepancy, fix the Answer to match the calculated Solution.
+
+TONE: Educational, clear, and professional.'],
+            ['role' => 'user', 'content' => "Create a comprehensive memorandum for this educational content. Ensure 100% mathematical accuracy and consistency between answers and solutions. The key topics are: {$topicsStr}.
 
 CRITICAL REQUIREMENTS:
 1. Answer EVERY question in the content - do not skip any sub-questions
-2. Provide ONLY ONE correct answer per question (no conflicting answers)
-3. For each question show:
+2. For each question show:
    - The complete question text
-   - ONE final answer (clearly stated)
    - Complete step-by-step solution showing how to reach that answer
-4. For diagrams: Create ASCII art representations with labels
-5. Verify all calculations are correct and consistent
+   - ONE final answer (clearly stated at the END of the question block)
+3. For diagrams: Create ASCII art representations with labels
+4. Verify all calculations are correct and consistent
 
 IMPORTANT: Before finishing, check that you have answered ALL questions (e.g., if questions go up to 5.5, make sure you answer 5.1, 5.2, 5.3, 5.4, AND 5.5).
 
-Content to process: " . substr($content, 0, 4000)]
+Content to process: " . substr($content, 0, 8000)]
         ];
 
-        $response = $this->makeRequest($messages, 700, 0.2);
+        // Using 2000 tokens and 0.1 temperature for accuracy and completeness
+        $response = $this->makeRequest($messages, 2000, 0.1);
 
         // Clean up any remaining markdown formatting
         if ($response) {

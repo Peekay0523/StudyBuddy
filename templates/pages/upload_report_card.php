@@ -199,55 +199,152 @@ $extraHead = <<<'SCRIPT'
 }
 
 .career-results {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
     margin-top: 20px;
 }
 
 .career-result-item {
-    background: #f9fafb;
-    border-radius: 12px;
+    background: white;
+    border-radius: 16px;
     padding: 20px;
-    border-left: 4px solid #667eea;
-    transition: all 0.2s;
-    margin-bottom: 15px;
-}
-
-.career-result-item:hover {
-    background: #eff6ff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.career-result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
     margin-bottom: 10px;
 }
 
-.career-result-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
+.career-result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.career-result-aps {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    display: inline-flex;
+.course-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.course-icon {
+    width: 45px;
+    height: 45px;
+    background: #eef2ff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4f46e5;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.career-result-name {
+    margin: 0;
+    color: #111827;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.career-result-aps-info {
+    font-size: 12px;
+    color: #6b7280;
+    display: flex;
     align-items: center;
     gap: 5px;
+    margin-top: 2px;
+}
+
+.divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 12px 0;
+}
+
+.details-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9fafb;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    transition: background 0.2s;
+}
+
+.details-toggle:hover {
+    background: #f3f4f6;
+}
+
+.details-toggle i.fa-chevron-down {
+    font-size: 10px;
+    transition: transform 0.3s;
+}
+
+.details-toggle.active i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.details-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.details-content.active {
+    max-height: 1000px;
+    padding-top: 10px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+    margin-bottom: 6px;
+}
+
+.requirement-item i {
+    color: #10b981;
+    font-size: 12px;
+}
+
+.institution-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #f9fafb;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.aps-badge {
+    background: #4f46e5;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .career-result-description {
     color: #6b7280;
     font-size: 14px;
     line-height: 1.6;
+    margin-bottom: 15px;
+}
     margin-bottom: 15px;
 }
 
@@ -327,6 +424,50 @@ $extraHead = <<<'SCRIPT'
 }
 
 /* Responsive layout for upload report card page */
+.career-search-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    position: sticky;
+    top: 20px;
+    transition: transform 0.3s ease;
+}
+
+.career-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #f3f4f6;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #f9fafb;
+}
+
+.career-search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.career-search-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 @media (max-width: 1024px) {
     .upload-container {
         grid-template-columns: 1fr !important;
@@ -609,6 +750,45 @@ let userSubjects = [];
 let userGrades = {};
 let calculatedAPS = 0;
 
+// Toggle details dropdowns
+function toggleDetails(button) {
+    const content = button.nextElementSibling;
+    button.classList.toggle('active');
+    content.classList.toggle('active');
+}
+
+const courseIcons = {
+    'software': 'fas fa-laptop-code',
+    'computer': 'fas fa-desktop',
+    'engineering': 'fas fa-gears',
+    'medicine': 'fas fa-stethoscope',
+    'health': 'fas fa-heart-pulse',
+    'doctor': 'fas fa-user-md',
+    'nurse': 'fas fa-user-nurse',
+    'law': 'fas fa-gavel',
+    'business': 'fas fa-briefcase',
+    'accounting': 'fas fa-calculator',
+    'commerce': 'fas fa-chart-line',
+    'science': 'fas fa-flask',
+    'art': 'fas fa-palette',
+    'design': 'fas fa-pen-nib',
+    'education': 'fas fa-chalkboard-user',
+    'teaching': 'fas fa-apple-whole',
+    'agriculture': 'fas fa-seedling',
+    'music': 'fas fa-music',
+    'psychology': 'fas fa-brain',
+};
+
+function getCourseIcon(courseName) {
+    courseName = courseName.toLowerCase();
+    for (const [keyword, icon] of Object.entries(courseIcons)) {
+        if (courseName.includes(keyword)) {
+            return icon;
+        }
+    }
+    return 'fas fa-graduation-cap';
+}
+
 async function searchCareers() {
     const searchInput = document.getElementById('career-search-input');
     const resultsContainer = document.getElementById('career-results-container');
@@ -632,93 +812,81 @@ async function searchCareers() {
         if (data.success && data.careers && data.careers.length > 0) {
             resultsContainer.innerHTML = data.careers.map(career => {
                 let institutions = career.institutions || [];
-                
+
                 // Sort by APS (ascending) to show lowest requirements first
                 institutions.sort((a, b) => {
                     const apsA = parseInt(a.required_aps) || 99;
                     const apsB = parseInt(b.required_aps) || 99;
                     return apsA - apsB;
                 });
-                
-                // Show all institutions (we have 15 per career, showing all)
-                const displayInstitutions = institutions;
 
                 // Build institutions HTML
                 let institutionsHtml = '';
-                if (displayInstitutions.length > 0) {
-                    institutionsHtml = displayInstitutions.map(inst => {
+                if (institutions.length > 0) {
+                    institutionsHtml = institutions.map(inst => {
                         const subjects = inst.subject_requirements || [];
-                        const qualifications = inst.qualifications || [];
-                        
+
                         // Subjects with levels
-                        const subjectsHtml = subjects.length > 0 ? 
-                            subjects.map(s => `<span class="subject-badge">${escapeHtml(s.subject)} - Level ${s.level}</span>`).join('') : 
-                            '<span style="color: #6b7280; font-size: 12px;">No specific subjects required</span>';
-                        
-                        // Qualifications
-                        const qualificationsHtml = qualifications.length > 0 ?
-                            qualifications.map(q => `<div style="font-size: 13px; color: #374151; margin: 4px 0;"><i class="fas fa-certificate" style="color: #667eea; margin-right: 5px;"></i>${escapeHtml(q.name)} (${escapeHtml(q.type)}, ${escapeHtml(q.duration || 'N/A')})</div>`).join('') :
-                            '<span style="color: #6b7280; font-size: 12px;">No qualifications listed</span>';
-                        
+                        const subjectsHtml = subjects.length > 0 ?
+                            subjects.map(s => `
+                                <div class="requirement-item">
+                                    <i class="fas fa-circle-check"></i>
+                                    <span>${escapeHtml(s.subject)} (Level ${s.level})</span>
+                                </div>
+                            `).join('') :
+                            '<div class="requirement-item"><span>No specific subjects</span></div>';
+
                         return `
-                            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #667eea;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                                    <h5 style="margin: 0; color: #1f2937; font-size: 14px; font-weight: 600;">
-                                        <i class="fas fa-university"></i> ${escapeHtml(inst.name)}
-                                    </h5>
-                                    <div style="display: flex; gap: 6px; align-items: center;">
-                                        ${inst.application_fee ? `<span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;"><i class="fas fa-tag"></i> R${inst.application_fee}</span>` : ''}
-                                        ${inst.required_aps ? `<span class="career-result-aps" style="font-size: 11px; padding: 3px 8px;">APS: ${inst.required_aps}</span>` : ''}
-                                    </div>
+                            <div class="institution-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                    <span style="font-weight: 700;">${escapeHtml(inst.name)}</span>
+                                    ${inst.required_aps ? `<div class="aps-badge">APS ${inst.required_aps}</div>` : ''}
                                 </div>
-                                <div style="margin-bottom: 8px;">
-                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;"><strong>Required Subjects:</strong></div>
-                                    <div class="career-result-subjects" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
-                                        ${subjectsHtml}
-                                    </div>
+                                <div style="margin-top: 5px; width: 100%;">
+                                    ${subjectsHtml}
                                 </div>
-                                <div>
-                                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;"><strong>Qualifications:</strong></div>
-                                    ${qualificationsHtml}
-                                </div>
-                                ${inst.website ? `
-                                    <a href="${escapeHtml(inst.website)}" target="_blank" class="btn-primary btn-sm" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; font-size: 12px; padding: 6px 12px;">
-                                        <i class="fas fa-external-link-alt"></i> Visit Website
-                                    </a>
-                                ` : ''}
                             </div>
                         `;
                     }).join('');
                 }
-                
+
                 return `
-                    <div class="career-result-item" style="cursor: default;" onclick="event.stopPropagation();">
-                        <div class="career-result-header" style="margin-bottom: 15px;">
-                            <h4 class="career-result-name" style="font-size: 20px;"><i class="fas fa-briefcase"></i> ${escapeHtml(career.name)}</h4>
-                            <span class="career-result-aps">
-                                <i class="fas fa-award"></i> Min APS: ${career.min_aps_score || 'N/A'}
-                            </span>
-                        </div>
-                        <p class="career-result-description" style="margin-bottom: 20px;">${escapeHtml(career.description || 'No description available')}</p>
-                        <div style="margin-bottom: 15px;">
-                            <h5 style="margin: 0 0 10px 0; color: #1f2937; font-size: 15px; display: flex; align-items: center; gap: 8px; justify-content: space-between;">
-                                <span><i class="fas fa-graduation-cap" style="color: #667eea;"></i> Institutions & Requirements</span>
-                                <span style="font-size: 12px; color: #10b981; font-weight: 600;"><i class="fas fa-check-circle"></i> All ${institutions.length} institutions shown</span>
-                            </h5>
-                            <div style="max-height: 500px; overflow-y: auto; padding-right: 5px; margin-bottom: 10px;">
-                                ${institutionsHtml || '<p style="color: #6b7280; font-size: 13px;">No institutions listed for this career.</p>'}
+                    <div class="career-result-item">
+                        <div class="course-top">
+                            <div class="course-icon">
+                                <i class="${getCourseIcon(career.name)}"></i>
+                            </div>
+                            <div>
+                                <h4 class="career-result-name">${escapeHtml(career.name)}</h4>
+                                <div class="career-result-aps-info">
+                                    <i class="fas fa-award"></i> Min APS: ${career.min_aps_score || 'N/A'}
+                                </div>
                             </div>
                         </div>
-                        <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                            <button onclick="showCareerDetails(${career.id}, '${escapeHtml(career.name).replace(/'/g, "\\'")}') " class="btn-secondary btn-sm" style="padding: 8px 20px; font-size: 13px;">
-                                <i class="fas fa-info-circle"></i> View More Details
+
+                        <div class="divider"></div>
+
+                        <p class="career-result-description">${escapeHtml(career.description || 'No description available')}</p>
+
+                        <button type="button" class="details-toggle" onclick="toggleDetails(this)">
+                            <span><i class="fas fa-building-columns"></i> Institutions & Requirements</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="details-content">
+                            <div style="padding-top: 10px;">
+                                ${institutionsHtml || '<p style="color: #6b7280; font-size: 13px;">No institutions listed.</p>'}
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f3f4f6;">
+                            <button onclick="showCareerDetails(${career.id}, '${escapeHtml(career.name).replace(/'/g, "\\'")}')" class="btn-secondary btn-sm" style="padding: 6px 16px; font-size: 12px; border-radius: 6px;">
+                                <i class="fas fa-info-circle"></i> More Details
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
-        } else {
-            resultsContainer.innerHTML = '<div class="career-no-results"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>No careers found. Try a different search term.</p></div>';
+        } else {            resultsContainer.innerHTML = '<div class="career-no-results"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 10px; display: block;"></i><p>No careers found. Try a different search term.</p></div>';
         }
     } catch (error) {
         console.error('Career search error:', error);
@@ -908,28 +1076,38 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 
     <!-- Right Column: Career Search Card -->
-    <div class="career-search-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; position: sticky; top: 20px;">
-        <h3 style="margin: 0 0 10px 0; color: #1f2937; display: flex; align-items: center; gap: 10px; font-size: 18px;">
-            <i class="fas fa-compass" style="color: #667eea;"></i> Search Careers & Check APS
-        </h3>
-        <p style="color: #6b7280; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Search for careers and find out the required APS and subjects for South African universities.</p>
-        
-        <div class="career-search-box" style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="career-search-input" class="career-search-input" placeholder="e.g., Doctor, Engineer..." onkeypress="enterPressedForSearch(event)" style="flex: 1; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
-            <button type="button" id="career-search-btn" class="career-search-btn" onclick="searchCareers()" style="padding: 10px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+    <div class="career-search-card">
+        <div class="course-top">
+            <div class="course-icon" style="background: #eff6ff; color: #3b82f6;">
+                <i class="fas fa-compass"></i>
+            </div>
+            <div>
+                <h3 class="career-result-name" style="font-size: 18px;">Search Careers & Check APS</h3>
+                <span class="duration" style="color: #6b7280; font-size: 13px;">Explore your university options</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+            Search for careers and find out the required APS and subjects for South African universities.
+        </p>
+
+        <div class="career-search-box" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="career-search-input" class="career-search-input" placeholder="e.g., Doctor, Engineer..." onkeypress="enterPressedForSearch(event)">
+            <button type="button" id="career-search-btn" class="career-search-btn" onclick="searchCareers()">
                 <i class="fas fa-search"></i> Search
             </button>
         </div>
-        
-        <div id="career-results-container" class="career-results" style="max-height: 400px; overflow-y: auto;">
-            <div class="career-no-results" style="text-align: center; padding: 20px 10px;">
-                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
-                <p style="color: #6b7280; margin: 0; font-size: 13px;">Enter a career name to search</p>
+
+        <div id="career-results-container" class="career-results" style="max-height: 500px; overflow-y: auto;">
+            <div class="career-no-results">
+                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 12px; display: block; color: #cbd5e1;"></i>
+                <p style="margin: 0; font-size: 14px;">Enter a career name above to begin searching</p>
             </div>
         </div>
     </div>
-</div>
-
+    </div>
 <!-- Your Uploaded Report Cards Section (Full Width Below) -->
 <div class="report-cards-section" style="margin-top: 40px;">
     <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>

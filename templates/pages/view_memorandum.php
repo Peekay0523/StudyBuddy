@@ -18,7 +18,23 @@ $showCalculator = (
 // DEBUG: Show calculator for ALL subjects temporarily - REMOVE THIS LINE after testing
 $showCalculator = true;
 
-$extraHead = '<style>
+$extraHead = '
+<!-- KaTeX for Math Rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<style>
+.math-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: block;
+    overflow-x: auto;
+}
 .highlight-word {
     background-color: #fef08a;
     border-radius: 4px;
@@ -430,8 +446,25 @@ function restoreOriginalContent() {
     const contentDiv = document.getElementById("memo-content");
     if (contentDiv && contentDiv.dataset.originalHtml) {
         contentDiv.innerHTML = contentDiv.dataset.originalHtml;
-        contentDiv.dataset.originalHtml = "";
+        // Re-render math after restoring
+        renderMathInContent(contentDiv);
     }
+}
+
+function renderMathInContent(contentDiv) {
+    let content = contentDiv.innerHTML;
+    content = content.replace(/\[math\]([\s\S]*?)\[\/math\]|\\\\\(([\s\S]*?)\\\\\)|\\\\\[([\s\S]*?)\\\\\]/g, function(match, p1, p2, p3) {
+        const tex = p1 || p2 || p3;
+        const isDisplay = match.startsWith("[math]") || match.startsWith("\\\\[");
+        return `<span class="math-render-wrapper ${isDisplay ? "math-container" : ""}" data-tex="${escapeHtml(tex)}" data-display="${isDisplay}"></span>`;
+    });
+    contentDiv.innerHTML = content;
+    contentDiv.querySelectorAll(".math-render-wrapper").forEach(el => {
+        katex.render(el.dataset.tex, el, { 
+            throwOnError: false, 
+            displayMode: el.dataset.display === "true" || el.dataset.tex.length > 50 
+        });
+    });
 }
 
 function speakContent(contentDiv) {
@@ -461,10 +494,15 @@ function speakNextSentence() {
     }
 
     const sentenceSpan = sentences[currentSentenceIndex];
-    let sentence = sentenceSpan.textContent;
+    
+    // For speech, we want the text content but we need to handle the math specifically
+    // We clone the span and remove the math rendered elements, keeping only the sr-only ones
+    const clone = sentenceSpan.cloneNode(true);
+    clone.querySelectorAll(".math-render-wrapper").forEach(el => el.remove());
+    let sentenceText = clone.textContent;
 
     // Clean up any extra whitespace
-    sentence = sentence.trim();
+    sentenceText = sentenceText.trim();
 
     // Highlight current sentence
     clearHighlights();
@@ -474,7 +512,7 @@ function speakNextSentence() {
     // Update progress
     updateProgress(currentSentenceIndex);
 
-    const utterance = new SpeechSynthesisUtterance(sentence);
+    const utterance = new SpeechSynthesisUtterance(sentenceText);
     utterance.lang = "en-US";
     utterance.rate = 0.95;
     utterance.pitch = 1;
@@ -496,24 +534,82 @@ function speakNextSentence() {
 }
 
 function prepareContentForSentences(contentDiv) {
+    // ALWAYS use the original pristine HTML if we have it
+    // This prevents trying to process already-rendered math spans
+    let content = contentDiv.dataset.originalHtml || contentDiv.innerHTML;
+    
+    // If we are setting originalHtml for the first time, do it now
     if (!contentDiv.dataset.originalHtml) {
-        contentDiv.dataset.originalHtml = contentDiv.innerHTML;
+        contentDiv.dataset.originalHtml = content;
     }
-    const text = contentDiv.textContent;
+    
+    // First, we need to extract the raw text but preserve our [math] tags
+    // so we can render them later but still have clean text for speech
+    
+    // Convert [math]...[/math], \(...\), and \[...\] to a special format that KaTeX can render but speech can skip/handle
+    // We use a temporary placeholder to avoid splitting sentences inside math tags
+    const mathBlocks = [];
+    content = content.replace(/\[math\]([\s\S]*?)\[\/math\]|\\\\\(([\s\S]*?)\\\\\)|\\\\\[([\s\S]*?)\\\\\]/g, function(match, p1, p2, p3) {
+        const tex = p1 || p2 || p3;
+        const id = "MATH_BLOCK_" + mathBlocks.length;
+        const isDisplay = match.startsWith("[math]") || match.startsWith("\\\\[");
+        mathBlocks.push({ id: id, tex: tex, original: match, isDisplay: isDisplay });
+        return id;
+    });
 
-    // Split by sentences but keep punctuation attached to each sentence
-    // This ensures the speech synthesizer treats periods as natural pauses
-    const sentences = text.match(/[^.!?]*[.!?]+[\s]*/g) || [];
+    // Clean up HTML tags for sentence splitting
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const text = tempDiv.textContent;
+
+    // Split by sentences
+    const sentenceRegex = /[^.!?]*[.!?]+[\s]*/g;
+    const rawSentences = text.match(sentenceRegex) || [text];
     let html = "";
 
-    for (let i = 0; i < sentences.length; i++) {
-        const sentence = sentences[i];
+    for (let i = 0; i < rawSentences.length; i++) {
+        let sentence = rawSentences[i];
         if (sentence.trim()) {
-            html += "<span class=\"sentence-span\">" + escapeHtml(sentence) + "</span>";
+            // Restore math blocks for this sentence
+            mathBlocks.forEach(block => {
+                // Replace placeholder with a span that KaTeX will target
+                // and a hidden span for speech synthesis to read naturally
+                const speechFriendlyMath = block.tex
+                    .replace(/\\\\frac\{([^}]*)\}\{([^}]*)\}/g, "$1 over $2")
+                    .replace(/\\\\sqrt\{([^}]*)\}/g, "square root of $1")
+                    .replace(/\\\\tan\^\{-1\}/g, "inverse tangent")
+                    .replace(/\\\\sin\^\{-1\}/g, "inverse sine")
+                    .replace(/\\\\cos\^\{-1\}/g, "inverse cosine")
+                    .replace(/\\\\theta/g, "theta")
+                    .replace(/\\\\approx/g, "is approximately")
+                    .replace(/\\\\circ/g, " degrees")
+                    .replace(/\\\\pm/g, "plus or minus")
+                    .replace(/\\\\times/g, "times")
+                    .replace(/\^/g, " to the power of ")
+                    .replace(/_/g, " sub ");
+                
+                const mathHtml = `<span class="math-render-wrapper ${block.isDisplay ? "math-container" : ""}" data-tex="${escapeHtml(block.tex)}" data-display="${block.isDisplay}"></span><span class="sr-only" style="display:none">${escapeHtml(speechFriendlyMath)}</span>`;
+                sentence = sentence.replace(block.id, mathHtml);
+            });
+            
+            html += "<span class=\"sentence-span\">" + sentence + "</span>";
         }
     }
 
     contentDiv.innerHTML = html;
+    
+    // Render the math blocks using KaTeX
+    contentDiv.querySelectorAll(".math-render-wrapper").forEach(el => {
+        try {
+            katex.render(el.dataset.tex, el, {
+                throwOnError: false,
+                displayMode: el.dataset.display === "true" || el.dataset.tex.length > 50
+            });
+        } catch (e) {
+            console.error("KaTeX error:", e);
+            el.textContent = el.dataset.tex;
+        }
+    });
 }
 
 function clearHighlights() {
@@ -534,6 +630,54 @@ window.addEventListener("beforeunload", function() {
     stopTimer();
     hideControlBar();
 });
+
+async function regenerateMemorandum() {
+    const btn = document.getElementById("regenerate-btn");
+    const memoContent = document.getElementById("memo-content");
+    
+    if (!confirm("Are you sure you want to regenerate this memorandum? The current content will be replaced with a new version.")) {
+        return;
+    }
+    
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Regenerating...";
+    
+    // Add loading overlay to content
+    memoContent.style.opacity = "0.5";
+    memoContent.style.pointerEvents = "none";
+    
+    try {
+        const response = await fetch("/generate-memorandum", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                "script_id": SCRIPT_ID
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            memoContent.textContent = result.memorandum;
+            alert("Memorandum successfully regenerated with improved accuracy!");
+            // Refresh the page to update other sections if needed
+            window.location.reload();
+        } else {
+            alert("Error: " + (result.error || "Failed to regenerate memorandum"));
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+        memoContent.style.opacity = "1";
+        memoContent.style.pointerEvents = "auto";
+    }
+}
 
 function downloadMemorandum(format) {
     const scriptId = SCRIPT_ID;
@@ -583,6 +727,12 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+
+    // Initial render for everything (Math + Sentences)
+    const memoContent = document.getElementById("memo-content");
+    if (memoContent) {
+        prepareContentForSentences(memoContent);
+    }
 });
 </script>';
 
@@ -608,6 +758,9 @@ include __DIR__ . '/../layouts/header.php';
         <div class="memo-actions">
             <button onclick="downloadMemorandum()" class="btn-secondary">
                 <i class="fas fa-download"></i> Download
+            </button>
+            <button id="regenerate-btn" class="btn-secondary" onclick="regenerateMemorandum()" title="Fix inconsistencies or errors">
+                <i class="fas fa-sync-alt"></i> Regenerate
             </button>
             <button id="speech-btn" class="btn-primary" onclick="toggleSpeech()">
                 <i class="fas fa-volume-high" id="speech-icon"></i> Recite Memorandum

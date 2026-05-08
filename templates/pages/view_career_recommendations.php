@@ -45,6 +45,23 @@ $extraHead = <<<EOT
     font-size: 1rem;
     font-weight: 500;
 }
+    .institution-card a,
+.institution-card button {
+    width: 100% !important;
+    max-width: 240px !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 15px 18px !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+}
 </style>
 EOT;
 
@@ -422,63 +439,113 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         </div>
         <div id="courses" class="card-content">
             <?php if (!empty($careerRec['courses'])): ?>
+                <?php
+                $courseIcons = [
+                    'software' => 'fas fa-laptop-code',
+                    'computer' => 'fas fa-desktop',
+                    'engineering' => 'fas fa-gears',
+                    'medicine' => 'fas fa-stethoscope',
+                    'health' => 'fas fa-heart-pulse',
+                    'doctor' => 'fas fa-user-md',
+                    'nurse' => 'fas fa-user-nurse',
+                    'law' => 'fas fa-gavel',
+                    'business' => 'fas fa-briefcase',
+                    'accounting' => 'fas fa-calculator',
+                    'commerce' => 'fas fa-chart-line',
+                    'science' => 'fas fa-flask',
+                    'art' => 'fas fa-palette',
+                    'design' => 'fas fa-pen-nib',
+                    'education' => 'fas fa-chalkboard-user',
+                    'teaching' => 'fas fa-apple-whole',
+                    'agriculture' => 'fas fa-seedling',
+                    'music' => 'fas fa-music',
+                    'psychology' => 'fas fa-brain',
+                ];
+
+                function getCourseIcon($courseName, $icons) {
+                    $courseName = strtolower($courseName);
+                    foreach ($icons as $keyword => $icon) {
+                        if (strpos($courseName, $keyword) !== false) {
+                            return $icon;
+                        }
+                    }
+                    return 'fas fa-graduation-cap';
+                }
+                ?>
                 <div class="courses-grid">
                     <?php foreach (array_slice($careerRec['courses'], 0, 5) as $course): ?>
                         <div class="course-card">
-                            <h4><?php echo htmlspecialchars($course['name']); ?></h4>
-                            <p class="course-duration"><i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? '3-4 years'); ?></p>
+                            <div class="course-top">
+                                <div class="course-icon">
+                                    <i class="<?php echo getCourseIcon($course['name'], $courseIcons); ?>"></i>
+                                </div>
+                                <div>
+                                    <h3><?php echo htmlspecialchars($course['name']); ?></h3>
+                                    <span class="duration">
+                                        <i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? '3-4 years'); ?>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="divider"></div>
                             
                             <!-- Entry Requirements -->
-                            <div class="course-requirements">
-                                <?php
-                                $apsRequired = $course['aps_required'] ?? null;
-                                $subjectReqs = $course['subject_requirements'] ?? [];
-                                $studentAps = $careerRec['aps'] ?? 0;
-                                $studentGrades = $reportCard['grades_data'] ?? [];
-                                
-                                // Build clean requirements list
-                                $reqLines = [];
-                                if ($apsRequired) {
-                                    $reqLines[] = "Min APS {$apsRequired}";
-                                }
-                                if (!empty($subjectReqs) && is_array($subjectReqs)) {
-                                    foreach ($subjectReqs as $req) {
-                                        $subj = $req['subject'] ?? '';
-                                        $level = $req['min_level'] ?? 0;
-                                        if ($subj && $level) {
-                                            $reqLines[] = "{$subj} (Level {$level})";
-                                        }
-                                    }
-                                }
-                                ?>
-                                <strong><i class="fas fa-list-check"></i> Entry Requirements:</strong>
-                                <ul class="entry-reqs-list">
-                                    <?php foreach ($reqLines as $reqLine): ?>
-                                        <li><?php echo htmlspecialchars($reqLine); ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
+                            <button type="button" class="details-toggle" onclick="toggleDetails(this)">
+                                <span><i class="fas fa-list-check"></i> Entry Requirements</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="details-content">
+                                <div class="requirements">
+                                    <?php
+                                    $apsRequired = $course['aps_required'] ?? null;
+                                    $subjectReqs = $course['subject_requirements'] ?? [];
+                                    
+                                    if ($apsRequired): ?>
+                                        <div class="requirement-item">
+                                            <i class="fas fa-circle-check"></i>
+                                            <span>Min APS <?php echo $apsRequired; ?></span>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($subjectReqs) && is_array($subjectReqs)): ?>
+                                        <?php foreach ($subjectReqs as $req): ?>
+                                            <?php
+                                            $subj = $req['subject'] ?? '';
+                                            $level = $req['min_level'] ?? 0;
+                                            if ($subj && $level): ?>
+                                                <div class="requirement-item">
+                                                    <i class="fas fa-circle-check"></i>
+                                                    <span><?php echo htmlspecialchars($subj); ?> (Level <?php echo $level; ?>)</span>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             
                             <!-- Institutions -->
                             <?php if (!empty($course['institutions']) && is_array($course['institutions'])): ?>
-                                <div class="course-institutions">
-                                    <strong><i class="fas fa-university"></i> Institutions Offering This Course:</strong>
-                                    <ul class="institution-list">
+                                <button type="button" class="details-toggle mt" onclick="toggleDetails(this)">
+                                    <span><i class="fas fa-building-columns"></i> Institutions</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="details-content">
+                                    <div class="institution-list">
                                         <?php foreach ($course['institutions'] as $inst): ?>
                                             <?php
                                             $instName = is_array($inst) ? ($inst['name'] ?? null) : $inst;
                                             $instAps = is_array($inst) ? ($inst['aps_required'] ?? null) : null;
                                             ?>
                                             <?php if ($instName): ?>
-                                                <li>
-                                                    <span class="inst-name"><?php echo htmlspecialchars($instName); ?></span>
+                                                <div class="institution-item">
+                                                    <span><?php echo htmlspecialchars($instName); ?></span>
                                                     <?php if ($instAps): ?>
-                                                        <span class="inst-aps">APS <?php echo $instAps; ?></span>
+                                                        <div class="aps-badge">APS <?php echo $instAps; ?></div>
                                                     <?php endif; ?>
-                                                </li>
+                                                </div>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
-                                    </ul>
+                                    </div>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -675,85 +742,166 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
 }
 
 .course-card {
-    background: #f9fafb;
-    padding: 20px;
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.course-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.course-icon {
+    width: 50px;
+    height: 50px;
+    background: #eef2ff;
     border-radius: 12px;
-    border-left: 4px solid #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4f46e5;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.course-card h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.duration {
+    font-size: 13px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.divider {
+    height: 1px;
+    background: #f3f4f6;
+    margin: 15px 0;
 }
 
 .course-card h4 {
-    margin: 0 0 10px;
-    color: #1f2937;
-}
-
-.course-duration {
-    color: #6b7280;
     font-size: 14px;
-    margin-bottom: 15px;
-}
-
-.course-requirements, .course-institutions {
-    margin-top: 15px;
-}
-
-.course-requirements strong, .course-institutions strong {
-    display: block;
-    margin-bottom: 8px;
+    font-weight: 600;
     color: #374151;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Entry Requirements List */
-.entry-reqs-list {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0 0 0;
+.mt {
+    margin-top: 15px !important;
 }
 
-.entry-reqs-list li {
-    padding: 8px 12px;
-    margin-bottom: 6px;
-    background: #f9fafb;
-    border-radius: 6px;
-    border-left: 3px solid #667eea;
-    color: #374151;
-    font-size: 14px;
-}
-
-/* Institution List */
-.institution-list {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0 0 0;
-}
-
-.institution-list li {
+.details-toggle {
+    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    margin-bottom: 6px;
     background: #f3f4f6;
-    border-radius: 6px;
-    flex-wrap: wrap;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    transition: background 0.2s;
 }
 
-.inst-name {
-    font-weight: 600;
+.details-toggle:hover {
+    background: #e5e7eb;
+}
+
+.details-toggle i.fa-chevron-down {
+    font-size: 12px;
+    transition: transform 0.3s;
+}
+
+.details-toggle.active i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.details-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+    padding: 0 14px;
+}
+
+.details-content.active {
+    max-height: 500px; /* Large enough to fit content */
+    padding: 12px 14px;
+}
+
+.requirements {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.requirement-item i {
+    color: #10b981;
+}
+
+.institution-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.institution-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 10px;
+    font-weight: 500;
     color: #1f2937;
 }
 
-.inst-aps {
-    padding: 4px 10px;
-    background: #667eea;
+.aps-badge {
+    background: #4f46e5;
     color: white;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .bursaries-list {
@@ -888,8 +1036,36 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         flex-direction: column;
     }
     
-    .courses-grid, .institutions-grid {
+    .courses-grid {
         grid-template-columns: 1fr;
+    }
+
+    .institutions-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .institution-card {
+        padding: 15px 10px;
+    }
+
+    .institution-card h4 {
+        font-size: 13px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .institution-type {
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+
+    .btn-visit, .btn-applied {
+        padding: 8px 10px;
+        font-size: 11px;
+        width: 100%;
     }
 }
 
@@ -970,6 +1146,13 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 </style>
 
 <script>
+// Toggle details dropdowns
+function toggleDetails(button) {
+    const content = button.nextElementSibling;
+    button.classList.toggle('active');
+    content.classList.toggle('active');
+}
+
 // Mark bursary as applied
 async function markBursaryAsApplied(reportCardId, bursaryName, bursaryProvider) {
     if (!confirm(`Mark "${bursaryName}" as applied? This will add it to your applications on the dashboard.`)) {
