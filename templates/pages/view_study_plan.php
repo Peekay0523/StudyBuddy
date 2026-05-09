@@ -211,7 +211,109 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 }
 
 .study-plan-info li strong {
+    color: #7c3aed;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Meta Section Styling Enhancement */
+.study-plan-info {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border-left: 4px solid #7c3aed;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 0.95rem;
+    color: #475569;
+    align-items: center;
+    list-style: none;
+}
+
+.study-plan-info li {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+}
+
+/* Accordion Styling */
+.topic-accordion {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.topic-accordion[open] {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.topic-accordion summary {
+    padding: 12px 20px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    outline: none;
+    background: #ffffff;
+    user-select: none;
+}
+
+.topic-accordion summary::-webkit-details-marker {
+    display: none;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: #1e293b;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.summary-content i {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.accordion-chevron {
+    transition: transform 0.3s ease;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.topic-accordion[open] .accordion-chevron {
+    transform: rotate(180deg);
+}
+
+.accordion-body {
+    padding: 20px 25px 25px 64px;
+    background: #ffffff;
+    white-space: pre-wrap;
+    line-height: 1.8;
+    color: #334155;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .status-badge {
@@ -339,8 +441,8 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
         justify-content: center;
     }
 
-    .plan-details {
-        padding: 15px;
+    .accordion-body {
+        padding: 15px 15px 15px 20px;
         font-size: 14px;
     }
 }
@@ -379,11 +481,13 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 
         <ul class="study-plan-info">
             <li>
-                <strong><i class="fas fa-calendar"></i> Created:</strong>
+                <i class="fas fa-calendar-day" style="color: #a78bfa; font-size: 14px;"></i>
+                <strong>Created:</strong>
                 <span><?php echo date('M d, Y', strtotime($studyPlan['created_at'])); ?></span>
             </li>
             <li>
-                <strong><i class="fas fa-flag"></i> Status:</strong>
+                <i class="fas fa-tasks" style="color: #a78bfa; font-size: 14px;"></i>
+                <strong>Status:</strong>
                 <span class="status-badge <?php echo $isCompleted ? 'completed' : 'in-progress'; ?>">
                     <i class="fas fa-<?php echo $isCompleted ? 'check-circle' : 'clock'; ?>"></i>
                     <?php echo $isCompleted ? 'Completed' : 'In Progress'; ?>
@@ -409,28 +513,37 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
             <?php endif; ?>
         </div>
 
-        <div class="plan-details" id="plan-content">
-            <h4><i class="fas fa-clipboard-list"></i> Plan Details</h4>
-            <?php
-            // Remove markdown formatting from study plan content
-            $content = $studyPlan['content'];
-            // Remove bold (**text**)
-            $content = preg_replace('/\*\*(.*?)\*\*/', '$1', $content);
-            // Remove italic (*text*)
-            $content = preg_replace('/\*(.*?)\*/', '$1', $content);
-            // Remove headers (###, ##, #)
-            $content = preg_replace('/^#+\s*/m', '', $content);
-            // Remove horizontal rules (---)
-            $content = preg_replace('/^---\s*$/m', '', $content);
-            // Remove markdown links [text](url)
-            $content = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $content);
-            // Remove escaped characters
-            $content = str_replace(['\\'], '', $content);
-            // Clean up multiple spaces/newlines
-            $content = preg_replace('/\n{3,}/', "\n\n", $content);
-            echo htmlspecialchars(trim($content));
-            ?>
-        </div>
+        <!-- Plan Details Accordion -->
+        <details class="topic-accordion" open>
+            <summary>
+                <div class="summary-content">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Plan Details</span>
+                </div>
+                <i class="fas fa-chevron-down accordion-chevron"></i>
+            </summary>
+            <div class="accordion-body" id="plan-content">
+                <?php
+                // Remove markdown formatting from study plan content
+                $content = $studyPlan['content'];
+                // Remove bold (**text**)
+                $content = preg_replace('/\*\*(.*?)\*\*/', '$1', $content);
+                // Remove italic (*text*)
+                $content = preg_replace('/\*(.*?)\*/', '$1', $content);
+                // Remove headers (###, ##, #)
+                $content = preg_replace('/^#+\s*/m', '', $content);
+                // Remove horizontal rules (---)
+                $content = preg_replace('/^---\s*$/m', '', $content);
+                // Remove markdown links [text](url)
+                $content = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $content);
+                // Remove escaped characters
+                $content = str_replace(['\\'], '', $content);
+                // Clean up multiple spaces/newlines
+                $content = preg_replace('/\n{3,}/', "\n\n", $content);
+                echo htmlspecialchars(trim($content));
+                ?>
+            </div>
+        </details>
     </div>
 </div>
 

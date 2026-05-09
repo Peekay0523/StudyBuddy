@@ -253,6 +253,169 @@ $extraHead = '
     font-family: monospace;
 }
 
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 30px 0 15px 0;
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.section-title i {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 18px;
+}
+
+.key-topics-icon { background: #e0f2fe; color: #0ea5e9; }
+.challenging-topics-icon { background: #fee2e2; color: #ef4444; }
+.memo-content-icon { background: #f0fdf4; color: #22c55e; }
+
+.topics-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 25px;
+}
+
+.topics-list li {
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.topics-list li:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.topics-list li::before {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #10b981;
+    font-size: 14px;
+    margin-top: 3px;
+}
+
+.challenging-topics-list li::before {
+    content: "\f0e7";
+    color: #f59e0b;
+}
+
+/* Meta Section Styling */
+.memo-meta {
+    font-family: \'Plus Jakarta Sans\', \'Inter\', system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border-left: 4px solid #7c3aed;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 0.95rem;
+    color: #475569;
+    align-items: center;
+}
+
+.memo-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.memo-meta strong {
+    color: #7c3aed;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+/* Accordion Styling */
+.topic-accordion {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.topic-accordion[open] {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.topic-accordion summary {
+    padding: 12px 20px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    outline: none;
+    background: #ffffff;
+    user-select: none;
+}
+
+.topic-accordion summary::-webkit-details-marker {
+    display: none;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.summary-content i {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.accordion-chevron {
+    transition: transform 0.3s ease;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.topic-accordion[open] .accordion-chevron {
+    transform: rotate(180deg);
+}
+
+.accordion-body {
+    padding: 5px 20px 15px 64px;
+}
+
+.accordion-body .topics-list {
+    margin-bottom: 0;
+}
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: monospace;
+}
+
 .recitation-controls {
     display: flex;
     align-items: center;
@@ -289,6 +452,13 @@ $extraHead = '
     min-width: 50px;
     text-align: center;
 }
+     @media screen and (max-width: 770px) {
+
+    * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+} 
 </style>
 <script>
 let synthesis = window.speechSynthesis;
@@ -631,73 +801,6 @@ window.addEventListener("beforeunload", function() {
     hideControlBar();
 });
 
-async function regenerateMemorandum() {
-    const btn = document.getElementById("regenerate-btn");
-    const memoContent = document.getElementById("memo-content");
-    
-    if (!confirm("Are you sure you want to regenerate this memorandum? The current content will be replaced with a new version.")) {
-        return;
-    }
-    
-    const originalBtnHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Regenerating...";
-    
-    // Add loading overlay to content
-    memoContent.style.opacity = "0.5";
-    memoContent.style.pointerEvents = "none";
-    
-    try {
-        const response = await fetch("/generate-memorandum", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-                "script_id": SCRIPT_ID
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            memoContent.textContent = result.memorandum;
-            alert("Memorandum successfully regenerated with improved accuracy!");
-            // Refresh the page to update other sections if needed
-            window.location.reload();
-        } else {
-            alert("Error: " + (result.error || "Failed to regenerate memorandum"));
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("An error occurred. Please try again.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalBtnHtml;
-        memoContent.style.opacity = "1";
-        memoContent.style.pointerEvents = "auto";
-    }
-}
-
-function downloadMemorandum(format) {
-    const scriptId = SCRIPT_ID;
-    const scriptTitle = SCRIPT_TITLE;
-    const modal = document.getElementById("download-format-modal");
-    modal.style.display = "flex";
-    document.getElementById("download-pdf-btn").onclick = function() {
-        window.open("/download-memorandum/" + scriptId + "?format=pdf", "_blank");
-        modal.style.display = "none";
-    };
-    document.getElementById("download-docx-btn").onclick = function() {
-        window.open("/download-memorandum/" + scriptId + "?format=docx", "_blank");
-        modal.style.display = "none";
-    };
-}
-
-function closeDownloadModal() {
-    document.getElementById("download-format-modal").style.display = "none";
-}
-
 // Progress bar click to seek
 document.addEventListener("DOMContentLoaded", function() {
     const progressBar = document.getElementById("recitation-progress-bar");
@@ -719,15 +822,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     
-    const modal = document.getElementById("download-format-modal");
-    if (modal) {
-        modal.addEventListener("click", function(e) {
-            if (e.target === modal) {
-                closeDownloadModal();
-            }
-        });
-    }
-
     // Initial render for everything (Math + Sentences)
     const memoContent = document.getElementById("memo-content");
     if (memoContent) {
@@ -756,12 +850,6 @@ include __DIR__ . '/../layouts/header.php';
             <i class="fas fa-file-alt"></i> <?php echo htmlspecialchars($script['title']); ?>
         </h3>
         <div class="memo-actions">
-            <button onclick="downloadMemorandum()" class="btn-secondary">
-                <i class="fas fa-download"></i> Download
-            </button>
-            <button id="regenerate-btn" class="btn-secondary" onclick="regenerateMemorandum()" title="Fix inconsistencies or errors">
-                <i class="fas fa-sync-alt"></i> Regenerate
-            </button>
             <button id="speech-btn" class="btn-primary" onclick="toggleSpeech()">
                 <i class="fas fa-volume-high" id="speech-icon"></i> Recite Memorandum
             </button>
@@ -773,42 +861,67 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <strong>Subject:</strong> <?php echo htmlspecialchars($script['subject'] ?? 'N/A'); ?> |
-        <strong>Grade Level:</strong> <?php echo htmlspecialchars($script['grade_level'] ?? 'N/A'); ?> |
-        <strong>Uploaded:</strong> <?php echo date('M d, Y', strtotime($script['uploaded_at'])); ?>
+    <div class="memo-meta">
+        <span><i class="fas fa-book-open" style="color: #a78bfa; font-size: 14px;"></i> <strong>Subject:</strong> <?php echo htmlspecialchars($script['subject'] ?? 'N/A'); ?></span>
+        <span><i class="fas fa-graduation-cap" style="color: #a78bfa; font-size: 14px;"></i> <strong>Grade Level:</strong> <?php echo htmlspecialchars($script['grade_level'] ?? 'N/A'); ?></span>
+        <span><i class="fas fa-calendar-day" style="color: #a78bfa; font-size: 14px;"></i> <strong>Uploaded:</strong> <?php echo date('M d, Y', strtotime($script['uploaded_at'])); ?></span>
     </div>
 
-    <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-list"></i> Key Topics</h4>
-    <?php
-    $topics = json_decode($script['processed_topics'], true) ?? [];
-    if (!empty($topics)):
-    ?>
-        <ul style="margin-bottom: 20px;">
-            <?php foreach ($topics as $topic): ?>
-                <li><?php echo htmlspecialchars($topic); ?></li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else: ?>
-        <p style="color: #6b7280;">No topics extracted yet.</p>
-    <?php endif; ?>
+    <!-- Key Topics Accordion -->
+    <details class="topic-accordion">
+        <summary>
+            <div class="summary-content">
+                <i class="fas fa-star key-topics-icon"></i>
+                <span>Key Topics</span>
+            </div>
+            <i class="fas fa-chevron-down accordion-chevron"></i>
+        </summary>
+        <div class="accordion-body">
+            <?php
+            $topics = json_decode($script['processed_topics'], true) ?? [];
+            if (!empty($topics)):
+            ?>
+                <ul class="topics-list">
+                    <?php foreach ($topics as $topic): ?>
+                        <li><?php echo htmlspecialchars($topic); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p style="color: #6b7280;">No topics extracted yet.</p>
+            <?php endif; ?>
+        </div>
+    </details>
 
-    <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-exclamation-triangle"></i> Challenging Topics</h4>
-    <?php
-    $challengingTopics = json_decode($script['challenging_topics'], true) ?? [];
-    if (!empty($challengingTopics)):
-    ?>
-        <ul style="margin-bottom: 20px;">
-            <?php foreach ($challengingTopics as $topic): ?>
-                <li><?php echo htmlspecialchars($topic); ?></li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else: ?>
-        <p style="color: #6b7280;">No challenging topics identified.</p>
-    <?php endif; ?>
+    <!-- Challenging Topics Accordion -->
+    <details class="topic-accordion">
+        <summary>
+            <div class="summary-content">
+                <i class="fas fa-bolt-lightning challenging-topics-icon"></i>
+                <span>Challenging Topics</span>
+            </div>
+            <i class="fas fa-chevron-down accordion-chevron"></i>
+        </summary>
+        <div class="accordion-body">
+            <?php
+            $challengingTopics = json_decode($script['challenging_topics'], true) ?? [];
+            if (!empty($challengingTopics)):
+            ?>
+                <ul class="topics-list challenging-topics-list">
+                    <?php foreach ($challengingTopics as $topic): ?>
+                        <li><?php echo htmlspecialchars($topic); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p style="color: #6b7280;">No challenging topics identified.</p>
+            <?php endif; ?>
+        </div>
+    </details>
 
-    <h4 style="margin: 20px 0 10px 0;"><i class="fas fa-book"></i> Memorandum Content</h4>
-    <div id="memo-content" style="background: #f9fafb; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
+    <div class="section-title">
+        <i class="fas fa-file-signature memo-content-icon"></i>
+        <span>Memorandum Content</span>
+    </div>
+    <div id="memo-content" style="background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; white-space: pre-wrap; line-height: 1.8; color: #334155; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <?php echo htmlspecialchars($memorandum['content'] ?? 'No memorandum available.'); ?>
     </div>
 
@@ -904,39 +1017,6 @@ include __DIR__ . '/../layouts/header.php';
         <div class="recitation-time">
             <span id="current-time">00:00</span>
             <span id="sentence-count">0/0</span>
-        </div>
-    </div>
-</div>
-
-<!-- Download Format Selection Modal -->
-<div id="download-format-modal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>
-                <i class="fas fa-download" style="color: #667eea;"></i> Download Memorandum
-            </h3>
-            <button onclick="closeDownloadModal()" class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <p style="color: #6b7280; margin-bottom: 20px;">Choose your preferred format:</p>
-            <div class="modal-format-grid">
-                <button id="download-pdf-btn" class="btn-download-format btn-download-pdf">
-                    <i class="fas fa-file-pdf"></i> PDF Format
-                </button>
-                <button id="download-docx-btn" class="btn-download-format btn-download-docx">
-                    <i class="fas fa-file-word"></i> Word Format
-                </button>
-            </div>
-            <p style="color: #9ca3af; font-size: 12px; margin-top: 15px;">
-                <i class="fas fa-info-circle"></i> PDF downloads as HTML (open in browser, then print to PDF)
-            </p>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeDownloadModal()" class="btn-secondary">
-                <i class="fas fa-times"></i> Cancel
-            </button>
         </div>
     </div>
 </div>

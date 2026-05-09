@@ -297,11 +297,155 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 
 .section-title {
     font-size: 24px;
-    margin-bottom: 20px;
-    color: #1f2937;
+    margin: 10px 0 25px 0;
+    color: #6d28d9; /* Deep Purple */
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
+    font-weight: 700;
+}
+
+.section-title i {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(109, 40, 217, 0.2);
+}
+
+/* Scripts List Styling */
+.scripts-list {
+    display: grid;
+    gap: 16px;
+}
+
+.script-item {
+    padding: 10px 16px;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.script-item:hover {
+    border-color: #6d28d9;
+    box-shadow: 0 10px 20px -5px rgba(109, 40, 217, 0.1);
+    transform: translateY(-2px);
+}
+
+.script-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.script-info h4 {
+    margin: 0 0 2px 0;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.script-meta {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.badge.blue { background: #f0f7ff; color: #0284c7; }
+.badge.orange { background: #fffaf0; color: #d97706; }
+.badge.green { background: #f0fdf4; color: #15803d; }
+
+.script-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Small Button Styles */
+.btn-sm {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    border-radius: 9px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.btn-sm-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(109, 40, 217, 0.2);
+}
+
+.btn-sm-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(109, 40, 217, 0.3);
+}
+
+.btn-sm-secondary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+
+.btn-sm-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+}
+
+.btn-sm-danger {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.15);
+}
+
+.btn-sm-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(225, 29, 72, 0.25);
+}
+
+.memo-result:empty {
+    display: none;
+}
+
+.memo-result {
+    margin-top: 10px;
+}
+
+.loading, .no-scripts, .error {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #e2e8f0;
 }
 
 /* Mobile Responsive */
@@ -316,6 +460,45 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 }
 
 @media (max-width: 768px) {
+    .script-item {
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .script-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .script-info {
+        width: 100%;
+    }
+
+    .script-meta {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .script-actions {
+        width: 100%;
+        gap: 10px;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 15px;
+        justify-content: stretch;
+    }
+
+    .script-actions button,
+    .script-actions form,
+    .script-actions form button {
+        flex: 1;
+    }
+
+    .btn-sm {
+        justify-content: center;
+        padding: 10px;
+    }
+
     .upload-script-page {
         padding: 15px;
     }
@@ -703,21 +886,23 @@ async function loadUploadedScripts() {
 
                     return `
                         <div class="script-item">
-                            <div class="script-info">
-                                <h4>${script.title}</h4>
-                                <p class="script-meta">
-                                    <span class="badge blue">${script.subject || 'No subject'}</span>
-                                    <span class="badge orange">Grade ${script.grade_level || '-'}</span>
-                                    <span class="badge green">${new Date(script.uploaded_at).toLocaleDateString()}</span>
-                                </p>
-                            </div>
-                            <div class="script-actions">
-                                ${buttonHtml}
-                                <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
-                                    <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </form>
+                            <div class="script-main">
+                                <div class="script-info">
+                                    <h4>${script.title}</h4>
+                                    <div class="script-meta">
+                                        <span class="badge blue"><i class="fas fa-book"></i> ${script.subject || 'General'}</span>
+                                        <span class="badge orange"><i class="fas fa-graduation-cap"></i> Grade ${script.grade_level || '-'}</span>
+                                        <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(script.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                    </div>
+                                </div>
+                                <div class="script-actions">
+                                    ${buttonHtml}
+                                    <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
+                                        <button type="submit" class="btn-sm btn-sm-danger" title="Delete Script">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                             <div id="memo-result-${script.id}" class="memo-result"></div>
                         </div>
@@ -825,23 +1010,6 @@ include __DIR__ . '/../layouts/header.php';
                 <input type="text" id="title" name="title" placeholder="Enter a title for your script">
             </div>
 
-            <div class="form-group">
-                <label for="subject">Subject</label>
-                <input type="text" id="subject" name="subject" placeholder="e.g., Mathematics, Physics, History" required>
-            </div>
-
-            <div class="form-group">
-                <label for="grade_level">Grade Level</label>
-                <select id="grade_level" name="grade_level" required>
-                    <option value="">Select Grade</option>
-                    <option value="8">Grade 8</option>
-                    <option value="9">Grade 9</option>
-                    <option value="10">Grade 10</option>
-                    <option value="11">Grade 11</option>
-                    <option value="12">Grade 12</option>
-                </select>
-            </div>
-
             <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Upload Script</button>
         </form>
     </div>
@@ -889,7 +1057,7 @@ include __DIR__ . '/../layouts/header.php';
 <!-- Your Uploaded Scripts Section (Full Width Below) -->
 <div class="scripts-section">
     <h2 class="section-title">
-        <i class="fas fa-file-alt"></i> Your Uploaded Scripts
+        <i class="fas fa-file-signature"></i> Your Uploaded Scripts
     </h2>
     <div id="scripts-list" class="scripts-list">
         <p class="loading">Loading scripts...</p>

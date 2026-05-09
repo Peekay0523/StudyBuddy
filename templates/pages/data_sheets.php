@@ -244,7 +244,13 @@ window.MathJax = {
         max-height: 90vh;
         overflow-y: auto;
     }
+ @media screen and (max-width: 770px) {
 
+    * {
+        max-width: 105% !important;
+        box-sizing: border-box !important;
+    }
+} 
     /* Media Queries for larger screens */
     @media (min-width: 640px) {
         .datasheet-wrapper {

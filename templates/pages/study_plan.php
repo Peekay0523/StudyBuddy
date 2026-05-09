@@ -96,8 +96,129 @@ $extraHead = <<<'HTML'
     background: #e0e7ff;
     border-color: #667eea;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
 }
+
+/* Study Plan Card Enhancements */
+.study-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.plan-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    min-height: 240px;
+}
+
+.plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px -8px rgba(102, 126, 234, 0.25);
+    border-color: #cbd5e1;
+}
+
+.plan-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.plan-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: #f5f3ff;
+    color: #7c3aed;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.plan-card-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.plan-card-body {
+    flex: 1;
+    margin-bottom: 20px;
+}
+
+.plan-preview {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.plan-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.plan-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.plan-actions-overlay {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-card-action {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-card-view { background: #f5f3ff; color: #7c3aed; text-decoration: none; }
+.btn-card-view:hover { background: #ede9fe; }
+
+.btn-card-share { background: #f0fdf4; color: #16a34a; }
+.btn-card-share:hover { background: #dcfce7; }
+
+.btn-card-reminder { background: #fff7ed; color: #ea580c; }
+.btn-card-reminder:hover { background: #ffedd5; }
+
 .calendar-day.other-month {
     background: #f1f5f9;
     color: #94a3b8;
@@ -134,7 +255,7 @@ $extraHead = <<<'HTML'
     color: #d97706;
 }
 .calendar-day-number {
-    font-weight: 700;
+    font-weight: 700 !important;
     margin-bottom: 8px;
     font-size: 1rem;
     color: #1e293b;
@@ -634,8 +755,6 @@ clearBtn.addEventListener("click", () => {
     previewSection.style.display = "none";
     uploadArea.style.display = "block";
     document.getElementById("title").value = "";
-    document.getElementById("subject").value = "";
-    document.getElementById("grade_level").value = "";
 });
 
 // Form submission
@@ -840,25 +959,6 @@ include __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                <div class="form-group">
-                    <label for="subject" style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Subject *</label>
-                    <input type="text" id="subject" name="subject" placeholder="e.g., Mathematics" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-                </div>
-
-                <div class="form-group">
-                    <label for="grade_level" style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Grade Level *</label>
-                    <select id="grade_level" name="grade_level" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-                        <option value="">Select Grade</option>
-                        <option value="8">Grade 8</option>
-                        <option value="9">Grade 9</option>
-                        <option value="10">Grade 10</option>
-                        <option value="11">Grade 11</option>
-                        <option value="12">Grade 12</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="form-group" style="margin-top: 15px;">
                 <label for="title" style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Title (optional)</label>
                 <input type="text" id="title" name="title" placeholder="e.g., Calculus Chapter 5 Notes" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
@@ -880,38 +980,48 @@ include __DIR__ . '/../layouts/header.php';
 <?php endif; ?>
 
 <?php if (!empty($studyPlans)): ?>
-    <h2 style="margin-bottom: 20px; color: #1e293b;">
-        <i class="fas fa-book" style="color: #667eea;"></i> Your Study Plans
+    <h2 style="margin: 40px 0 20px 0; color: #1e293b;">
+        <i class="fas fa-book" style="color: #7c3aed;"></i> Your Study Plans
     </h2>
-    <section class="actions" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+    <div class="study-plan-grid">
         <?php foreach ($studyPlans as $plan): ?>
-            <div class="action orange" style="flex-direction: column; align-items: flex-start; height: auto; min-height: 150px; position: relative;">
-                <a href="/view-study-plan/<?php echo $plan['id']; ?>" style="text-decoration: none; color: inherit; flex: 1;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px;"><?php echo htmlspecialchars($plan['title']); ?></h3>
-                    <p style="margin: 0; font-size: 14px; opacity: 0.9; overflow: hidden; text-overflow: ellipsis;">
-                        <?php echo htmlspecialchars(substr($plan['content'], 0, 100)); ?>...
+            <div class="plan-card">
+                <div class="plan-card-header">
+                    <div class="plan-icon-wrapper">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 class="plan-card-title"><?php echo htmlspecialchars($plan['title']); ?></h3>
+                    </div>
+                </div>
+                
+                <div class="plan-card-body">
+                    <p class="plan-preview">
+                        <?php echo htmlspecialchars(substr($plan['content'], 0, 120)); ?>...
                     </p>
-                </a>
-                <div style="margin-top: 10px; opacity: 0.8; font-size: 0.85rem;">
-                    <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($plan['created_at'])); ?>
+                </div>
+
+                <div class="plan-card-meta">
+                    <span><i class="fas fa-calendar-alt"></i> <?php echo date('M d, Y', strtotime($plan['created_at'])); ?></span>
                     <?php if (isset($plan['shared_count']) && $plan['shared_count'] > 0): ?>
-                        | <i class="fas fa-share-alt"></i> Shared <?php echo $plan['shared_count']; ?> time(s)
+                        <span><i class="fas fa-share-alt"></i> Shared <?php echo $plan['shared_count']; ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="study-plan-actions">
-                    <button class="btn-sm btn-primary share-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>" style="cursor: pointer;">
-                        <i class="fas fa-share-alt"></i> Share
-                    </button>
-                    <button class="btn-sm btn-success add-reminder-to-plan" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>" style="cursor: pointer;">
-                        <i class="fas fa-bell"></i> Add Reminder
-                    </button>
-                    <a href="/view-study-plan/<?php echo $plan['id']; ?>" class="btn-sm btn-secondary" style="text-decoration: none;">
+
+                <div class="plan-actions-overlay">
+                    <a href="/view-study-plan/<?php echo $plan['id']; ?>" class="btn-card-action btn-card-view">
                         <i class="fas fa-eye"></i> View
                     </a>
+                    <button class="btn-card-action btn-card-share share-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <button class="btn-card-action btn-card-reminder add-reminder-to-plan" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
+                        <i class="fas fa-bell"></i> Remind
+                    </button>
                 </div>
             </div>
         <?php endforeach; ?>
-    </section>
+    </div>
 <?php endif; ?>
 
 <!-- Share Study Plan Modal -->

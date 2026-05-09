@@ -86,7 +86,7 @@ class ScriptController {
                     if (file_put_contents($destPath, $scan['file_data'])) {
                         $title = $_POST['title'] ?? $selectedScan;
                         $subject = $_POST['subject'] ?? '';
-                        $gradeLevel = $_POST['grade_level'] ?? '';
+                        $gradeLevel = $_POST['grade_level'] ?? ($student['grade_level'] ?? '');
 
                         $scriptId = $this->scriptModel->create(
                             $student['id'],
@@ -135,7 +135,7 @@ class ScriptController {
                     if ($fileName) {
                         $title = $_POST['title'] ?? $_FILES['script_file']['name'];
                         $subject = $_POST['subject'] ?? '';
-                        $gradeLevel = $_POST['grade_level'] ?? '';
+                        $gradeLevel = $_POST['grade_level'] ?? ($student['grade_level'] ?? '');
 
                         $scriptId = $this->scriptModel->create(
                             $student['id'],
