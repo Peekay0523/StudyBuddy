@@ -96,21 +96,22 @@ class ScriptController {
                             $gradeLevel
                         );
 
+                        $generateStudyPlan = (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1');
                         // Process the script and check for errors
-                        $processResult = $this->processScript($scriptId);
+                        $processResult = $this->processScript($scriptId, $generateStudyPlan);
 
                         if ($processResult !== true) {
                             $error = $processResult ?: 'Failed to process script. Please try a different file.';
                         } else {
                             // Check if redirecting to study plan page
-                            if (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1') {
+                            if ($generateStudyPlan) {
                                 setFlashMessage('success', 'Script uploaded successfully! Your study plan has been generated.');
                                 header('Location: /study-plan?generated=1');
                                 exit;
                             }
 
                             setFlashMessage('success', 'Script uploaded and processed successfully!');
-                            header('Location: /dashboard');
+                            header('Location: /view-memorandum/' . $scriptId);
                             exit;
                         }
                     } else {
@@ -145,21 +146,22 @@ class ScriptController {
                             $gradeLevel
                         );
 
+                        $generateStudyPlan = (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1');
                         // Process the script and check for errors
-                        $processResult = $this->processScript($scriptId);
+                        $processResult = $this->processScript($scriptId, $generateStudyPlan);
                         
                         if ($processResult !== true) {
                             $error = $processResult ?: 'Failed to process script. Please try a different file.';
                         } else {
                             // Check if redirecting to study plan page
-                            if (isset($_POST['for_study_plan']) && $_POST['for_study_plan'] == '1') {
+                            if ($generateStudyPlan) {
                                 setFlashMessage('success', 'Script uploaded successfully! Your study plan has been generated.');
                                 header('Location: /study-plan?generated=1');
                                 exit;
                             }
 
                             setFlashMessage('success', 'Script uploaded and processed successfully!');
-                            header('Location: /dashboard');
+                            header('Location: /view-memorandum/' . $scriptId);
                             exit;
                         }
                     } else {
@@ -172,7 +174,7 @@ class ScriptController {
         include __DIR__ . '/../templates/pages/upload_script.php';
     }
     
-    private function processScript($scriptId) {
+    private function processScript($scriptId, $generateStudyPlan = false) {
         try {
             $script = $this->scriptModel->findById($scriptId);
             $filePath = UPLOAD_DIR_SCRIPTS . $script['file_path'];
@@ -262,15 +264,17 @@ class ScriptController {
             $memorandumContent = $this->aiRouter->generateMemorandum($textContent, $topics);
             $this->memorandumModel->create($scriptId, $memorandumContent);
 
-            // Generate study plan (intermediate task - can use Grok)
-            $studentModel = new Student();
-            $student = $studentModel->findByUserId($script['student_id']);
-            $userModel = new User();
-            $user = $userModel->findById($student['user_id']);
+            // Generate study plan only if requested
+            if ($generateStudyPlan) {
+                $studentModel = new Student();
+                $student = $studentModel->findByUserId($script['student_id']);
+                $userModel = new User();
+                $user = $userModel->findById($student['user_id']);
 
-            $studyPlanData = $this->aiRouter->generateStudyPlan($challengingTopics, $user['username']);
-            $studyPlanId = $this->studyPlanModel->create($student['id'], $studyPlanData['title'], $studyPlanData['content']);
-            error_log("Study plan created successfully with ID: " . $studyPlanId . " for student: " . $student['id']);
+                $studyPlanData = $this->aiRouter->generateStudyPlan($challengingTopics, $user['username']);
+                $studyPlanId = $this->studyPlanModel->create($student['id'], $studyPlanData['title'], $studyPlanData['content']);
+                error_log("Study plan created successfully with ID: " . $studyPlanId . " for student: " . $student['id']);
+            }
 
             return true;
 
@@ -301,6 +305,138 @@ class ScriptController {
         }
 
         include __DIR__ . '/../templates/pages/view_memorandum.php';
+    }
+
+    /**
+     * API endpoint to generate a quiz question based on memorandum content
+     */
+    public function generateQuizQuestion() {
+        requireLogin();
+        header('Content-Type: application/json');
+
+        error_log("Quiz generation started for script_id: " . ($_POST['script_id'] ?? 'none'));
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $scriptId = $_POST['script_id'] ?? null;
+        if (!$scriptId) {
+            echo json_encode(['success' => false, 'error' => 'No script ID provided']);
+            exit;
+        }
+
+        $script = $this->scriptModel->findById($scriptId);
+        $memorandum = $this->memorandumModel->findByScriptId($scriptId);
+
+        if (!$script) {
+            error_log("Script not found: " . $scriptId);
+            echo json_encode(['success' => false, 'error' => 'Script not found']);
+            exit;
+        }
+        
+        if (!$memorandum) {
+            error_log("Memorandum not found for script: " . $scriptId);
+            echo json_encode(['success' => false, 'error' => 'Memorandum not found']);
+            exit;
+        }
+
+        $topics = json_decode($script['processed_topics'], true) ?? [];
+        $topicsStr = implode(', ', $topics);
+        
+        $memoContent = substr($memorandum['content'], 0, 4000); 
+
+        $systemPrompt = "You are an educational assessment expert. Your goal is to generate ONE challenging, clear quiz question based on the provided memorandum content.
+        
+        RULES:
+        1. Generate ONLY the question text.
+        2. The question must be based on the provided memorandum.
+        3. For subjects like Mathematics or Science, ensure the question is technically accurate.
+        4. Do NOT provide multiple choice options unless the content specifically suggests it.
+        5. The question should test understanding of the key concepts: {$topicsStr}.
+        6. Keep the question concise and suitable for a student to answer via voice or text.";
+
+        $userPrompt = "Memorandum Content:\n{$memoContent}\n\nGenerate one question now:";
+
+        try {
+            error_log("Sending request to AI for quiz question...");
+            $response = $this->aiRouter->chat($userPrompt, $systemPrompt, AIRouter::COMPLEXITY_INTERMEDIATE);
+            error_log("AI Response received: " . ($response ? "Yes" : "No"));
+            
+            if ($response) {
+                echo json_encode(['success' => true, 'question' => $response]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'AI failed to generate a question']);
+            }
+        } catch (Exception $e) {
+            error_log("Quiz generation error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    /**
+     * API endpoint to evaluate a quiz answer
+     */
+    public function evaluateQuizAnswer() {
+        requireLogin();
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            exit;
+        }
+
+        $question = $_POST['question'] ?? '';
+        $answer = $_POST['answer'] ?? '';
+        $scriptId = $_POST['script_id'] ?? null;
+
+        if (empty($question) || empty($answer)) {
+            echo json_encode(['success' => false, 'error' => 'Missing question or answer']);
+            exit;
+        }
+
+        $memorandum = null;
+        if ($scriptId) {
+            $memorandum = $this->memorandumModel->findByScriptId($scriptId);
+        }
+
+        $memoContext = $memorandum ? "\nMemorandum Reference:\n" . substr($memorandum['content'], 0, 3000) : "";
+
+        $systemPrompt = "You are an expert tutor evaluating a student's answer to a quiz question. 
+        Compare the student's answer with the question and the provided memorandum context.
+        
+        RESPONSE FORMAT:
+        You must respond in exactly this format:
+        CORRECT|Short encouraging explanation of why it is right.
+        or
+        INCORRECT|Short helpful explanation of the correct answer.
+        
+        Keep explanations brief (1-2 sentences). Be encouraging.";
+
+        $userPrompt = "Question: {$question}\nStudent Answer: {$answer}{$memoContext}";
+
+        try {
+            $response = $this->aiRouter->chat($userPrompt, $systemPrompt, AIRouter::COMPLEXITY_INTERMEDIATE);
+            
+            if ($response) {
+                $parts = explode('|', $response, 2);
+                $status = trim(strtoupper($parts[0]));
+                $explanation = isset($parts[1]) ? trim($parts[1]) : $response;
+
+                echo json_encode([
+                    'success' => true, 
+                    'is_correct' => ($status === 'CORRECT'),
+                    'explanation' => $explanation
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'AI failed to evaluate the answer']);
+            }
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
     }
 
     public function getUserScripts() {

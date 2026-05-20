@@ -63,7 +63,7 @@ class SubscriptionController {
     ];
 
     public function index() {
-        requireStudent();
+        requireLogin();
         
         $user = getCurrentUser();
         $subscription = $this->getUserSubscription($user['id']);
@@ -75,7 +75,7 @@ class SubscriptionController {
     }
 
     public function checkout() {
-        requireStudent();
+        requireLogin();
 
         $plan = $_GET['plan'] ?? 'basic';
 
@@ -102,7 +102,7 @@ class SubscriptionController {
     }
 
     public function processPayment() {
-        requireStudent();
+        requireLogin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /subscription');
@@ -300,7 +300,7 @@ class SubscriptionController {
      * BobPay Return URL - Handle successful payment
      */
     public function bobpayReturn() {
-        requireStudent();
+        requireLogin();
 
         $user = getCurrentUser();
 
@@ -360,7 +360,7 @@ class SubscriptionController {
      * BobPay Cancel URL - Handle cancelled payment
      */
     public function bobpayCancel() {
-        requireStudent();
+        requireLogin();
 
         // Clear session transaction data
         unset($_SESSION['bobpay_transaction']);
@@ -476,7 +476,7 @@ class SubscriptionController {
     }
 
     public function success() {
-        requireStudent();
+        requireLogin();
         
         $plan = $_GET['plan'] ?? 'basic';
         $user = getCurrentUser();
@@ -489,7 +489,7 @@ class SubscriptionController {
     }
 
     public function cancel() {
-        requireStudent();
+        requireLogin();
 
         $user = getCurrentUser();
         $this->cancelSubscription($user['id']);
@@ -503,7 +503,7 @@ class SubscriptionController {
      * Downgrade to free plan
      */
     public function downgrade() {
-        requireStudent();
+        requireLogin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /subscription');

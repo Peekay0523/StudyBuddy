@@ -35,40 +35,47 @@
                         <i class="fas fa-shield-halved icon-sm"></i> Admin Panel
                     </a>
                 <?php else: ?>
-                    <!-- Regular users see full navigation -->
-                    <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
-                    <a href="/upload-script" class="<?php echo ($currentPage ?? '') === 'scripts' ? 'active' : ''; ?>"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
-                    <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>">
-                        <i class="fas fa-calendar-alt icon-sm"></i> Study Plan
-                        <?php
-                        $pendingPlans = getPendingStudyPlansCount();
-                        if ($pendingPlans > 0):
-                        ?>
-                            <span class="notification-badge"><?php echo $pendingPlans > 99 ? '99+' : $pendingPlans; ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>" id="study-group-link">
-                        <i class="fas fa-users icon-sm"></i> Study Group
-                        <?php
-                        $groupActivity = getStudyGroupActivityCount();
-                        if ($groupActivity > 0):
-                        ?>
-                            <span class="notification-badge"><?php echo $groupActivity > 99 ? '99+' : $groupActivity; ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="/scan" class="<?php echo ($currentPage ?? '') === 'scan' ? 'active' : ''; ?>"><i class="fas fa-camera icon-sm"></i> Scan to PDF</a>
-                    <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>" id="careers-link">
-                        <i class="fas fa-bullseye icon-sm"></i> Careers
-                        <?php
-                        $bursaryCount = getBursaryNotificationCount();
-                        if ($bursaryCount > 0):
-                        ?>
-                            <span class="notification-badge"><?php echo $bursaryCount > 99 ? '99+' : $bursaryCount; ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
-                    <a href="/simulate" class="<?php echo ($currentPage ?? '') === 'simulate' ? 'active' : ''; ?>"><i class="fas fa-vial icon-sm"></i> Simulate</a>
-                    <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
+                    <!-- Parent users see limited navigation -->
+                    <?php if (isParent()): ?>
+                        <a href="/parent-dashboard" class="<?php echo ($currentPage ?? '') === 'parent-dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Parent Dashboard</a>
+                        <a href="/parent/track-progress" class="<?php echo ($currentPage ?? '') === 'track-progress' ? 'active' : ''; ?>"><i class="fas fa-chart-bar icon-sm"></i> Track Progress</a>
+                        <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
+                    <?php else: ?>
+                        <!-- Regular users see full navigation -->
+                        <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
+                        <a href="/upload-script" class="<?php echo ($currentPage ?? '') === 'scripts' ? 'active' : ''; ?>"><i class="fas fa-file-alt icon-sm"></i> Scripts</a>
+                        <a href="/study-plan" class="<?php echo ($currentPage ?? '') === 'study-plan' ? 'active' : ''; ?>">
+                            <i class="fas fa-calendar-alt icon-sm"></i> Study Plan
+                            <?php
+                            $pendingPlans = getPendingStudyPlansCount();
+                            if ($pendingPlans > 0):
+                            ?>
+                                <span class="notification-badge"><?php echo $pendingPlans > 99 ? '99+' : $pendingPlans; ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>" id="study-group-link">
+                            <i class="fas fa-users icon-sm"></i> Study Group
+                            <?php
+                            $groupActivity = getStudyGroupActivityCount();
+                            if ($groupActivity > 0):
+                            ?>
+                                <span class="notification-badge"><?php echo $groupActivity > 99 ? '99+' : $groupActivity; ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="/scan" class="<?php echo ($currentPage ?? '') === 'scan' ? 'active' : ''; ?>"><i class="fas fa-camera icon-sm"></i> Scan to PDF</a>
+                        <a href="/upload-report-card" class="<?php echo ($currentPage ?? '') === 'careers' ? 'active' : ''; ?>" id="careers-link">
+                            <i class="fas fa-bullseye icon-sm"></i> Careers
+                            <?php
+                            $bursaryCount = getBursaryNotificationCount();
+                            if ($bursaryCount > 0):
+                            ?>
+                                <span class="notification-badge"><?php echo $bursaryCount > 99 ? '99+' : $bursaryCount; ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="/ai-chat" class="<?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>"><i class="fas fa-comments icon-sm"></i> AI Chat</a>
+                        <a href="/simulate" class="<?php echo ($currentPage ?? '') === 'simulate' ? 'active' : ''; ?>"><i class="fas fa-vial icon-sm"></i> Simulate</a>
+                        <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
+                    <?php endif; ?>
                 <?php endif; ?>
             <?php else: ?>
                 <a href="/login" class="<?php echo ($currentPage ?? '') === 'login' ? 'active' : ''; ?>"><i class="fas fa-sign-in-alt icon-sm"></i> Login</a>

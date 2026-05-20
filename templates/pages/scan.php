@@ -206,8 +206,19 @@ include __DIR__ . '/../layouts/header.php';
         </h3>
         <div style="margin-bottom: 20px;">
             <label for="save-filename" style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Enter PDF filename:</label>
-            <input type="text" id="save-filename" placeholder="my_scan_2026-03-04" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
-            <small style="color: #6b7280; display: block; margin-top: 5px;">.pdf will be added automatically</small>
+            <input type="text" id="save-filename" placeholder="my_scan_2026-03-04" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 15px;">
+            
+            <label for="save-folder" style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Select Folder:</label>
+            <input type="text" id="save-folder" list="folder-suggestions" placeholder="e.g. Assignments, Reports" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+            <datalist id="folder-suggestions">
+                <option value="Assignments">
+                <option value="Reports">
+                <option value="Exams">
+                <option value="Study Material">
+                <option value="Personal">
+                <option value="Other">
+            </datalist>
+            <small style="color: #6b7280; display: block; margin-top: 5px;">Group your documents for a neater UI</small>
         </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
             <button id="save-modal-cancel" class="btn-secondary" style="padding: 10px 20px;">
@@ -571,6 +582,7 @@ saveModalOverlay.addEventListener('click', (e) => {
 // Confirm save
 saveModalConfirm.addEventListener('click', async () => {
     const filename = saveFilenameInput.value.trim();
+    const folder = document.getElementById('save-folder').value.trim() || 'Uncategorized';
 
     if (!filename) {
         alert('Please enter a filename');
@@ -592,14 +604,15 @@ saveModalConfirm.addEventListener('click', async () => {
             },
             body: JSON.stringify({
                 scan_id: currentScanId,
-                filename: cleanFilename
+                filename: cleanFilename,
+                folder: folder
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            alert('PDF saved successfully as: ' + data.filename);
+            alert('PDF saved successfully in folder: ' + data.folder);
             saveModalOverlay.style.display = 'none';
             loadSavedPdfs(); // Reload saved list
         } else {
@@ -649,28 +662,63 @@ async function loadSavedPdfs() {
 
         if (data.success && data.files.length > 0) {
             noSavedPdfs.style.display = 'none';
-            savedPdfsList.innerHTML = data.files.map(file => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                        <i class="fas fa-file-pdf" style="font-size: 32px; color: #dc2626;"></i>
-                        <div>
-                            <h4 style="margin: 0; color: #1f2937;">${escapeHtml(file.name)}</h4>
-                            <small style="color: #6b7280;">${file.size} • ${file.date}</small>
+            
+            // Group files by folder
+            const groups = {};
+            data.files.forEach(file => {
+                const folder = file.folder || 'Uncategorized';
+                if (!groups[folder]) groups[folder] = [];
+                groups[folder].push(file);
+            });
+
+            savedPdfsList.innerHTML = Object.keys(groups).sort().map(folder => {
+                const files = groups[folder];
+                return `
+                    <details class="scan-folder" open style="margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <summary style="padding: 16px 20px; font-weight: 700; color: #4b5563; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; background: #f8fafc; transition: background 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-folder" style="color: #667eea; font-size: 20px;"></i>
+                                <span>${escapeHtml(folder)} (${files.length})</span>
+                            </div>
+                            <i class="fas fa-chevron-down folder-chevron" style="font-size: 12px; color: #94a3b8; transition: transform 0.3s ease;"></i>
+                        </summary>
+                        <div style="padding: 10px; display: grid; gap: 10px; background: white;">
+                            ${files.map(file => `
+                                <div class="scan-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #fdfdfd; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                    <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                                        <i class="fas fa-file-pdf" style="font-size: 24px; color: #dc2626;"></i>
+                                        <div>
+                                            <h4 style="margin: 0; color: #1f2937; font-size: 14px;">${escapeHtml(file.name)}</h4>
+                                            <small style="color: #94a3b8; font-size: 11px;">${file.size} • ${file.date}</small>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/view-scan-saved/${file.id}" target="_blank" class="btn-sm" style="text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f0f9ff; color: #3b82f6; font-size: 12px; font-weight: 600; border: 1px solid #e0f2fe;">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="${file.url}" class="btn-sm" style="text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f0fdf4; color: #16a34a; font-size: 12px; font-weight: 600; border: 1px solid #dcfce7;">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button onclick="deleteSavedPdf(${file.id})" class="btn-sm" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #fee2e2; background: #fff5f5; color: #ef4444; cursor: pointer;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <a href="/view-scan-saved/${file.id}" target="_blank" class="btn-sm btn-sm-warning" style="text-decoration: none; padding: 8px 16px; border-radius: 6px; background: linear-gradient(135deg, #f59e0b, #f97316); color: white;">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="${file.url}" class="btn-sm btn-sm-primary" style="text-decoration: none; padding: 8px 16px; border-radius: 6px;">
-                            <i class="fas fa-download"></i> Download
-                        </a>
-                        <button onclick="deleteSavedPdf(${file.id})" class="btn-sm btn-sm-danger" style="padding: 8px 16px; border-radius: 6px; border: none; background: #dc2626; color: white; cursor: pointer;">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                    </details>
+                `;
+            }).join('');
+            
+            // Add CSS for chevron rotation
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .scan-folder[open] .folder-chevron { transform: rotate(180deg); }
+                .scan-folder summary::-webkit-details-marker { display: none; }
+                .scan-folder summary:hover { background: #f1f5f9 !important; }
+            `;
+            document.head.appendChild(style);
+            
         } else {
             noSavedPdfs.style.display = 'block';
             savedPdfsList.innerHTML = '';

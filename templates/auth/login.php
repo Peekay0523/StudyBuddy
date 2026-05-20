@@ -83,6 +83,19 @@ $extraHead = '<style>
         <?php endif; ?>
 
         <form method="post" action="/login">
+            <div class="role-selection" style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <label class="role-card" id="student-card" style="flex: 1; text-align: center; padding: 15px; border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; background: #eff6ff; transition: all 0.3s;">
+                    <input type="radio" name="role" value="student" checked style="display: none;" onchange="updateRoleSelection()">
+                    <i class="fas fa-user-graduate" style="font-size: 24px; color: #3b82f6; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; color: #1f2937;">Student</div>
+                </label>
+                <label class="role-card" id="parent-card" style="flex: 1; text-align: center; padding: 15px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; background: white; transition: all 0.3s;">
+                    <input type="radio" name="role" value="parent" style="display: none;" onchange="updateRoleSelection()">
+                    <i class="fas fa-user-friends" style="font-size: 24px; color: #6b7280; margin-bottom: 8px;"></i>
+                    <div style="font-weight: 600; color: #4b5563;">Parent</div>
+                </label>
+            </div>
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required>
@@ -115,6 +128,33 @@ $extraHead = '<style>
 </div>
 
 <script>
+function updateRoleSelection() {
+    const studentCard = document.getElementById('student-card');
+    const parentCard = document.getElementById('parent-card');
+    const isStudent = document.querySelector('input[name="role"]:checked').value === 'student';
+
+    if (isStudent) {
+        studentCard.style.borderColor = '#3b82f6';
+        studentCard.style.background = '#eff6ff';
+        studentCard.querySelector('i').style.color = '#3b82f6';
+        studentCard.querySelector('div').style.color = '#1f2937';
+
+        parentCard.style.borderColor = '#e5e7eb';
+        parentCard.style.background = 'white';
+        parentCard.querySelector('i').style.color = '#6b7280';
+        parentCard.querySelector('div').style.color = '#4b5563';
+    } else {
+        parentCard.style.borderColor = '#3b82f6';
+        parentCard.style.background = '#eff6ff';
+        parentCard.querySelector('i').style.color = '#3b82f6';
+        parentCard.querySelector('div').style.color = '#1f2937';
+
+        studentCard.style.borderColor = '#e5e7eb';
+        studentCard.style.background = 'white';
+        studentCard.querySelector('i').style.color = '#6b7280';
+        studentCard.querySelector('div').style.color = '#4b5563';
+    }
+}
 function fillAdminCredentials() {
     document.getElementById('username').value = 'Peekay';
     document.getElementById('password').value = 'admin123';

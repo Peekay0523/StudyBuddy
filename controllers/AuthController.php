@@ -33,6 +33,7 @@ class AuthController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
+            $role = $_POST['role'] ?? 'student';
             
             if (empty($username) || empty($password)) {
                 $error = 'Please fill in all fields';
@@ -43,6 +44,7 @@ class AuthController {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['user'] = $user;
+                    $_SESSION['user_role'] = $role; // Selected role (parent or student)
 
                     // Track login activity and streak
                     $this->userActivityModel->updateActivity($user['id']);
@@ -50,6 +52,8 @@ class AuthController {
                     // Redirect admin users to admin panel
                     if ($user['role'] === 'admin') {
                         header('Location: /admin');
+                    } elseif ($role === 'parent') {
+                        header('Location: /parent-dashboard');
                     } else {
                         header('Location: /dashboard');
                     }

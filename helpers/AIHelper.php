@@ -404,11 +404,16 @@ Content to process: " . substr($content, 0, 8000)]
 
         $topicsStr = implode(', ', $challengingTopics);
         $messages = [
-            ['role' => 'system', 'content' => 'You are an educational advisor that creates personalized study plans focusing on challenging topics.'],
-            ['role' => 'user', 'content' => "Create a personalized study plan for a student named {$studentName} who finds these topics challenging: {$topicsStr}. Include study tips and resources."]
+            ['role' => 'system', 'content' => 'You are an educational advisor that creates personalized DAILY study plans focusing on challenging topics. 
+            STRICT FORMATTING RULES:
+            1. Use "Day" numbering instead of "Week" (e.g., "Day 1-2:", "Day 3:").
+            2. Every section MUST start with a header like "Day X: [Topic Name]" or "Day X-Y: [Topic Name]".
+            3. Use the header sentence to clearly define what is being studied.'],
+            ['role' => 'user', 'content' => "Create a personalized DAILY study plan for a student named {$studentName} who finds these topics challenging: {$topicsStr}. 
+            Format the plan using 'Day X:' headers. Include specific tasks, study tips and resources for each day."]
         ];
 
-        $response = $this->makeRequest($messages, 400, 0.5);
+        $response = $this->makeRequest($messages, 500, 0.5);
         error_log("GenerateStudyPlan: API Response: " . substr($response ?: 'NULL', 0, 100));
 
         // Remove markdown formatting from response
@@ -424,11 +429,53 @@ Content to process: " . substr($content, 0, 8000)]
         }
 
         return [
-            'title' => "Personalized Study Plan for {$studentName}",
+            'title' => "Daily Study Plan for {$studentName}",
             'content' => $response ?: "Focus on these challenging topics: {$topicsStr}. Review regularly and practice problems."
         ];
     }
     
+    /**
+     * Generate a structured study schedule from study plan content
+     */
+    public function generateStudySchedule($title, $content, $startDate) {
+        if (!$this->isValidApiKey()) {
+            return [];
+        }
+
+        $messages = [
+            ['role' => 'system', 'content' => 'You are an educational assistant that converts study plans into structured calendar schedules. 
+            Analyze the study plan and extract a sequence of study sessions. 
+            Return a JSON array of objects, where each object has:
+            - date_offset: number of days from start date (0 = start date, 1 = next day, etc.)
+            - title: The EXACT header sentence from the study plan for that day (e.g., "Day 1-2: Review and Foundation")
+            - description: brief description of what to study (max 200 chars)
+            - time: recommended start time (HH:MM format)
+            
+            Guidelines:
+            - Use the "Day X" or "Day X-Y" markers in the plan to determine date_offset.
+            - CRITICAL: The "title" field MUST be the full header line from the plan (e.g. "Day 3-4: Calculating the Gradient of a Line").
+            - Spread sessions across the timeline mentioned in the plan.
+            - TIME RULES:
+              * Weekdays (Mon-Fri): Use times between 15:00 and 22:00 (after school).
+              * Sundays: Use times between 12:00 and 22:00.
+              * Saturdays: Use times between 10:00 and 22:00.
+            - Return ONLY the JSON array starting with [ and ending with ].'],
+            ['role' => 'user', 'content' => "Convert this daily study plan into a schedule starting from {$startDate}:\n\nTitle: {$title}\n\nContent: " . substr($content, 0, 4000)]
+        ];
+
+        $response = $this->makeRequest($messages, 800, 0.3);
+        
+        if ($response) {
+            $jsonMatch = [];
+            if (preg_match('/\[.*\]/s', $response, $jsonMatch)) {
+                $decoded = json_decode($jsonMatch[0], true);
+                return is_array($decoded) ? $decoded : [];
+            }
+        }
+        
+        return [];
+    }
+
     /**
      * Calculate APS (Admission Point Score) from grades
      * South African NSC APS calculation

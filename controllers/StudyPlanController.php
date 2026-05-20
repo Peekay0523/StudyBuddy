@@ -43,6 +43,10 @@ class StudyPlanController {
             exit;
         }
 
+        // Check if this study plan has any reminders in the calendar
+        $reminders = $this->studyReminderModel->findByUser($student['id'], ['study_plan_id' => $planId]);
+        $hasReminders = !empty($reminders);
+
         include __DIR__ . '/../templates/pages/view_study_plan.php';
     }
 
@@ -144,6 +148,43 @@ class StudyPlanController {
         $this->studyPlanModel->updateShareStatus($shareId, $status);
 
         echo json_encode(['success' => true]);
+    }
+
+    /**
+     * Delete a study plan (soft delete)
+     */
+    public function delete($planId) {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $student = getCurrentStudent();
+        $studyPlan = $this->studyPlanModel->findById($planId);
+
+        if (!$studyPlan || $studyPlan['student_id'] != $student['id']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Study plan not found']);
+            return;
+        }
+
+        $result = $this->studyPlanModel->updateActive($planId, 0);
+
+        if ($result) {
+            // Also remove associated reminders
+            $reminders = $this->studyReminderModel->findByUser($student['id'], ['study_plan_id' => $planId]);
+            foreach ($reminders as $reminder) {
+                $this->studyReminderModel->delete($reminder['id']);
+            }
+            
+            echo json_encode(['success' => true]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to delete study plan']);
+        }
     }
 
     /**
@@ -299,11 +340,152 @@ class StudyPlanController {
         $result = $this->studyPlanModel->markComplete($planId);
 
         if ($result) {
+            // Also remove associated reminders when plan is completed
+            $reminders = $this->studyReminderModel->findByUser($student['id'], ['study_plan_id' => $planId]);
+            foreach ($reminders as $reminder) {
+                $this->studyReminderModel->delete($reminder['id']);
+            }
+            
             echo json_encode(['success' => true]);
         } else {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to mark study plan as complete']);
         }
+    }
+
+    /**
+     * Add study plan dates to calendar
+     */
+    public function addToCalendar($planId) {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $student = getCurrentStudent();
+        $studyPlan = $this->studyPlanModel->findById($planId);
+        $startDate = $_POST['start_date'] ?? date('Y-m-d');
+
+        if (!$studyPlan || $studyPlan['student_id'] != $student['id']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Study plan not found']);
+            return;
+        }
+
+        // Use AI to generate a structured schedule from the study plan content
+        $schedule = $this->aiRouter->generateStudySchedule($studyPlan['title'], $studyPlan['content'], $startDate);
+
+        if (empty($schedule)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to generate schedule from study plan']);
+            return;
+        }
+
+        $createdReminders = [];
+        $conflicts = [];
+
+        foreach ($schedule as $session) {
+            $offset = intval($session['date_offset'] ?? 0);
+            $targetDate = date('Y-m-d', strtotime($startDate . " + $offset days"));
+            
+            // Check for ANY existing reminders on this date to avoid direct time conflicts
+            $existingOnDate = $this->studyReminderModel->findByDate($student['id'], $targetDate);
+            
+            // Check if THIS specific study plan already has a reminder on this date
+            $alreadyScheduled = false;
+            foreach ($existingOnDate as $rem) {
+                if ($rem['study_plan_id'] == $planId) {
+                    $alreadyScheduled = true;
+                    break;
+                }
+            }
+
+            if ($alreadyScheduled) {
+                $conflicts[] = $targetDate;
+                continue;
+            }
+
+            // Find a free time slot based on day of week (respecting school hours)
+            $dayOfWeek = date('w', strtotime($targetDate)); // 0 = Sunday, 1-5 = Weekday, 6 = Saturday
+            
+            if ($dayOfWeek == 0) { // Sunday: Start from 12:00
+                $slots = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00"];
+                $startTime = "12:00:00";
+            } elseif ($dayOfWeek == 6) { // Saturday: Start from 10:00 (assume more free time)
+                $slots = ["10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"];
+                $startTime = "10:00:00";
+            } else { // Weekdays: Start from 15:00 (after school)
+                $slots = ["15:00", "17:00", "19:00", "21:00", "22:00"];
+                $startTime = "15:00:00";
+            }
+
+            if (!empty($existingOnDate)) {
+                $busyTimes = array_map(function($r) { return substr($r['reminder_time'], 0, 5); }, $existingOnDate);
+                
+                foreach ($slots as $slot) {
+                    if (!in_array($slot, $busyTimes)) {
+                        $startTime = $slot . ":00";
+                        break;
+                    }
+                    // If all slots full, it will just use the last one
+                    $startTime = $slot . ":00"; 
+                }
+            }
+
+            $reminderId = $this->studyReminderModel->create(
+                $student['id'],
+                $session['title'] ?? $studyPlan['title'],
+                $targetDate,
+                $startTime,
+                $session['description'] ?? '',
+                $planId,
+                0, // Not recurring by default
+                null,
+                1 // Mark as important
+            );
+
+            if ($reminderId) {
+                $createdReminders[] = $reminderId;
+            }
+        }
+
+        echo json_encode([
+            'success' => true, 
+            'count' => count($createdReminders),
+            'conflicts' => count($conflicts)
+        ]);
+    }
+
+    /**
+     * Remove all reminders associated with a study plan
+     */
+    public function removeSchedule($planId) {
+        requireStudent();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        $student = getCurrentStudent();
+        $studyPlan = $this->studyPlanModel->findById($planId);
+
+        if (!$studyPlan || $studyPlan['student_id'] != $student['id']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Study plan not found']);
+            return;
+        }
+
+        $reminders = $this->studyReminderModel->findByUser($student['id'], ['study_plan_id' => $planId]);
+        foreach ($reminders as $reminder) {
+            $this->studyReminderModel->delete($reminder['id']);
+        }
+
+        echo json_encode(['success' => true]);
     }
 
     /**

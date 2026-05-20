@@ -975,7 +975,7 @@ EOT;
 include __DIR__ . '/../layouts/header.php';
 ?>
 
-<h1 class="title" style="font-size: 1.5rem; margin-bottom: 0.25rem;">AI Chat Assistant</h1>
+<h1 class="title" style="font-size: 1.5rem; margin-bottom: 0.25rem;">StudyBuddie Chat Assistant</h1>
 <p class="subtitle" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Ask me anything about your studies!</p>
 
 <style>
@@ -1408,7 +1408,7 @@ include __DIR__ . '/../layouts/header.php';
 <div class="chat-container" id="chat-container">
     <div class="chat-messages" id="messages-container">
         <div class="chat-message ai">
-            Hello! I'm your AI Study Assistant. I can help you with questions about various subjects, explain concepts, provide study tips, or create quiz questions. What would you like to know?
+            Hello! I'm StudyBuddie your AI Study Assistant. I can help you with questions about various subjects, explain concepts, provide study tips, or create quiz questions. What would you like to know?
         </div>
     </div>
 

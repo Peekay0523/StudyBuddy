@@ -465,6 +465,7 @@ class ScanController {
             
             $scanId = $input['scan_id'] ?? '';
             $filename = $input['filename'] ?? '';
+            $folder = $input['folder'] ?? 'Uncategorized';
 
             if (empty($scanId)) {
                 throw new Exception('Missing scan ID. Please try converting the images to PDF again.');
@@ -486,13 +487,14 @@ class ScanController {
                 throw new Exception('Scan not found');
             }
 
-            // Mark as saved with new filename
-            $stmt = $db->prepare("UPDATE scans SET is_saved = 1, filename = ?, original_filename = ? WHERE id = ? AND user_id = ?");
-            $stmt->execute([$filename, $filename, $scanId, $user['id']]);
+            // Mark as saved with new filename and folder
+            $stmt = $db->prepare("UPDATE scans SET is_saved = 1, filename = ?, original_filename = ?, folder = ? WHERE id = ? AND user_id = ?");
+            $stmt->execute([$filename, $filename, $folder, $scanId, $user['id']]);
 
             echo json_encode([
                 'success' => true,
                 'filename' => $filename,
+                'folder' => $folder,
                 'scan_id' => $scanId
             ]);
             exit;
@@ -529,6 +531,7 @@ class ScanController {
                 $files[] = [
                     'id' => $scan['id'],
                     'name' => $scan['filename'],
+                    'folder' => $scan['folder'] ?? 'Uncategorized',
                     'size' => formatFileSize($scan['file_size']),
                     'date' => date('M d, Y H:i', strtotime($scan['created_at'])),
                     'url' => '/download-scan-saved/' . $scan['id']

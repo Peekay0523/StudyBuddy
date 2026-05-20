@@ -42,7 +42,19 @@ class AIRouter {
         
         // Route to selected model
         if ($model === self::MODEL_GROK && $this->grokAI->isValidApiKey()) {
-            return $this->grokAI->chat($userMessage, $systemPrompt);
+            $messages = [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userMessage]
+            ];
+            $response = $this->grokAI->makeRequest($messages);
+            if ($response) {
+                // Remove markdown formatting for cleaner display (similar to GrokAI::chat)
+                $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response);
+                $response = preg_replace('/\*(.*?)\*/', '$1', $response);
+                $response = preg_replace('/^#+\s*/m', '', $response);
+                $response = str_replace(['**', '__', '_'], '', $response);
+                return $response;
+            }
         }
         
         // Fallback to OpenAI
@@ -129,7 +141,21 @@ class AIRouter {
             return $this->grokAI->reciteStudyPlan($studyPlanContent);
         }
         
-        return $this->openAIHelper->reciteStudyPlan($studyPlanContent);
+        return $this->openAIHelper->reciteStudyPlan('Study Plan', $studyPlanContent);
+    }
+
+    /**
+     * Route study schedule generation
+     */
+    public function generateStudySchedule($title, $content, $startDate) {
+        // Schedule generation is intermediate
+        $model = $this->selectModel(self::COMPLEXITY_INTERMEDIATE);
+        
+        if ($model === self::MODEL_GROK && $this->grokAI->isValidApiKey()) {
+            return $this->grokAI->generateStudySchedule($title, $content, $startDate);
+        }
+        
+        return $this->openAIHelper->generateStudySchedule($title, $content, $startDate);
     }
     
     /**

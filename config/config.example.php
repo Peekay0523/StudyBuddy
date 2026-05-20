@@ -62,9 +62,33 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
+function isParent() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'parent';
+}
+
+function isStudent() {
+    return !isset($_SESSION['user_role']) || $_SESSION['user_role'] === 'student';
+}
+
 function requireLogin() {
     if (!isLoggedIn()) {
         header('Location: /login');
+        exit;
+    }
+}
+
+function requireParent() {
+    requireLogin();
+    if (!isParent()) {
+        header('Location: /dashboard');
+        exit;
+    }
+}
+
+function requireStudent() {
+    requireLogin();
+    if (!isStudent()) {
+        header('Location: /parent-dashboard');
         exit;
     }
 }

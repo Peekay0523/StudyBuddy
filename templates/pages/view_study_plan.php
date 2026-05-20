@@ -502,6 +502,17 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
             <button id="stopReciteBtn" onclick="stopRecitation()" class="btn-secondary" style="display: none;">
                 <i class="fas fa-stop"></i> Stop Recitation
             </button>
+            
+            <?php if (!$hasReminders): ?>
+                <button id="calendarBtn" onclick="showCalendarModal()" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <i class="fas fa-calendar-plus"></i> Add to Calendar
+                </button>
+            <?php else: ?>
+                <button id="removeScheduleBtn" onclick="removeSchedule()" class="btn-secondary" style="color: #ef4444; border-color: #ef4444;">
+                    <i class="fas fa-calendar-minus"></i> Remove from Calendar
+                </button>
+            <?php endif; ?>
+
             <?php if (!$isCompleted): ?>
                 <button onclick="markStudyPlanComplete()" class="btn-primary btn-success">
                     <i class="fas fa-check-circle"></i> Mark as Complete
@@ -511,6 +522,22 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
                     <i class="fas fa-check-circle"></i> Completed
                 </span>
             <?php endif; ?>
+        </div>
+
+        <!-- Calendar Start Date Modal -->
+        <div id="calendarModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <h4 style="margin-top: 0; color: #1e293b;"><i class="fas fa-calendar-alt"></i> Add to Calendar</h4>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Choose when you want to start this study plan. We'll automatically schedule sessions for you.</p>
+                
+                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #475569;">Start Date:</label>
+                <input type="date" id="calendarStartDate" value="<?php echo date('Y-m-d'); ?>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="hideCalendarModal()" class="btn-secondary" style="padding: 8px 15px;">Cancel</button>
+                    <button onclick="addToCalendar()" id="confirmCalendarBtn" class="btn-primary" style="padding: 8px 20px;">Schedule Plan</button>
+                </div>
+            </div>
         </div>
 
         <!-- Plan Details Accordion -->
@@ -1044,7 +1071,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 async function markStudyPlanComplete() {
-    if (!confirm('Mark this study plan as complete?')) {
+    if (!confirm('Mark this study plan as complete? This will also remove any scheduled calendar reminders.')) {
         return;
     }
 
@@ -1085,6 +1112,78 @@ async function markStudyPlanComplete() {
     } catch (error) {
         console.error('Error:', error);
         alert('An error occurred. Please try again.');
+    }
+}
+
+// Calendar functions
+function showCalendarModal() {
+    document.getElementById('calendarModal').style.display = 'flex';
+}
+
+function hideCalendarModal() {
+    document.getElementById('calendarModal').style.display = 'none';
+}
+
+async function addToCalendar() {
+    const startDate = document.getElementById('calendarStartDate').value;
+    if (!startDate) {
+        alert('Please select a start date');
+        return;
+    }
+
+    const btn = document.getElementById('confirmCalendarBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+
+    try {
+        const formData = new FormData();
+        formData.append('start_date', startDate);
+
+        const response = await fetch('/study-plan/add-to-calendar/<?php echo $studyPlan['id']; ?>', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(`Successfully scheduled ${data.count} sessions on your calendar!`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to schedule sessions'));
+        }
+    } catch (error) {
+        console.error('Error adding to calendar:', error);
+        alert('An error occurred while scheduling your study plan.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        hideCalendarModal();
+    }
+}
+
+async function removeSchedule() {
+    if (!confirm('Are you sure you want to remove this study plan from your calendar?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/study-plan/remove-schedule/<?php echo $studyPlan['id']; ?>', {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Study plan removed from your calendar.');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to remove from calendar'));
+        }
+    } catch (error) {
+        console.error('Error removing schedule:', error);
+        alert('An error occurred while removing the schedule.');
     }
 }
 </script>

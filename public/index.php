@@ -156,6 +156,8 @@ $router->get('/logout', 'AuthController@logout');
 
 // Dashboard
 $router->get('/dashboard', 'DashboardController@index');
+$router->get('/parent-dashboard', 'ParentController@index');
+$router->get('/parent/track-progress', 'ParentController@trackProgress');
 $router->get('/dashboard/login-streak-info', 'DashboardController@getLoginStreakInfo');
 
 // Scripts
@@ -204,6 +206,11 @@ $router->post('/study-plan/share', function() {
     $controller = new StudyPlanController();
     $controller->share();
 });
+$router->post('/study-plan/delete/{id}', function($planId) {
+    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->delete($planId);
+});
 $router->post('/study-plan/share-respond/{id}', function($shareId) {
     require_once __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
@@ -229,12 +236,25 @@ $router->post('/study-plan/reminder-delete/{id}', function($reminderId) {
     $controller = new StudyPlanController();
     $controller->deleteReminder($reminderId);
 });
-$router->post('/study-plan/complete/{id}', function($planId) {
-    require_once __DIR__ . '/../controllers/StudyPlanController.php';
+$router->post('/study-plan/complete/(\d+)', function($planId) {
+    require __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
     $controller->complete($planId);
 });
-$router->post('/study-plan/{id}/mark-viewed', function($planId) {
+
+$router->post('/study-plan/add-to-calendar/(\d+)', function($planId) {
+    require __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->addToCalendar($planId);
+});
+
+$router->post('/study-plan/remove-schedule/(\d+)', function($planId) {
+    require __DIR__ . '/../controllers/StudyPlanController.php';
+    $controller = new StudyPlanController();
+    $controller->removeSchedule($planId);
+});
+
+$router->post('/study-plan/(\d+)/mark-viewed', function($planId) {
     require_once __DIR__ . '/../controllers/StudyPlanController.php';
     $controller = new StudyPlanController();
     $controller->markAsViewed($planId);
@@ -637,6 +657,8 @@ $router->get('/api/get-user-scripts', 'ScriptController@getUserScripts');
 $router->post('/api/generate-memorandum', 'ScriptController@generateMemorandum');
 $router->get('/download-memorandum/{id}', 'ScriptController@downloadMemorandum');
 $router->post('/delete-script/{id}', 'ScriptController@deleteScript');
+$router->post('/api/quiz/generate', 'ScriptController@generateQuizQuestion');
+$router->post('/api/quiz/evaluate', 'ScriptController@evaluateQuizAnswer');
 
 // Test download directly
 $router->get('/test-download/{id}', function($scriptId) {

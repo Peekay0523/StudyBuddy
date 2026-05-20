@@ -113,14 +113,135 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-size: 14px;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
     box-sizing: border-box;
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.form-group input:hover,
+.form-group select:hover {
+    border-color: #cbd5e1;
+    background-color: #f1f5f9;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
     border-color: #667eea;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Custom Dropdown Styles */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+    border-color: #cbd5e1;
+    background-color: #f1f5f9;
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: #667eea;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-select-trigger::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: #64748b;
+    transition: transform 0.2s;
+}
+
+.custom-select-wrapper.open .custom-select-trigger::after {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-select-wrapper.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.custom-option:hover {
+    background: #f1f5f9;
+    color: #667eea;
+}
+
+.custom-option.selected {
+    background: #eff6ff;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.custom-option i {
+    width: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.custom-option.selected i {
+    color: #667eea;
 }
 
 /* Upload Area */
@@ -557,6 +678,61 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     }
 }
 
+/* Subject Grouping Styles */
+.subject-group {
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.subject-group summary {
+    padding: 16px 20px;
+    font-weight: 700;
+    color: #4b5563;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    background: #f8fafc;
+    transition: background 0.2s;
+}
+
+.subject-group summary:hover {
+    background: #f1f5f9;
+}
+
+.subject-group summary::-webkit-details-marker {
+    display: none;
+}
+
+.subject-group summary::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: #94a3b8;
+    transition: transform 0.3s ease;
+}
+
+.subject-group[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.subject-group[open] summary {
+    border-bottom: 1px solid #e2e8f0;
+    color: #6d28d9;
+}
+
+.subject-group-content {
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+}
+
 @media (max-width: 480px) {
     .upload-script-page {
         padding: 10px;
@@ -614,6 +790,44 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+// Custom Select Functionality
+const customWrappers = document.querySelectorAll('.custom-select-wrapper');
+customWrappers.forEach(wrapper => {
+    const trigger = wrapper.querySelector('.custom-select-trigger');
+    const options = wrapper.querySelectorAll('.custom-option');
+    const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+    
+    trigger.addEventListener('click', (e) => {
+        customWrappers.forEach(other => {
+            if (other !== wrapper) other.classList.remove('open');
+        });
+        wrapper.classList.toggle('open');
+        e.stopPropagation();
+    });
+    
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            const value = option.getAttribute('data-value');
+            const content = option.innerHTML;
+            
+            hiddenInput.value = value;
+            trigger.querySelector('span').innerHTML = content;
+            
+            options.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            
+            wrapper.classList.remove('open');
+            
+            const event = new Event('change', { bubbles: true });
+            hiddenInput.dispatchEvent(event);
+        });
+    });
+});
+
+document.addEventListener('click', () => {
+    customWrappers.forEach(wrapper => wrapper.classList.remove('open'));
+});
+
 const uploadArea = document.getElementById("upload-area");
 const fileInput = document.getElementById("script_file");
 const previewSection = document.getElementById("preview-section");
@@ -863,51 +1077,76 @@ async function loadUploadedScripts() {
         if (data.scripts && data.scripts.length > 0) {
             const scriptsList = document.getElementById("scripts-list");
             if (scriptsList) {
-                scriptsList.innerHTML = data.scripts.map(script => {
-                    const hasMemorandum = script.has_memorandum == 1;
-                    let buttonHtml = '';
-                    
-                    if (hasMemorandum) {
-                        // Already has memorandum - show view button
-                        buttonHtml = `<button data-script-id="${script.id}" class="view-memo-btn btn-sm btn-sm-secondary" style="cursor: pointer;">
-                            <i class="fas fa-eye"></i> View Memorandum
-                           </button>`;
-                    } else if (CAN_GENERATE_MEMORANDUM) {
-                        // Paid user - show generate button
-                        buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-primary">
-                            <i class="fas fa-magic"></i> Generate Memorandum
-                           </button>`;
-                    } else {
-                        // Free user - show locked button with upgrade tooltip
-                        buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-secondary" style="cursor: not-allowed; opacity: 0.7;" title="Upgrade to Basic or Premium to generate memorandums">
-                            <i class="fas fa-lock"></i> Upgrade to Generate
-                           </button>`;
-                    }
+                // Group scripts by subject
+                const groups = data.scripts.reduce((acc, script) => {
+                    const subject = script.subject || 'General';
+                    if (!acc[subject]) acc[subject] = [];
+                    acc[subject].push(script);
+                    return acc;
+                }, {});
 
-                    return `
-                        <div class="script-item">
-                            <div class="script-main">
-                                <div class="script-info">
-                                    <h4>${script.title}</h4>
-                                    <div class="script-meta">
-                                        <span class="badge blue"><i class="fas fa-book"></i> ${script.subject || 'General'}</span>
-                                        <span class="badge orange"><i class="fas fa-graduation-cap"></i> Grade ${script.grade_level || '-'}</span>
-                                        <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(script.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                let groupsHtml = '';
+                for (const subject in groups) {
+                    const scripts = groups[subject];
+                    const scriptItemsHtml = scripts.map(script => {
+                        const hasMemorandum = script.has_memorandum == 1;
+                        let buttonHtml = '';
+                        
+                        if (hasMemorandum) {
+                            // Already has memorandum - show view button
+                            buttonHtml = `<button data-script-id="${script.id}" class="view-memo-btn btn-sm btn-sm-secondary" style="cursor: pointer;">
+                                <i class="fas fa-eye"></i> View Memorandum
+                               </button>`;
+                        } else if (CAN_GENERATE_MEMORANDUM) {
+                            // Paid user - show generate button
+                            buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-primary">
+                                <i class="fas fa-magic"></i> Generate Memorandum
+                               </button>`;
+                        } else {
+                            // Free user - show locked button with upgrade tooltip
+                            buttonHtml = `<button data-script-id="${script.id}" class="gen-memo-btn btn-sm btn-sm-secondary" style="cursor: not-allowed; opacity: 0.7;" title="Upgrade to Basic or Premium to generate memorandums">
+                                <i class="fas fa-lock"></i> Upgrade to Generate
+                               </button>`;
+                        }
+
+                        return `
+                            <div class="script-item">
+                                <div class="script-main">
+                                    <div class="script-info">
+                                        <h4>${script.title}</h4>
+                                        <div class="script-meta">
+                                            <span class="badge blue"><i class="fas fa-book"></i> ${script.subject || 'General'}</span>
+                                            <span class="badge orange"><i class="fas fa-graduation-cap"></i> Grade ${script.grade_level || '-'}</span>
+                                            <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(script.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        </div>
+                                    </div>
+                                    <div class="script-actions">
+                                        ${buttonHtml}
+                                        <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
+                                            <button type="submit" class="btn-sm btn-sm-danger" title="Delete Script">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
-                                <div class="script-actions">
-                                    ${buttonHtml}
-                                    <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
-                                        <button type="submit" class="btn-sm btn-sm-danger" title="Delete Script">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </form>
-                                </div>
+                                <div id="memo-result-${script.id}" class="memo-result"></div>
                             </div>
-                            <div id="memo-result-${script.id}" class="memo-result"></div>
-                        </div>
+                        `;
+                    }).join("");
+
+                    groupsHtml += `
+                        <details class="subject-group" ${Object.keys(groups).length === 1 ? 'open' : ''}>
+                            <summary>
+                                <span><i class="fas fa-book"></i> ${subject} (${scripts.length})</span>
+                            </summary>
+                            <div class="subject-group-content">
+                                ${scriptItemsHtml}
+                            </div>
+                        </details>
                     `;
-                }).join("");
+                }
+
+                scriptsList.innerHTML = groupsHtml;
 
                 // Attach event listeners to generate memorandum buttons
                 document.querySelectorAll('.gen-memo-btn').forEach(btn => {
@@ -979,7 +1218,7 @@ include __DIR__ . '/../layouts/header.php';
         <form method="post" action="/upload-script" enctype="multipart/form-data" id="upload-script-form">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
-                <label for="script_file">Script File (PDF, DOCX, or TXT)</label>
+                <label for="script_file">Script File</label>
                 <label for="script_file" class="upload-area" id="upload-area">
                     <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;">
                     <i class="fas fa-cloud-upload-alt"></i>
@@ -1008,6 +1247,59 @@ include __DIR__ . '/../layouts/header.php';
             <div class="form-group">
                 <label for="title">Title (optional)</label>
                 <input type="text" id="title" name="title" placeholder="Enter a title for your script">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <div class="custom-select-wrapper" id="subject-select">
+                        <input type="hidden" id="subject" name="subject" value="General">
+                        <div class="custom-select-trigger">
+                            <span><i class="fas fa-folder"></i> Other</span>
+                        </div>
+                        <div class="custom-options">
+                            <?php 
+                            $subjects = [
+                                'General' => ['name' => 'General / Other', 'icon' => 'fas fa-folder'],
+                                'Mathematics' => ['name' => 'Mathematics', 'icon' => 'fas fa-calculator'],
+                                'Physical Science' => ['name' => 'Physical Science', 'icon' => 'fas fa-flask'],
+                                'Life Sciences' => ['name' => 'Life Sciences', 'icon' => 'fas fa-dna'],
+                                'English' => ['name' => 'English', 'icon' => 'fas fa-language'],
+                                'Afrikaans' => ['name' => 'Afrikaans', 'icon' => 'fas fa-comments'],
+                                'Accounting' => ['name' => 'Accounting', 'icon' => 'fas fa-file-invoice-dollar'],
+                                'Business Studies' => ['name' => 'Business Studies', 'icon' => 'fas fa-briefcase'],
+                                'Geography' => ['name' => 'Geography', 'icon' => 'fas fa-globe-africa'],
+                                'History' => ['name' => 'History', 'icon' => 'fas fa-history'],
+                                'Economics' => ['name' => 'Economics', 'icon' => 'fas fa-chart-line'],
+                                'Life Orientation' => ['name' => 'Life Orientation', 'icon' => 'fas fa-heart']
+                            ];
+                            foreach ($subjects as $val => $data): ?>
+                                <div class="custom-option <?php echo $val === 'General' ? 'selected' : ''; ?>" data-value="<?php echo $val; ?>">
+                                    <i class="<?php echo $data['icon']; ?>"></i>
+                                    <?php echo $data['name']; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="grade_level">Grade Level</label>
+                    <div class="custom-select-wrapper" id="grade-select">
+                        <?php $currentGrade = getCurrentStudent()['grade_level'] ?? 12; ?>
+                        <input type="hidden" id="grade_level" name="grade_level" value="<?php echo $currentGrade; ?>">
+                        <div class="custom-select-trigger">
+                            <span><i class="fas fa-graduation-cap"></i> Grade <?php echo $currentGrade; ?></span>
+                        </div>
+                        <div class="custom-options">
+                            <?php for ($i = 8; $i <= 12; $i++): ?>
+                                <div class="custom-option <?php echo $i == $currentGrade ? 'selected' : ''; ?>" data-value="<?php echo $i; ?>">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    Grade <?php echo $i; ?>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Upload Script</button>

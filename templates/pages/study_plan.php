@@ -687,116 +687,140 @@ $extraHead = <<<'HTML'
 HTML;
 
 $extraScripts = '<script>
-const uploadArea = document.getElementById("upload-area");
-const fileInput = document.getElementById("script_file");
-const previewSection = document.getElementById("preview-section");
-const fileName = document.getElementById("file-name");
-const fileSize = document.getElementById("file-size");
-const clearBtn = document.getElementById("clear-btn");
-const generateForm = document.getElementById("generate-form");
+document.addEventListener("DOMContentLoaded", function() {
+    const uploadArea = document.getElementById("upload-area");
+    const fileInput = document.getElementById("script_file");
+    const previewSection = document.getElementById("preview-section");
+    const fileName = document.getElementById("file-name");
+    const fileSize = document.getElementById("file-size");
+    const clearBtn = document.getElementById("clear-btn");
+    const generateForm = document.getElementById("generate-form");
 
-// Click to upload
-uploadArea.addEventListener("click", () => {
-    fileInput.click();
-});
-
-// Drag and drop
-uploadArea.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = "#667eea";
-    uploadArea.style.background = "#e0e7ff";
-});
-
-uploadArea.addEventListener("dragleave", () => {
-    uploadArea.style.borderColor = "#cbd5e1";
-    uploadArea.style.background = "#f8fafc";
-});
-
-uploadArea.addEventListener("drop", (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = "#cbd5e1";
-    uploadArea.style.background = "#f8fafc";
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-        handleFile(files[0]);
-    }
-});
-
-// File input change
-fileInput.addEventListener("change", (e) => {
-    if (e.target.files && e.target.files[0]) {
-        handleFile(e.target.files[0]);
-    }
-});
-
-function handleFile(file) {
-    const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
-    
-    if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx") && !file.name.endsWith(".txt")) {
-        alert("Invalid file type. Please upload PDF, DOCX, or TXT files.");
-        return;
-    }
-    
-    if (file.size > 10 * 1024 * 1024) {
-        alert("File size must be less than 10MB.");
-        return;
-    }
-    
-    fileName.textContent = file.name;
-    fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
-    previewSection.style.display = "block";
-    uploadArea.style.display = "none";
-}
-
-// Clear selection
-clearBtn.addEventListener("click", () => {
-    fileInput.value = "";
-    previewSection.style.display = "none";
-    uploadArea.style.display = "block";
-    document.getElementById("title").value = "";
-});
-
-// Form submission
-generateForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const selectedScanInput = document.getElementById("selected_scan_file");
-    const hasFile = fileInput.files && fileInput.files[0];
-    const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== "";
-
-    if (!hasFile && !hasScan) {
-        alert("Please select a file to upload. Click or drag a file into the upload area, or use Select from My Scans button.");
-        return;
-    }
-
-    const formData = new FormData(generateForm);
-    formData.append("for_study_plan", "1");
-
-    const submitBtn = document.getElementById("submit-btn");
-    const originalBtnText = submitBtn.innerHTML;
-
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Generating Study Plan...";
-    
-    try {
-        const response = await fetch("/upload-script", {
-            method: "POST",
-            body: formData
+    if (uploadArea && fileInput) {
+        // Click to upload
+        uploadArea.addEventListener("click", () => {
+            fileInput.click();
         });
+
+        // Drag and drop
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = "#667eea";
+            uploadArea.style.background = "#e0e7ff";
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.style.borderColor = "#cbd5e1";
+            uploadArea.style.background = "#f8fafc";
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = "#cbd5e1";
+            uploadArea.style.background = "#f8fafc";
+            
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleFile(file) {
+        const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
         
-        if (response.ok) {
-            window.location.href = "/study-plan?generated=1";
-        } else {
-            const data = await response.json();
-            alert("Error: " + (data.error || "Failed to generate study plan"));
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+        if (!allowedTypes.includes(file.type) && !file.name.endsWith(".pdf") && !file.name.endsWith(".docx") && !file.name.endsWith(".txt")) {
+            alert("Invalid file type. Please upload PDF, DOCX, or TXT files.");
+            return;
         }
-    } catch (error) {
-        alert("Error: Failed to connect to server");
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert("File size must be less than 10MB.");
+            return;
+        }
+        
+        if (fileName) fileName.textContent = file.name;
+        if (fileSize) fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
+        if (previewSection) previewSection.style.display = "block";
+        if (uploadArea) uploadArea.style.display = "none";
+    }
+
+    // Clear selection
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            if (fileInput) fileInput.value = "";
+            if (previewSection) previewSection.style.display = "none";
+            if (uploadArea) uploadArea.style.display = "block";
+            const titleInput = document.getElementById("title");
+            if (titleInput) titleInput.value = "";
+            
+            // Also clear selected scan if any
+            const selectedScanInput = document.getElementById("selected_scan_file");
+            if (selectedScanInput) selectedScanInput.value = "";
+        });
+    }
+
+    // Form submission
+    if (generateForm) {
+        generateForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const selectedScanInput = document.getElementById("selected_scan_file");
+            const hasFile = fileInput && fileInput.files && fileInput.files[0];
+            const hasScan = selectedScanInput && selectedScanInput.value && selectedScanInput.value.trim() !== "";
+
+            if (!hasFile && !hasScan) {
+                alert("Please select a file to upload. Click or drag a file into the upload area, or use Select from My Scans button.");
+                return;
+            }
+
+            const formData = new FormData(generateForm);
+            // for_study_plan is already in the form as a hidden input
+
+            const submitBtn = document.getElementById("submit-btn");
+            if (!submitBtn) return;
+            
+            const originalBtnText = submitBtn.innerHTML;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Generating Study Plan...";
+            
+            try {
+                const response = await fetch("/upload-script", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    // Check if it redirected to study-plan?generated=1
+                    // fetch follows redirects, so if successful it will have followed to /study-plan?generated=1
+                    window.location.href = "/study-plan?generated=1";
+                } else {
+                    let errorMessage = "Failed to generate study plan";
+                    try {
+                        const data = await response.json();
+                        errorMessage = data.error || errorMessage;
+                    } catch (e) {
+                        // Not JSON, use default error
+                    }
+                    alert("Error: " + errorMessage);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Error: Failed to connect to server");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
     }
 });
 </script>';
@@ -841,11 +865,14 @@ include __DIR__ . '/../layouts/header.php';
 
 <!-- Upcoming Reminders -->
 <?php if (!empty($upcomingReminders)): ?>
-<div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-    <h3 style="margin-bottom: 15px; color: #1e293b;">
-        <i class="fas fa-bell" style="color: #f59e0b;"></i> Upcoming Reminders
-    </h3>
-    <div style="display: grid; gap: 10px;">
+<details style="background: white; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;" open>
+    <summary style="padding: 20px; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; outline: none; user-select: none;">
+        <h3 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-bell" style="color: #f59e0b;"></i> Upcoming Reminders
+        </h3>
+        <i class="fas fa-chevron-down" style="color: #64748b; transition: transform 0.3s ease;"></i>
+    </summary>
+    <div style="padding: 0 20px 20px 20px; display: grid; gap: 10px;">
         <?php foreach ($upcomingReminders as $reminder): ?>
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #10b981;">
             <div>
@@ -868,7 +895,16 @@ include __DIR__ . '/../layouts/header.php';
         </div>
         <?php endforeach; ?>
     </div>
-</div>
+</details>
+
+<style>
+details summary::-webkit-details-marker {
+    display: none;
+}
+details[open] summary i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+</style>
 <?php endif; ?>
 
 <!-- Pending Share Requests -->
@@ -924,18 +960,20 @@ include __DIR__ . '/../layouts/header.php';
 <?php endif; ?>
 
 <!-- Upload & Generate Section -->
-<div class="upload-container" style="max-width: 800px; margin: 0 auto 40px auto;">
-    <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <h2 style="margin-bottom: 20px; color: #1e293b; font-size: 20px;">
+<div class="upload-container" style="max-width: 800px; margin: 0 auto 40px auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+    <div style="padding: 20px 30px; border-bottom: 1px solid #f1f5f9;">
+        <h2 style="margin: 0; color: #1e293b; font-size: 20px; display: flex; align-items: center; gap: 12px;">
             <i class="fas fa-magic" style="color: #667eea;"></i> Generate New Study Plan
         </h2>
-        
+    </div>
+    <div style="padding: 30px;">
         <form method="post" action="/upload-script" enctype="multipart/form-data" id="generate-form">
+            <input type="hidden" name="for_study_plan" value="1">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Upload Study Material (PDF, DOCX, or TXT)</label>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">Upload Study Material</label>
                 <div class="upload-area" id="upload-area" style="border: 3px dashed #cbd5e1; border-radius: 12px; padding: 30px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
-                    <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;" required>
+                    <input type="file" id="script_file" name="script_file" accept=".pdf,.docx,.txt" style="display: none;">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #667eea; margin-bottom: 15px;"></i>
                     <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 15px;">Click or drag file to upload</h4>
                     <p style="margin: 0; color: #64748b; font-size: 13px;">PDF, DOCX, TXT (Max 10MB)</p>
@@ -1012,8 +1050,8 @@ include __DIR__ . '/../layouts/header.php';
                     <a href="/view-study-plan/<?php echo $plan['id']; ?>" class="btn-card-action btn-card-view">
                         <i class="fas fa-eye"></i> View
                     </a>
-                    <button class="btn-card-action btn-card-share share-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
-                        <i class="fas fa-share-alt"></i> Share
+                    <button class="btn-card-action btn-card-danger delete-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>" style="background: #fee2e2; color: #ef4444;">
+                        <i class="fas fa-trash"></i> Delete
                     </button>
                     <button class="btn-card-action btn-card-reminder add-reminder-to-plan" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
                         <i class="fas fa-bell"></i> Remind
@@ -1259,9 +1297,27 @@ function selectScan(filename, url) {
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Color palettes for different study plans
+function getStudyPlanColors(planId) {
+    if (!planId) return { bg: '#ede9fe', border: '#8b5cf6', text: '#1e293b' };
+
+    const palettes = [
+        { bg: '#f5f3ff', border: '#8b5cf6', text: '#6d28d9' }, // Purple (Default)
+        { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }, // Blue
+        { bg: '#ecfdf5', border: '#10b981', text: '#065f46' }, // Green
+        { bg: '#fff7ed', border: '#f97316', text: '#9a3412' }, // Orange
+        { bg: '#fdf2f8', border: '#ec4899', text: '#9d174d' }, // Pink
+        { bg: '#f0f9ff', border: '#06b6d4', text: '#164e63' }, // Cyan
+        { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' }, // Red
+        { bg: '#f5f5f4', border: '#78716c', text: '#44403c' }, // Stone
+    ];
+
+    return palettes[planId % palettes.length];
 }
 
 // Calendar functionality
@@ -1373,7 +1429,16 @@ function renderCalendar() {
 
         dayEl.innerHTML = `
             <div class="calendar-day-number">${day}</div>
-            ${reminderCount > 0 ? `<span class="${isOverdue && !isImportant ? 'calendar-overdue-count' : (isImportant ? 'calendar-important-count' : 'calendar-reminder-count')}">${reminderCount}</span>` : ''}
+            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+                ${reminderCount > 0 ? (() => {
+                    const uniquePlans = [...new Set(reminders.map(r => r.study_plan_id))];
+                    return uniquePlans.map(planId => {
+                        const colors = getStudyPlanColors(planId);
+                        return `<div style="width: 8px; height: 8px; border-radius: 50%; background: ${colors.border};" title="Study Plan Reminder"></div>`;
+                    }).join('');
+                })() : ''}
+            </div>
+            ${reminderCount > 0 ? `<span class="${isOverdue && !isImportant ? 'calendar-overdue-count' : (isImportant ? 'calendar-important-count' : 'calendar-reminder-count')}" style="position: absolute; top: 5px; right: 5px; font-size: 0.65rem; padding: 2px 6px;">${reminderCount}</span>` : ''}
         `;
         dayEl.addEventListener('click', () => showDayDetail(dateStr));
         grid.appendChild(dayEl);
@@ -1442,9 +1507,10 @@ async function showDayDetail(dateStr) {
                     borderColor = '#ef4444';
                     textColor = '#991b1b';
                 } else {
-                    bgColor = '#ede9fe';
-                    borderColor = '#8b5cf6';
-                    textColor = '#1e293b';
+                    const colors = getStudyPlanColors(reminder.study_plan_id);
+                    bgColor = colors.bg;
+                    borderColor = colors.border;
+                    textColor = colors.text;
                 }
 
                 html += `
@@ -1531,6 +1597,33 @@ function deleteReminderFromDetail(reminderId) {
             .finally(() => hideLoading());
     }
 }
+
+// Delete plan
+document.querySelectorAll('.delete-plan-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const planId = this.dataset.id;
+        const planTitle = this.dataset.title;
+        
+        if (confirm(`Are you sure you want to delete the study plan "${planTitle}"? This will also remove all associated reminders.`)) {
+            showLoading('Deleting study plan...');
+            try {
+                const response = await fetch(`/study-plan/delete/${planId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to delete study plan'));
+                }
+            } catch (error) {
+                alert('Error deleting study plan');
+            } finally {
+                hideLoading();
+            }
+        }
+    });
+});
 
 // Share functionality
 const shareModalOverlay = document.getElementById('share-modal-overlay');
