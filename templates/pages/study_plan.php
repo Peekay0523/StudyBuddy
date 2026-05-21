@@ -502,22 +502,29 @@ $extraHead = <<<'HTML'
     }
     
     .calendar-header {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
     }
     
     .calendar-header h2 {
-        font-size: 1.2rem;
-        order: -1;
-        width: 100%;
+        font-size: 1rem;
+        order: 0;
+        width: auto;
+        flex: 1.2;
+        text-align: center;
+        white-space: nowrap;
     }
     
     .calendar-header .btn-secondary {
-        padding: 8px 16px;
-        font-size: 0.85rem;
-        width: 100%;
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        width: auto;
+        flex: 1;
         justify-content: center;
+        white-space: nowrap;
     }
     
     .calendar-grid {
@@ -839,11 +846,11 @@ include __DIR__ . '/../layouts/header.php';
 <!-- Calendar Section -->
 <div class="calendar-container">
     <div class="calendar-header">
-        <button id="prev-month" class="btn-secondary" style="padding: 8px 16px;">
+        <button id="prev-month" class="btn-secondary">
             <i class="fas fa-chevron-left"></i> Previous
         </button>
-        <h2 id="calendar-month-year" style="margin: 0; color: #1e293b;"></h2>
-        <button id="next-month" class="btn-secondary" style="padding: 8px 16px;">
+        <h2 id="calendar-month-year"></h2>
+        <button id="next-month" class="btn-secondary">
             Next <i class="fas fa-chevron-right"></i>
         </button>
     </div>

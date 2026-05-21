@@ -1423,9 +1423,7 @@ include __DIR__ . '/../layouts/header.php';
                 <span class="toggle-slider"></span>
             </label>
         </div>
-        <button type="button" id="stop-speech-btn" class="btn-icon btn-icon-small" title="Stop speech">
-            <i class="fas fa-stop"></i>
-        </button>
+        
         <?php else: ?>
         <div class="voice-mode-control" style="flex: 1; text-align: center; color: #f59e0b; font-size: 13px;">
             <i class="fas fa-lock"></i> Voice Mode available in Basic and Premium plans

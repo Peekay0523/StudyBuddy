@@ -1089,9 +1089,7 @@ include __DIR__ . '/../layouts/header.php';
 
         <div class="divider"></div>
 
-        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
-            Search for careers and find out the required APS and subjects for South African universities.
-        </p>
+        
 
         <div class="career-search-box" style="display: flex; gap: 10px; margin-bottom: 20px;">
             <input type="text" id="career-search-input" class="career-search-input" placeholder="e.g., Doctor, Engineer..." onkeypress="enterPressedForSearch(event)">
