@@ -5,7 +5,7 @@ include __DIR__ . '/../layouts/header.php';
 ?>
 
 <div class="hero-section">
-    <h1>Welcome to StudySmart</h1>
+    <h1>Welcome to StudyBuddie</h1>
     <p class="hero-tagline"><i class="fas fa-map-marker-alt"></i> Built for South African learners</p>
     <p>An AI-powered educational platform designed to help students learn more effectively.</p>
     <?php if (!isLoggedIn()): ?>
@@ -132,7 +132,7 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <div class="how-it-works">
-    <h2><i class="fas fa-cogs icon"></i> How It Works</h2>
+    <h2><i class="fas fa-cogs"></i> How It Works</h2>
     <div class="steps-container">
         <div class="step">
             <div class="step-number"><i class="fas fa-cloud-upload-alt"></i></div>
@@ -339,9 +339,189 @@ include __DIR__ . '/../layouts/header.php';
     color: #10b981;
 }
 
-.stat-label {
+/* Features Section Enhancements */
+.features-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.feature-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.15);
+    border-color: #e2e8f0;
+}
+
+.feature-card:hover::before {
+    opacity: 1;
+}
+
+.feature-card h3 {
+    color: #1e293b;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.feature-card .icon {
+    width: 60px;
+    height: 60px;
+    background: #f5f3ff;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    font-size: 24px;
+    transition: all 0.3s;
+}
+
+.feature-card:hover .icon {
+    background: #7c3aed;
+    color: white;
+    transform: scale(1.1) rotate(5deg);
+}
+
+.feature-card p {
     color: #64748b;
+    line-height: 1.7;
+    font-size: 15px;
+    margin-bottom: 25px;
+}
+
+.feature-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feature-card li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.feature-card li i {
+    color: #10b981;
     font-size: 16px;
+}
+
+/* How It Works Section */
+.how-it-works {
+    background: #f8fafc;
+    padding: 80px 20px;
+    text-align: center;
+    border-radius: 24px;
+    margin: 60px 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.how-it-works h2 {
+    color: #1e293b;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.how-it-works h2 i {
+    color: #7c3aed;
+    background: #f5f3ff;
+    width: 50px;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 24px;
+}
+
+.steps-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.step-number {
+    width: 80px;
+    height: 80px;
+    background: white;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 28px;
+    box-shadow: 0 10px 20px -5px rgba(124, 58, 237, 0.2);
+    border: 2px solid #f5f3ff;
+    transition: all 0.3s;
+}
+
+.step:hover .step-number {
+    background: #7c3aed;
+    color: white;
+    transform: scale(1.1);
+}
+
+.step h4 {
+    color: #1e293b;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.step p {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
 }
 
 @keyframes fadeInUp {

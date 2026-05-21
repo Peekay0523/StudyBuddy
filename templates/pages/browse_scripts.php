@@ -43,6 +43,109 @@ include __DIR__ . '/../layouts/header.php';
     min-width: 150px;
 }
 
+/* Custom Select Styles */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    min-width: 180px;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #475569;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: #7c3aed;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.custom-select-trigger::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: #94a3b8;
+    transition: transform 0.2s;
+}
+
+.custom-select-wrapper.open .custom-select-trigger::after {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-select-wrapper.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.custom-option:hover {
+    background: #f1f5f9;
+    color: #7c3aed;
+}
+
+.custom-option.selected {
+    background: #f5f3ff;
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+.custom-option i {
+    width: 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.custom-option.selected i {
+    color: #7c3aed;
+}
+
 /* Header & Back Button */
 .back-btn-modern {
     display: inline-flex;
@@ -146,27 +249,40 @@ include __DIR__ . '/../layouts/header.php';
             </h1>
         </div>
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <div class="filter-group">
-                <i class="fas fa-book-open"></i>
-                <select id="subject-filter" class="styled-select" onchange="filterScripts()">
-                    <option value="">All Subjects</option>
+            <div class="custom-select-wrapper" id="subject-select">
+                <input type="hidden" id="subject-filter" value="">
+                <div class="custom-select-trigger">
+                    <span><i class="fas fa-book-open"></i> All Subjects</span>
+                </div>
+                <div class="custom-options">
+                    <div class="custom-option selected" data-value="">
+                        <i class="fas fa-book-open"></i> All Subjects
+                    </div>
                     <?php foreach ($subjects as $subj): ?>
-                        <option value="<?php echo htmlspecialchars($subj['subject']); ?>"><?php echo htmlspecialchars($subj['subject']); ?></option>
+                        <div class="custom-option" data-value="<?php echo htmlspecialchars($subj['subject']); ?>">
+                            <i class="fas fa-book"></i> <?php echo htmlspecialchars($subj['subject']); ?>
+                        </div>
                     <?php endforeach; ?>
-                </select>
+                </div>
             </div>
-            <div class="filter-group">
-                <i class="fas fa-calendar-day"></i>
-                <select id="year-filter" class="styled-select" onchange="filterScripts()">
-                    <option value="">All Years</option>
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                    <option value="2020">2020</option>
-                </select>
+
+            <div class="custom-select-wrapper" id="year-select">
+                <input type="hidden" id="year-filter" value="">
+                <div class="custom-select-trigger">
+                    <span><i class="fas fa-calendar-day"></i> All Years</span>
+                </div>
+                <div class="custom-options">
+                    <div class="custom-option selected" data-value="">
+                        <i class="fas fa-calendar-day"></i> All Years
+                    </div>
+                    <?php 
+                    $years = ['2026', '2025', '2024', '2023', '2022', '2021', '2020'];
+                    foreach ($years as $year): ?>
+                        <div class="custom-option" data-value="<?php echo $year; ?>">
+                            <i class="fas fa-calendar-alt"></i> <?php echo $year; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -236,11 +352,52 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Custom Select Functionality
+    const customWrappers = document.querySelectorAll('.custom-select-wrapper');
+    customWrappers.forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const options = wrapper.querySelectorAll('.custom-option');
+        const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+        
+        trigger.addEventListener('click', (e) => {
+            customWrappers.forEach(other => {
+                if (other !== wrapper) other.classList.remove('open');
+            });
+            wrapper.classList.toggle('open');
+            e.stopPropagation();
+        });
+        
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.getAttribute('data-value');
+                const content = option.innerHTML;
+                
+                hiddenInput.value = value;
+                trigger.querySelector('span').innerHTML = content;
+                
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                wrapper.classList.remove('open');
+                
+                // Trigger filter
+                filterScripts();
+            });
+        });
+    });
+
+    document.addEventListener('click', () => {
+        customWrappers.forEach(wrapper => wrapper.classList.remove('open'));
+    });
+});
+
 function filterScripts() {
     const selectedSubject = document.getElementById('subject-filter').value;
     const selectedYear = document.getElementById('year-filter').value;
     const scriptCards = document.querySelectorAll('.script-card-modern');
 
+    let visibleCount = 0;
     scriptCards.forEach(card => {
         const cardSubject = card.getAttribute('data-subject');
         const cardYear = card.getAttribute('data-year');
@@ -250,8 +407,32 @@ function filterScripts() {
 
         if (matchesSubject && matchesYear) {
             card.style.display = 'flex';
+            visibleCount++;
         } else {
             card.style.display = 'none';
+        }
+    });
+
+    // Handle no results message if needed
+    const grid = document.getElementById('scripts-grid');
+    const noResults = document.getElementById('no-filter-results');
+    
+    if (visibleCount === 0 && scriptCards.length > 0) {
+        if (!noResults) {
+            const msg = document.createElement('div');
+            msg.id = 'no-filter-results';
+            msg.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #94a3b8;';
+            msg.innerHTML = '<i class="fas fa-search" style="font-size: 40px; margin-bottom: 15px; display: block; color: #e2e8f0;"></i><p>No scripts match your filter selection.</p>';
+            grid.appendChild(msg);
+        }
+    } else if (noResults) {
+        noResults.remove();
+    }
+}
+</script>
+
+<?php include __DIR__ . '/../layouts/footer.php'; ?>
+
         }
     });
 }

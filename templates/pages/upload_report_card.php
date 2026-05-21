@@ -53,90 +53,99 @@ $extraHead = <<<'SCRIPT'
     font-weight: 500;
 }
 
-/* Bursaries Section */
+/* Bursary Item Styling */
 .bursaries-list-container {
     display: grid;
-    gap: 20px;
+    gap: 16px;
+    margin-bottom: 30px;
 }
 
 .bursary-item {
     background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border-left: 4px solid #667eea;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
 }
 
 .bursary-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .bursary-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 10px;
 }
 
 .bursary-header h4 {
     margin: 0;
-    color: #1f2937;
+    color: #1e293b;
     font-size: 18px;
+    font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .bursary-deadline {
-    font-size: 13px;
-    color: #6b7280;
-    padding: 6px 12px;
-    background: #f3f4f6;
+    font-size: 12px;
+    color: #64748b;
+    padding: 6px 14px;
+    background: #f8fafc;
     border-radius: 20px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    font-weight: 600;
 }
 
 .bursary-deadline.urgent {
-    background: #fef3c7;
-    color: #92400e;
+    background: #fff7ed;
+    color: #f59e0b;
 }
 
 .bursary-provider {
     font-size: 14px;
-    color: #6b7280;
-    margin-bottom: 15px;
+    color: #64748b;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    font-weight: 500;
 }
 
 .bursary-details {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 10px;
 }
 
 .bursary-details p {
-    margin: 8px 0;
+    margin: 10px 0;
     font-size: 14px;
-    color: #374151;
+    color: #475569;
     line-height: 1.6;
 }
 
 .bursary-details strong {
-    color: #1f2937;
+    color: #1e293b;
+    font-weight: 600;
 }
 
 .bursary-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
-    padding-top: 15px;
-    border-top: 1px solid #e5e7eb;
+    padding-top: 18px;
+    border-top: 1px solid #f1f5f9;
 }
 
 .no-bursaries {
@@ -196,6 +205,111 @@ $extraHead = <<<'SCRIPT'
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+/* Section Titles Styling */
+.section-title {
+    font-size: 24px;
+    margin: 40px 0 25px 0;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 700;
+}
+
+.section-title i {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
+}
+
+/* Report Cards List Styling */
+.report-cards-list {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.report-card-item {
+    padding: 16px 20px;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.report-card-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.report-card-info h4 {
+    margin: 0 0 6px 0;
+    color: #1e293b;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.report-card-meta {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.badge.blue { background: #eff6ff; color: #3b82f6; }
+.badge.green { background: #f0fdf4; color: #10b981; }
+.badge.orange { background: #fff7ed; color: #f59e0b; }
+
+.report-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    border: none;
+}
+
+.btn-sm-danger {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.btn-sm-danger:hover {
+    background: #fecaca;
+    transform: translateY(-1px);
 }
 
 .career-results {
@@ -424,6 +538,115 @@ $extraHead = <<<'SCRIPT'
 }
 
 /* Responsive layout for upload report card page */
+.auth-box {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Custom Select Styles */
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+    margin-bottom: 20px;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+    border-color: #cbd5e1;
+    background-color: #f1f5f9;
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: #667eea;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-select-trigger::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+    color: #64748b;
+    transition: transform 0.2s;
+}
+
+.custom-select-wrapper.open .custom-select-trigger::after {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-select-wrapper.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.2s;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.custom-option:hover {
+    background: #f1f5f9;
+    color: #667eea;
+}
+
+.custom-option.selected {
+    background: #eff6ff;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.custom-option i {
+    width: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.custom-option.selected i {
+    color: #667eea;
+}
+
 .career-search-card {
     background: white;
     border-radius: 20px;
@@ -604,23 +827,23 @@ async function loadUploadedReportCards() {
                 reportCardsList.innerHTML = data.report_cards.map(rc => `
                     <div class="report-card-item">
                         <div class="report-card-info">
-                            <h4>Report Card - ${rc.grade ? "Grade " + rc.grade : ""} ${rc.term ? "Term " + rc.term : ""}</h4>
-                            <p class="report-card-meta">
-                                <span class="badge blue">${rc.file_path}</span>
-                                <span class="badge green">${new Date(rc.uploaded_at).toLocaleDateString()}</span>
-                            </p>
+                            <h4><i class="fas fa-file-invoice" style="color: #667eea; margin-right: 8px;"></i> Report Card - ${rc.grade ? "Grade " + rc.grade : ""} ${rc.term ? "Term " + rc.term : ""}</h4>
+                            <div class="report-card-meta">
+                                <span class="badge blue"><i class="fas fa-file-alt"></i> ${rc.file_path.split('/').pop()}</span>
+                                <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(rc.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                            </div>
                         </div>
                         <div class="report-card-actions">
                             ${isFreeTierGlobal
-                                ? `<a href="/subscription" class="btn-primary btn-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                                    <i class="fas fa-lock"></i> Upgrade to View Recommendations
+                                ? `<a href="/subscription" class="btn-sm" style="background: #fff7ed; color: #f59e0b; border: 1px solid #ffedd5;">
+                                    <i class="fas fa-lock"></i> Upgrade
                                 </a>`
-                                : `<a href="/view-career-recommendations/${rc.id}" class="btn-primary btn-sm">
-                                    <i class="fas fa-compass"></i> View Career Recommendations
+                                : `<a href="/view-career-recommendations/${rc.id}" class="btn-sm" style="background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe;">
+                                    <i class="fas fa-compass"></i> Recommendations
                                 </a>`
                             }
                             <form method="POST" action="/delete-report-card/${rc.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report card?');">
-                                <button type="submit" class="btn-sm btn-sm-danger" style="cursor: pointer;">
+                                <button type="submit" class="btn-sm btn-sm-danger" title="Delete">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </form>
@@ -990,6 +1213,44 @@ function enterPressedForSearch(event) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Custom Select Functionality
+    const customWrappers = document.querySelectorAll('.custom-select-wrapper');
+    customWrappers.forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const options = wrapper.querySelectorAll('.custom-option');
+        const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+        
+        trigger.addEventListener('click', (e) => {
+            customWrappers.forEach(other => {
+                if (other !== wrapper) other.classList.remove('open');
+            });
+            wrapper.classList.toggle('open');
+            e.stopPropagation();
+        });
+        
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.getAttribute('data-value');
+                const content = option.innerHTML;
+                
+                hiddenInput.value = value;
+                trigger.querySelector('span').innerHTML = content;
+                
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                wrapper.classList.remove('open');
+                
+                const event = new Event('change', { bubbles: true });
+                hiddenInput.dispatchEvent(event);
+            });
+        });
+    });
+
+    document.addEventListener('click', () => {
+        customWrappers.forEach(wrapper => wrapper.classList.remove('open'));
+    });
+
     initUploadHandlers();
     loadUploadedReportCards();
     loadAvailableBursaries();
@@ -1048,27 +1309,48 @@ include __DIR__ . '/../layouts/header.php';
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="grade">Grade (optional)</label>
-                <select id="grade" name="grade">
-                    <option value="">Select Grade</option>
-                    <option value="8">Grade 8</option>
-                    <option value="9">Grade 9</option>
-                    <option value="10">Grade 10</option>
-                    <option value="11">Grade 11</option>
-                    <option value="12">Grade 12</option>
-                </select>
-            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="grade">Grade (optional)</label>
+                    <div class="custom-select-wrapper" id="grade-select">
+                        <input type="hidden" id="grade" name="grade" value="">
+                        <div class="custom-select-trigger">
+                            <span>Select Grade</span>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option selected" data-value="">
+                                Select Grade
+                            </div>
+                            <?php for ($i = 8; $i <= 12; $i++): ?>
+                                <div class="custom-option" data-value="<?php echo $i; ?>">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    Grade <?php echo $i; ?>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label for="term">Term (optional)</label>
-                <select id="term" name="term">
-                    <option value="">Select Term</option>
-                    <option value="1">Term 1</option>
-                    <option value="2">Term 2</option>
-                    <option value="3">Term 3</option>
-                    <option value="4">Term 4</option>
-                </select>
+                <div class="form-group">
+                    <label for="term">Term (optional)</label>
+                    <div class="custom-select-wrapper" id="term-select">
+                        <input type="hidden" id="term" name="term" value="">
+                        <div class="custom-select-trigger">
+                            <span>Select Term</span>
+                        </div>
+                        <div class="custom-options">
+                            <div class="custom-option selected" data-value="">
+                                Select Term
+                            </div>
+                            <?php for ($i = 1; $i <= 4; $i++): ?>
+                                <div class="custom-option" data-value="<?php echo $i; ?>">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Term <?php echo $i; ?>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="btn-primary">Upload Report Card</button>
@@ -1107,7 +1389,7 @@ include __DIR__ . '/../layouts/header.php';
     </div>
     </div>
 <!-- Your Uploaded Report Cards Section (Full Width Below) -->
-<div class="report-cards-section" style="margin-top: 40px;">
+<div class="report-cards-section">
     <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>
     <div id="report-cards-list" class="report-cards-list">
         <p class="loading">Loading report cards...</p>

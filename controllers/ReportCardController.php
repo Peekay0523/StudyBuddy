@@ -1978,38 +1978,302 @@ Return ONLY the JSON, no other text.'
                 ];
             } else {
                 $courses = [
-                    ['name' => 'National Diploma in Business Studies', 'requirements' => 'English (Level 4), Mathematics/Math Literacy (Level 3)', 'duration' => '3 years', 'institutions' => ['UJ', 'TUT', 'CPUT', 'DUT']],
-                    ['name' => 'Diploma in Information Technology', 'requirements' => 'Mathematics (Level 4) or Math Literacy (Level 5)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'DUT', 'MUT']],
-                    ['name' => 'Diploma in Marketing', 'requirements' => 'English (Level 4), Mathematics (Level 3)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'DUT']],
-                    ['name' => 'National Diploma in Public Management', 'requirements' => 'English (Level 4)', 'duration' => '3 years', 'institutions' => ['TUT', 'CPUT', 'VUT']],
-                    ['name' => 'Diploma in Office Management and Technology', 'requirements' => 'English (Level 3)', 'duration' => '3 years', 'institutions' => ['DUT', 'MUT', 'VUT']]
+                    [
+                        'name' => 'National Diploma in Business Studies',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4), Mathematics/Math Literacy (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'UJ', 'aps_required' => 18],
+                            ['name' => 'TUT', 'aps_required' => 18],
+                            ['name' => 'CPUT', 'aps_required' => 18],
+                            ['name' => 'DUT', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Information Technology',
+                        'aps_required' => 20,
+                        'requirements' => 'APS 20, Mathematics (Level 4) or Math Literacy (Level 5)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 20],
+                            ['name' => 'CPUT', 'aps_required' => 20],
+                            ['name' => 'DUT', 'aps_required' => 18],
+                            ['name' => 'MUT', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Marketing',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4), Mathematics (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4],
+                            ['subject' => 'Mathematics', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 18],
+                            ['name' => 'CPUT', 'aps_required' => 18],
+                            ['name' => 'DUT', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'National Diploma in Public Management',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 4)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 4]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 18],
+                            ['name' => 'CPUT', 'aps_required' => 18],
+                            ['name' => 'VUT', 'aps_required' => 16]
+                        ]
+                    ],
+                    [
+                        'name' => 'Diploma in Office Management and Technology',
+                        'aps_required' => 18,
+                        'requirements' => 'APS 18, English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '3 years',
+                        'institutions' => [
+                            ['name' => 'DUT', 'aps_required' => 18],
+                            ['name' => 'MUT', 'aps_required' => 16],
+                            ['name' => 'VUT', 'aps_required' => 16]
+                        ]
+                    ]
                 ];
             }
         } else {
             // Lower achievement - certificate/higher certificate
             if ($careerTheme === 'IT') {
                 $courses = [
-                    ['name' => 'Higher Certificate in Information Technology', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'TUT', 'CPUT']],
-                    ['name' => 'Higher Certificate in Computer Programming', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'VUT', 'TUT']],
-                    ['name' => 'Higher Certificate in Computer Science', 'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ']],
-                    ['name' => 'Certificate in Web Development', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
-                    ['name' => 'Higher Certificate in Systems Support', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'VUT']]
+                    [
+                        'name' => 'Higher Certificate in Information Technology',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Computer Programming',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'VUT', 'aps_required' => 15],
+                            ['name' => 'TUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Computer Science',
+                        'aps_required' => 18,
+                        'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 2]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 18],
+                            ['name' => 'UJ', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Certificate in Web Development',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 2]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15],
+                            ['name' => 'DUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Systems Support',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15],
+                            ['name' => 'VUT', 'aps_required' => 15]
+                        ]
+                    ]
                 ];
             } elseif ($careerTheme === 'Business') {
                 $courses = [
-                    ['name' => 'Higher Certificate in Business', 'requirements' => 'National Senior Certificate (Level 3 in most subjects)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP', 'NWU']],
-                    ['name' => 'Higher Certificate in Business Management', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']],
-                    ['name' => 'Higher Certificate in Financial Planning', 'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ']],
-                    ['name' => 'Certificate in Entrepreneurship', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
-                    ['name' => 'Higher Certificate in Accounting', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']]
+                    [
+                        'name' => 'Higher Certificate in Business',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3 in most subjects)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'UJ', 'aps_required' => 15],
+                            ['name' => 'UP', 'aps_required' => 15],
+                            ['name' => 'NWU', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Business Management',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'UJ', 'aps_required' => 15],
+                            ['name' => 'UP', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Financial Planning',
+                        'aps_required' => 18,
+                        'requirements' => 'National Senior Certificate (Level 3), Mathematics (Level 2)',
+                        'subject_requirements' => [
+                            ['subject' => 'Mathematics', 'min_level' => 2]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 18],
+                            ['name' => 'UJ', 'aps_required' => 18]
+                        ]
+                    ],
+                    [
+                        'name' => 'Certificate in Entrepreneurship',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 2]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15],
+                            ['name' => 'DUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Accounting',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'UJ', 'aps_required' => 15],
+                            ['name' => 'UP', 'aps_required' => 15]
+                        ]
+                    ]
                 ];
             } else {
                 $courses = [
-                    ['name' => 'Higher Certificate in Business', 'requirements' => 'National Senior Certificate (Level 3 in most subjects)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP', 'NWU']],
-                    ['name' => 'Higher Certificate in Information Technology', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'TUT', 'CPUT']],
-                    ['name' => 'Higher Certificate in Arts', 'requirements' => 'National Senior Certificate (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'UP']],
-                    ['name' => 'Certificate in Communication Skills', 'requirements' => 'National Senior Certificate', 'duration' => '1 year', 'institutions' => ['TUT', 'CPUT', 'DUT']],
-                    ['name' => 'Higher Certificate in Law', 'requirements' => 'National Senior Certificate (Level 3), English (Level 3)', 'duration' => '1 year', 'institutions' => ['UNISA', 'UJ', 'NWU']]
+                    [
+                        'name' => 'Higher Certificate in Business',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3 in most subjects)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'UJ', 'aps_required' => 15],
+                            ['name' => 'UP', 'aps_required' => 15],
+                            ['name' => 'NWU', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Information Technology',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Arts',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 15],
+                            ['name' => 'UJ', 'aps_required' => 15],
+                            ['name' => 'UP', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Certificate in Communication Skills',
+                        'aps_required' => 15,
+                        'requirements' => 'National Senior Certificate',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 2]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'TUT', 'aps_required' => 15],
+                            ['name' => 'CPUT', 'aps_required' => 15],
+                            ['name' => 'DUT', 'aps_required' => 15]
+                        ]
+                    ],
+                    [
+                        'name' => 'Higher Certificate in Law',
+                        'aps_required' => 18,
+                        'requirements' => 'National Senior Certificate (Level 3), English (Level 3)',
+                        'subject_requirements' => [
+                            ['subject' => 'English', 'min_level' => 3]
+                        ],
+                        'duration' => '1 year',
+                        'institutions' => [
+                            ['name' => 'UNISA', 'aps_required' => 18],
+                            ['name' => 'UJ', 'aps_required' => 18],
+                            ['name' => 'NWU', 'aps_required' => 18]
+                        ]
+                    ]
                 ];
             }
         }

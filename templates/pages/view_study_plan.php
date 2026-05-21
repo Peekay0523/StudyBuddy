@@ -308,12 +308,54 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 }
 
 .accordion-body {
-    padding: 20px 25px 25px 64px;
+    padding: 30px 40px 40px 40px;
     background: #ffffff;
-    white-space: pre-wrap;
-    line-height: 1.8;
+    line-height: 1.6;
     color: #334155;
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.day-header {
+    display: block;
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 1.2rem;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f5f9;
+    letter-spacing: -0.02em;
+}
+
+.day-header:first-child {
+    margin-top: 0;
+}
+
+.study-point {
+    display: block;
+    padding-left: 28px;
+    position: relative;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: #475569;
+}
+
+.study-point::before {
+    content: "\f058";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 2px;
+    color: #7c3aed;
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.plan-text {
+    display: block;
+    margin-bottom: 15px;
+    color: #475569;
 }
 
 .status-badge {
@@ -442,7 +484,21 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     }
 
     .accordion-body {
-        padding: 15px 15px 15px 20px;
+        padding: 20px 20px 25px 20px;
+        font-size: 14px;
+    }
+
+    .day-header {
+        font-size: 1.1rem;
+        margin-top: 20px;
+    }
+
+    .study-point {
+        padding-left: 24px;
+        margin-bottom: 12px;
+    }
+
+    .study-point::before {
         font-size: 14px;
     }
 }
@@ -551,23 +607,39 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
             </summary>
             <div class="accordion-body" id="plan-content">
                 <?php
-                // Remove markdown formatting from study plan content
+                // Get content and clean up common markdown artifacts
                 $content = $studyPlan['content'];
-                // Remove bold (**text**)
                 $content = preg_replace('/\*\*(.*?)\*\*/', '$1', $content);
-                // Remove italic (*text*)
                 $content = preg_replace('/\*(.*?)\*/', '$1', $content);
-                // Remove headers (###, ##, #)
                 $content = preg_replace('/^#+\s*/m', '', $content);
-                // Remove horizontal rules (---)
                 $content = preg_replace('/^---\s*$/m', '', $content);
-                // Remove markdown links [text](url)
                 $content = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $content);
-                // Remove escaped characters
                 $content = str_replace(['\\'], '', $content);
-                // Clean up multiple spaces/newlines
                 $content = preg_replace('/\n{3,}/', "\n\n", $content);
-                echo htmlspecialchars(trim($content));
+                
+                // Split into lines for structured formatting
+                $lines = explode("\n", trim($content));
+                $formattedHtml = "";
+                
+                foreach ($lines as $line) {
+                    $trimmedLine = trim($line);
+                    if (empty($trimmedLine)) continue;
+                    
+                    // Match "Day X:" or "Day X-Y:" headers
+                    if (preg_match('/^Day\s+\d+([-–]\d+)?[:\s]/i', $trimmedLine)) {
+                        $formattedHtml .= '<div class="day-header">' . htmlspecialchars($trimmedLine) . ' </div>';
+                    } 
+                    // Match bullet points (-, *, or Unicode bullets)
+                    elseif (preg_match('/^[-*•]\s+/', $trimmedLine)) {
+                        $cleanPoint = preg_replace('/^[-*•]\s+/', '', $trimmedLine);
+                        $formattedHtml .= '<div class="study-point">' . htmlspecialchars($cleanPoint) . ' </div>';
+                    }
+                    // Regular text lines
+                    else {
+                        $formattedHtml .= '<div class="plan-text">' . htmlspecialchars($trimmedLine) . ' </div>';
+                    }
+                }
+                echo $formattedHtml;
                 ?>
             </div>
         </details>
@@ -1015,8 +1087,8 @@ function prepareContentForSentences(contentDiv) {
     const text = contentDiv.textContent;
 
     // Split by sentences but keep punctuation attached to each sentence
-    // This ensures the speech synthesizer treats periods as natural pauses
-    const sentences = text.match(/[^.!?]*[.!?]+[\s]*/g) || [];
+    // Improved regex to also catch segments without trailing punctuation
+    const sentences = text.match(/[^.!?]*[.!?]+[\s]*|[^.!?]+$/g) || [];
     let html = "";
 
     for (let i = 0; i < sentences.length; i++) {

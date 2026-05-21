@@ -707,13 +707,14 @@ IMPORTANT RULES FOR COURSE RECOMMENDATIONS:
 REQUIRED OUTPUT - ALL items must be thematically consistent with {$careerTheme}:
 
 1. 5 recommended careers - ALL from the {$careerTheme} field, appropriate for the student's achievement level
-2. 5 suitable bachelor's degree/diploma/certificate courses - ALL must be {$careerTheme}-related, with:
-   - OVERALL APS SCORE REQUIRED for each course
-   - DETAILED SUBJECT REQUIREMENTS listing EACH subject with its minimum level
-   - Include ALL compulsory subjects (Mathematics, Physical Sciences, Life Sciences, English, etc.)
-   - Example: \"APS 28, Mathematics (Level 5), Physical Sciences (Level 4), English (Level 4), Life Sciences (Level 4)\"
-3. For EACH course, list 3-5 South African institutions that offer it, with their specific entry requirements
-4. 3 bursaries/scholarships related to {$careerTheme}
+2. 5 suitable bachelor's degree/diploma/certificate courses - ALL must be {$careerTheme}-related.
+   - EACH COURSE MUST INCLUDE:
+     - aps_required: A single numeric value for the overall APS required (e.g., 28)
+     - subject_requirements: An array of objects, each with 'subject' and 'min_level' (numeric 1-7). 
+       - EXAMPLE: [{\"subject\": \"Mathematics\", \"min_level\": 5}, {\"subject\": \"Physical Sciences\", \"min_level\": 4}]
+     - requirements: A summary string of all requirements (e.g., \"APS 28, Mathematics (Level 5), Physical Sciences (Level 4)\")
+     - duration: A string (e.g., \"3 years\")
+     - institutions: An array of 3-5 South African institutions with their specific entry requirements
 
 Return as JSON with keys:
 - careers (array of career names, all from {$careerTheme} field, appropriate for achievement level)
@@ -899,143 +900,340 @@ Return as JSON with keys:
             'Engineering' => [
                 [
                     'name' => 'Bachelor of Science in Engineering',
+                    'aps_required' => 28,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5), English (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5],
+                        ['subject' => 'English', 'min_level' => 5]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['University of Cape Town', 'Wits University', 'Stellenbosch University', 'University of Pretoria']
+                    'institutions' => [
+                        ['name' => 'University of Cape Town', 'aps_required' => 30],
+                        ['name' => 'Wits University', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch University', 'aps_required' => 28],
+                        ['name' => 'University of Pretoria', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Engineering in Civil Engineering',
+                    'aps_required' => 26,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'UKZN']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'UKZN', 'aps_required' => 26]
+                    ]
                 ]
             ],
             'Medicine' => [
                 [
                     'name' => 'Bachelor of Medicine and Bachelor of Surgery (MBChB)',
+                    'aps_required' => 35,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 6), Life Sciences (Level 7), English (Level 6)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 6],
+                        ['subject' => 'Life Sciences', 'min_level' => 7],
+                        ['subject' => 'English', 'min_level' => 6]
+                    ],
                     'duration' => '6 years',
-                    'institutions' => ['University of Cape Town', 'Wits University', 'Stellenbosch University', 'UP', 'UKZN']
+                    'institutions' => [
+                        ['name' => 'University of Cape Town', 'aps_required' => 38],
+                        ['name' => 'Wits University', 'aps_required' => 36],
+                        ['name' => 'Stellenbosch University', 'aps_required' => 36],
+                        ['name' => 'UP', 'aps_required' => 35],
+                        ['name' => 'UKZN', 'aps_required' => 35]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Nursing',
+                    'aps_required' => 26,
                     'requirements' => 'Life Sciences (Level 5), English (Level 5), Mathematics/Math Literacy (Level 4)',
+                    'subject_requirements' => [
+                        ['subject' => 'Life Sciences', 'min_level' => 5],
+                        ['subject' => 'English', 'min_level' => 5],
+                        ['subject' => 'Mathematics', 'min_level' => 4]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['UCT', 'Wits', 'UKZN', 'UWC']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 26],
+                        ['name' => 'UKZN', 'aps_required' => 26],
+                        ['name' => 'UWC', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Commerce' => [
                 [
                     'name' => 'Bachelor of Commerce',
+                    'aps_required' => 26,
                     'requirements' => 'Mathematics (Level 5), English (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5],
+                        ['subject' => 'English', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'Stellenbosch', 'UJ', 'UP']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 26],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28],
+                        ['name' => 'UJ', 'aps_required' => 24],
+                        ['name' => 'UP', 'aps_required' => 26]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Accounting Sciences',
+                    'aps_required' => 26,
                     'requirements' => 'Mathematics (Level 5), Accounting (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5],
+                        ['subject' => 'Accounting', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['Wits', 'UJ', 'UNISA']
+                    'institutions' => [
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UJ', 'aps_required' => 26],
+                        ['name' => 'UNISA', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Education' => [
                 [
                     'name' => 'Bachelor of Education',
+                    'aps_required' => 24,
                     'requirements' => 'English (Level 5), 2 official languages, Mathematics/Math Literacy (Level 4)',
+                    'subject_requirements' => [
+                        ['subject' => 'English', 'min_level' => 5],
+                        ['subject' => 'Mathematics', 'min_level' => 4]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['UP', 'UJ', 'Wits', 'UNISA']
+                    'institutions' => [
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'UJ', 'aps_required' => 26],
+                        ['name' => 'Wits', 'aps_required' => 26],
+                        ['name' => 'UNISA', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Law' => [
                 [
                     'name' => 'Bachelor of Laws (LLB)',
+                    'aps_required' => 28,
                     'requirements' => 'English (Level 6), 2 other languages (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'English', 'min_level' => 6]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch', 'UKZN']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 32],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch', 'aps_required' => 30],
+                        ['name' => 'UKZN', 'aps_required' => 28]
+                    ]
                 ]
             ],
             'IT' => [
                 [
                     'name' => 'Bachelor of Science in Computer Science',
+                    'aps_required' => 28,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Information Technology',
+                    'aps_required' => 24,
                     'requirements' => 'Mathematics (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UP', 'UJ', 'NWU']
+                    'institutions' => [
+                        ['name' => 'UP', 'aps_required' => 26],
+                        ['name' => 'UJ', 'aps_required' => 26],
+                        ['name' => 'NWU', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Computer Science' => [
                 [
                     'name' => 'Bachelor of Science in Computer Science',
+                    'aps_required' => 28,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Information Technology',
+                    'aps_required' => 24,
                     'requirements' => 'Mathematics (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UP', 'UJ', 'NWU']
+                    'institutions' => [
+                        ['name' => 'UP', 'aps_required' => 26],
+                        ['name' => 'UJ', 'aps_required' => 26],
+                        ['name' => 'NWU', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Software' => [
                 [
                     'name' => 'Bachelor of Science in Software Engineering',
+                    'aps_required' => 28,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Computer and Information Sciences',
+                    'aps_required' => 24,
                     'requirements' => 'Mathematics (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['Wits', 'UP', 'UJ', 'NWU']
+                    'institutions' => [
+                        ['name' => 'Wits', 'aps_required' => 26],
+                        ['name' => 'UP', 'aps_required' => 26],
+                        ['name' => 'UJ', 'aps_required' => 24],
+                        ['name' => 'NWU', 'aps_required' => 24]
+                    ]
                 ]
             ],
             'Science' => [
                 [
                     'name' => 'Bachelor of Science',
+                    'aps_required' => 24,
                     'requirements' => 'Mathematics (Level 5), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 5],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'UP', 'Stellenbosch']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 26],
+                        ['name' => 'UP', 'aps_required' => 26],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Science in Data Science',
+                    'aps_required' => 28,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['Wits', 'UP', 'UCT']
+                    'institutions' => [
+                        ['name' => 'Wits', 'aps_required' => 30],
+                        ['name' => 'UP', 'aps_required' => 28],
+                        ['name' => 'UCT', 'aps_required' => 32]
+                    ]
                 ]
             ],
             'Health' => [
                 [
                     'name' => 'Bachelor of Health Sciences',
+                    'aps_required' => 28,
                     'requirements' => 'Life Sciences (Level 5), English (Level 5)',
+                    'subject_requirements' => [
+                        ['subject' => 'Life Sciences', 'min_level' => 5],
+                        ['subject' => 'English', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'UKZN', 'Stellenbosch']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 30],
+                        ['name' => 'Wits', 'aps_required' => 28],
+                        ['name' => 'UKZN', 'aps_required' => 28],
+                        ['name' => 'Stellenbosch', 'aps_required' => 28]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Pharmacy',
+                    'aps_required' => 30,
                     'requirements' => 'Mathematics (Level 6), Physical Sciences (Level 5), Life Sciences (Level 6)',
+                    'subject_requirements' => [
+                        ['subject' => 'Mathematics', 'min_level' => 6],
+                        ['subject' => 'Physical Sciences', 'min_level' => 5],
+                        ['subject' => 'Life Sciences', 'min_level' => 6]
+                    ],
                     'duration' => '4 years',
-                    'institutions' => ['Wits', 'UP', 'UKZN', 'NWU']
+                    'institutions' => [
+                        ['name' => 'Wits', 'aps_required' => 32],
+                        ['name' => 'UP', 'aps_required' => 30],
+                        ['name' => 'UKZN', 'aps_required' => 30],
+                        ['name' => 'NWU', 'aps_required' => 28]
+                    ]
                 ]
             ],
             'Arts' => [
                 [
                     'name' => 'Bachelor of Arts',
+                    'aps_required' => 24,
                     'requirements' => 'English (Level 5), Second Language (Level 4)',
+                    'subject_requirements' => [
+                        ['subject' => 'English', 'min_level' => 5]
+                    ],
                     'duration' => '3 years',
-                    'institutions' => ['UCT', 'Wits', 'Stellenbosch', 'UJ']
+                    'institutions' => [
+                        ['name' => 'UCT', 'aps_required' => 28],
+                        ['name' => 'Wits', 'aps_required' => 24],
+                        ['name' => 'Stellenbosch', 'aps_required' => 26],
+                        ['name' => 'UJ', 'aps_required' => 22]
+                    ]
                 ],
                 [
                     'name' => 'Bachelor of Fine Arts',
+                    'aps_required' => 24,
                     'requirements' => 'Visual Arts/Design (Level 5), Portfolio',
+                    'subject_requirements' => [
+                        ['subject' => 'English', 'min_level' => 4]
+                    ],
                     'duration' => '3-4 years',
-                    'institutions' => ['Wits', 'UCT', 'UKZN']
+                    'institutions' => [
+                        ['name' => 'Wits', 'aps_required' => 24],
+                        ['name' => 'UCT', 'aps_required' => 24],
+                        ['name' => 'UKZN', 'aps_required' => 24]
+                    ]
                 ]
             ]
         ];

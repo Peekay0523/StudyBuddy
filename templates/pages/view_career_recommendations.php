@@ -499,6 +499,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                     <?php
                                     $apsRequired = $course['aps_required'] ?? null;
                                     $subjectReqs = $course['subject_requirements'] ?? [];
+                                    $requirementsStr = $course['requirements'] ?? '';
                                     
                                     if ($apsRequired): ?>
                                         <div class="requirement-item">
@@ -519,6 +520,16 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                                 </div>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
+                                    <?php elseif (!empty($requirementsStr)): ?>
+                                        <div class="requirement-item">
+                                            <i class="fas fa-info-circle" style="color: #667eea;"></i>
+                                            <span><?php echo htmlspecialchars($requirementsStr); ?></span>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="requirement-item">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>Contact institution for detailed requirements</span>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
