@@ -1,6 +1,188 @@
     </main>
 </div>
 
+<?php if (isLoggedIn()): ?>
+<!-- Modern Mobile Bottom Navigation -->
+<nav class="mobile-bottom-nav">
+    <div class="mobile-bottom-nav-inner">
+        <a href="/ai-chat" class="nav-item <?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>">
+            <i class="fas fa-robot"></i>
+            <span>AI Chat</span>
+        </a>
+        <a href="javascript:void(0)" onclick="toggleCalculator()" class="nav-item <?php echo ($currentPage ?? '') === 'math' ? 'active' : ''; ?>">
+            <i class="fas fa-calculator"></i>
+            <span>Calculator</span>
+        </a>
+        <div class="nav-item-plus-wrapper">
+            <a href="/scan" class="nav-item-plus">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+        <a href="/data-sheets" class="nav-item <?php echo ($currentPage ?? '') === 'data-sheets' ? 'active' : ''; ?>">
+            <i class="fas fa-file-lines"></i>
+            <span>Datasheets</span>
+        </a>
+        <a href="/dashboard" class="nav-item <?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </div>
+</nav>
+
+<?php include __DIR__ . '/calculator_modal.php'; ?>
+
+<style>
+/* Modern Mobile Bottom Navigation Styles */
+.mobile-bottom-nav {
+    display: none; /* Hide by default for desktop */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: 92%;
+    max-width: 420px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 40px;
+    padding: 12px 10px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Show only on mobile/tablet */
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: block;
+    }
+}
+
+/* Hide when sidebar is active */
+.mobile-bottom-nav.sidebar-active {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(100px);
+}
+
+.mobile-bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex: 1;
+    z-index: 1;
+}
+
+.nav-item i {
+    font-size: 20px;
+    margin-bottom: 4px;
+    transition: transform 0.3s ease;
+}
+
+.nav-item.active {
+    color: #6366f1;
+}
+
+.nav-item.active i {
+    transform: translateY(-2px);
+}
+
+.nav-item:active {
+    transform: scale(0.9);
+}
+
+/* Floating Plus Button */
+.nav-item-plus-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    height: 40px;
+}
+
+.nav-item-plus {
+    position: absolute;
+    bottom: 0px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-decoration: none;
+    z-index: 2;
+    border: 4px solid #fff;
+}
+
+.nav-item-plus:hover {
+    transform: translateY(-8px) scale(1.1);
+    box-shadow: 0 15px 30px rgba(99, 102, 241, 0.5);
+}
+
+.nav-item-plus:active {
+    transform: translateY(-2px) scale(0.95);
+}
+
+/* Page padding to prevent overlap */
+body {
+    padding-bottom: 100px !important;
+}
+
+@media (max-width: 480px) {
+    .mobile-bottom-nav {
+        bottom: 15px;
+        width: 94%;
+        padding: 10px 5px;
+    }
+    
+    .nav-item span {
+        font-size: 9px;
+    }
+    
+    .nav-item-plus {
+        width: 54px;
+        height: 54px;
+        font-size: 20px;
+        bottom: 5px;
+    }
+}
+
+/* Dark mode support (if applicable) */
+@media (prefers-color-scheme: dark) {
+    .mobile-bottom-nav {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+    .nav-item {
+        color: #64748b;
+    }
+    .nav-item-plus {
+        border-color: #1e293b;
+    }
+}
+</style>
+<?php endif; ?>
+
 <script>
     // Sidebar toggle for mobile
     const hamburger = document.getElementById('hamburger');
@@ -11,12 +193,24 @@
         sidebar.classList.toggle('mobile-open');
         overlay.classList.toggle('active');
         hamburger.classList.toggle('active');
+        
+        // Hide/Show bottom navigation bar
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (bottomNav) {
+            bottomNav.classList.toggle('sidebar-active');
+        }
     }
 
     function closeSidebar() {
         sidebar.classList.remove('mobile-open');
         overlay.classList.remove('active');
         hamburger.classList.remove('active');
+        
+        // Ensure bottom navigation bar is visible
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (bottomNav) {
+            bottomNav.classList.remove('sidebar-active');
+        }
     }
 
     if (hamburger && sidebar) {

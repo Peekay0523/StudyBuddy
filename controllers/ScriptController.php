@@ -1164,6 +1164,7 @@ HTML;
     public function dataSheets() {
         requireLogin();
         $pageTitle = "Data Sheets - StudySmart";
+        $currentPage = 'data-sheets';
         include __DIR__ . '/../templates/pages/data_sheets.php';
     }
 

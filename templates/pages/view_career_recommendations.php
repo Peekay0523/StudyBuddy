@@ -2,6 +2,76 @@
 $pageTitle = 'Career Recommendations - StudySmart';
 $currentPage = 'careers';
 $reportCardIdJs = htmlspecialchars($reportCard['id'] ?? '');
+
+// Admission Probability Prediction Logic
+function calculateAdmissionProbability($requiredAps, $studentAps, $grade, $term, $subjectRequirements = [], $studentGrades = []) {
+    if (!$requiredAps) return ['percent' => 50, 'label' => 'Moderate Chance', 'color' => 'orange'];
+    
+    $grade = (int)filter_var($grade, FILTER_SANITIZE_NUMBER_INT);
+    $term = (int)filter_var($term, FILTER_SANITIZE_NUMBER_INT);
+    
+    // Base probability based on APS
+    $apsDiff = $studentAps - $requiredAps;
+    $baseProb = 50 + ($apsDiff * 5); // 5% per APS point difference
+    
+    // Subject requirement check
+    $subjectGaps = 0;
+    if (!empty($subjectRequirements)) {
+        foreach ($subjectRequirements as $req) {
+            $subjName = strtolower($req['subject'] ?? '');
+            $reqLevel = (int)($req['min_level'] ?? 0);
+            
+            $met = false;
+            foreach ($studentGrades as $sSubj => $sGrade) {
+                if (strpos(strtolower($sSubj), $subjName) !== false || strpos($subjName, strtolower($sSubj)) !== false) {
+                    $sLevel = 0;
+                    if (preg_match('/(\d+)/', $sGrade, $m)) {
+                        $pct = (int)$m[1];
+                        if ($pct >= 80) $sLevel = 7;
+                        elseif ($pct >= 70) $sLevel = 6;
+                        elseif ($pct >= 60) $sLevel = 5;
+                        elseif ($pct >= 50) $sLevel = 4;
+                        elseif ($pct >= 40) $sLevel = 3;
+                        elseif ($pct >= 30) $sLevel = 2;
+                        else $sLevel = 1;
+                    }
+                    if ($sLevel >= $reqLevel) {
+                        $met = true;
+                    } else {
+                        $subjectGaps += ($reqLevel - $sLevel);
+                    }
+                    break;
+                }
+            }
+            if (!$met && $subjectGaps === 0) $subjectGaps += 1;
+        }
+    }
+    
+    $baseProb -= ($subjectGaps * 15);
+    
+    // Adjustment based on Grade and Term (Realistic trajectory)
+    $adjustment = 0;
+    if ($grade == 12) {
+        if ($term == 4) {
+            // Very strict in final term
+            $adjustment = -5;
+        } elseif ($term == 1) {
+            // More optimistic in term 1 (time to improve)
+            $adjustment = 5;
+        }
+    } elseif ($grade == 11) {
+        $adjustment = 10; // High potential for growth
+    } elseif ($grade <= 10) {
+        $adjustment = 15; // Plenty of time
+    }
+    
+    $finalProb = max(5, min(98, $baseProb + $adjustment));
+    
+    if ($finalProb >= 75) return ['percent' => $finalProb, 'label' => 'High Chance', 'color' => '#22c55e'];
+    if ($finalProb >= 50) return ['percent' => $finalProb, 'label' => 'Moderate Chance', 'color' => '#f59e0b'];
+    return ['percent' => $finalProb, 'label' => 'Low Chance', 'color' => '#ef4444'];
+}
+
 $extraHead = <<<EOT
 <style>
 /* Loading Overlay */
@@ -61,6 +131,146 @@ $extraHead = <<<EOT
     align-items: center !important;
     justify-content: center !important;
     gap: 10px !important;
+}
+
+/* Prediction Badge Styles */
+.prob-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 10px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.prob-badge i {
+    font-size: 0.9rem;
+}
+
+/* Improve Button Styles */
+.btn-improve {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    font-size: 0.85rem !important;
+    padding: 8px 16px !important;
+    margin-top: 12px;
+    border-radius: 12px !important;
+    width: auto !important;
+    display: inline-flex !important;
+}
+
+.btn-improve:hover {
+    background: #4f46e5;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+/* Glassmorphism Modal Styles */
+.glass-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.glass-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.glass-modal-content {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 550px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 30px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.glass-modal.active .glass-modal-content {
+    transform: scale(1);
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.05);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.improvement-advice-section {
+    margin-bottom: 25px;
+}
+
+.advice-card {
+    background: white;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.advice-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.target-badge {
+    background: #ecfdf5;
+    color: #059669;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.alt-option {
+    background: #f8fafc;
+    border-left: 4px solid #6366f1;
+    padding: 12px;
+    border-radius: 0 12px 12px 0;
+    margin-top: 10px;
 }
 </style>
 EOT;
@@ -546,13 +756,45 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                             <?php
                                             $instName = is_array($inst) ? ($inst['name'] ?? null) : $inst;
                                             $instAps = is_array($inst) ? ($inst['aps_required'] ?? null) : null;
+                                            
+                                            // Prediction
+                                            $prediction = calculateAdmissionProbability(
+                                                $instAps ?: ($course['aps_required'] ?? 0),
+                                                $careerRec['aps'] ?? 0,
+                                                $reportCard['grade'] ?? '12',
+                                                $reportCard['term'] ?? '1',
+                                                $course['subject_requirements'] ?? [],
+                                                $reportCard['grades_data'] ?? []
+                                            );
                                             ?>
                                             <?php if ($instName): ?>
-                                                <div class="institution-item">
-                                                    <span><?php echo htmlspecialchars($instName); ?></span>
-                                                    <?php if ($instAps): ?>
-                                                        <div class="aps-badge">APS <?php echo $instAps; ?></div>
-                                                    <?php endif; ?>
+                                                <div class="institution-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                        <span><?php echo htmlspecialchars($instName); ?></span>
+                                                        <?php if ($instAps): ?>
+                                                            <div class="aps-badge">APS <?php echo $instAps; ?></div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    
+                                                    <!-- Admission Probability Badge -->
+                                                    <div class="prob-badge" style="color: <?php echo $prediction['color']; ?>; background: <?php echo $prediction['color']; ?>15;">
+                                                        <i class="fas fa-chart-pie"></i>
+                                                        <span>Admission Probability: <?php echo $prediction['percent']; ?>% (<?php echo $prediction['label']; ?>)</span>
+                                                    </div>
+                                                    
+                                                    <!-- Improve Chances Button -->
+                                                    <button type="button" class="btn-improve" onclick='showImprovementAdvice(
+                                                        <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
+                                                        <?php echo htmlspecialchars(json_encode($course['name']), ENT_QUOTES); ?>, 
+                                                        <?php echo $instAps ?: ($course['aps_required'] ?? 0); ?>, 
+                                                        <?php echo htmlspecialchars(json_encode($course['subject_requirements'] ?? []), ENT_QUOTES); ?>,
+                                                        <?php echo $careerRec['aps'] ?? 0; ?>,
+                                                        <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? '12'), ENT_QUOTES); ?>,
+                                                        <?php echo htmlspecialchars(json_encode($reportCard['term'] ?? '1'), ENT_QUOTES); ?>,
+                                                        <?php echo htmlspecialchars(json_encode($reportCard['grades_data'] ?? []), ENT_QUOTES); ?>
+                                                    )'>
+                                                        <i class="fas fa-wand-magic-sparkles"></i> Improve Chances
+                                                    </button>
                                                 </div>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
@@ -630,28 +872,60 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
             <div class="institutions-grid">
                 <?php
                 $institutions = [
-                    ['name' => 'University of Cape Town', 'type' => 'Public', 'website' => 'https://www.uct.ac.za'],
-                    ['name' => 'Wits University', 'type' => 'Public', 'website' => 'https://www.wits.ac.za'],
-                    ['name' => 'Stellenbosch University', 'type' => 'Public', 'website' => 'https://www.sun.ac.za'],
-                    ['name' => 'University of Pretoria', 'type' => 'Public', 'website' => 'https://www.up.ac.za'],
-                    ['name' => 'University of Johannesburg', 'type' => 'Public', 'website' => 'https://www.uj.ac.za'],
-                    ['name' => 'UKZN', 'type' => 'Public', 'website' => 'https://www.ukzn.ac.za'],
-                    ['name' => 'UNISA', 'type' => 'Distance Learning', 'website' => 'https://www.unisa.ac.za'],
-                    ['name' => 'Tshwane University of Technology (TUT)', 'type' => 'Public', 'website' => 'https://www.tut.ac.za'],
-                    ['name' => 'Cape Peninsula University of Technology', 'type' => 'Public', 'website' => 'https://www.cput.ac.za'],
-                    ['name' => 'Durban University of Technology', 'type' => 'Public', 'website' => 'https://www.dut.ac.za'],
+                    ['name' => 'University of Cape Town', 'type' => 'Public', 'website' => 'https://www.uct.ac.za', 'aps_required' => 30],
+                    ['name' => 'Wits University', 'type' => 'Public', 'website' => 'https://www.wits.ac.za', 'aps_required' => 28],
+                    ['name' => 'Stellenbosch University', 'type' => 'Public', 'website' => 'https://www.sun.ac.za', 'aps_required' => 28],
+                    ['name' => 'University of Pretoria', 'type' => 'Public', 'website' => 'https://www.up.ac.za', 'aps_required' => 26],
+                    ['name' => 'University of Johannesburg', 'type' => 'Public', 'website' => 'https://www.uj.ac.za', 'aps_required' => 24],
+                    ['name' => 'UKZN', 'type' => 'Public', 'website' => 'https://www.ukzn.ac.za', 'aps_required' => 26],
+                    ['name' => 'UNISA', 'type' => 'Distance Learning', 'website' => 'https://www.unisa.ac.za', 'aps_required' => 20],
+                    ['name' => 'Tshwane University of Technology (TUT)', 'type' => 'Public', 'website' => 'https://www.tut.ac.za', 'aps_required' => 20],
+                    ['name' => 'Cape Peninsula University of Technology', 'type' => 'Public', 'website' => 'https://www.cput.ac.za', 'aps_required' => 20],
+                    ['name' => 'Durban University of Technology', 'type' => 'Public', 'website' => 'https://www.dut.ac.za', 'aps_required' => 18],
                 ];
                 foreach ($institutions as $inst):
+                    // Prediction for general entry
+                    $prediction = calculateAdmissionProbability(
+                        $inst['aps_required'],
+                        $careerRec['aps'] ?? 0,
+                        $reportCard['grade'] ?? '12',
+                        $reportCard['term'] ?? '1',
+                        [], // No specific subject reqs for general institution card
+                        $reportCard['grades_data'] ?? []
+                    );
                 ?>
-                    <div class="institution-card">
-                        <h4><?php echo htmlspecialchars($inst['name']); ?></h4>
-                        <span class="institution-type"><?php echo htmlspecialchars($inst['type']); ?></span>
-                        <a href="<?php echo htmlspecialchars($inst['website']); ?>" target="_blank" class="btn-visit">
-                            <i class="fas fa-external-link-alt"></i> Visit Website
-                        </a>
-                        <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($inst['name']); ?>', '<?php echo htmlspecialchars($inst['type']); ?>')" class="btn-applied">
-                            <i class="fas fa-check-circle"></i> Mark Applied
-                        </button>
+                    <div class="institution-card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <h4 style="margin-bottom: 5px;"><?php echo htmlspecialchars($inst['name']); ?></h4>
+                        <span class="institution-type" style="margin-bottom: 10px;"><?php echo htmlspecialchars($inst['type']); ?></span>
+                        
+                        <!-- Admission Probability Badge -->
+                        <div class="prob-badge" style="color: <?php echo $prediction['color']; ?>; background: <?php echo $prediction['color']; ?>15; margin-bottom: 10px; width: 100%; justify-content: center;">
+                            <i class="fas fa-chart-pie"></i>
+                            <span><?php echo $prediction['percent']; ?>% Chance</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center;">
+                            <a href="<?php echo htmlspecialchars($inst['website']); ?>" target="_blank" class="btn-visit" style="margin-top: 0; width: 100%;">
+                                <i class="fas fa-external-link-alt"></i> Visit Website
+                            </a>
+                            
+                            <button type="button" class="btn-improve" style="width: 100% !important; margin-top: 0;" onclick='showImprovementAdvice(
+                                <?php echo htmlspecialchars(json_encode($inst['name']), ENT_QUOTES); ?>, 
+                                "General Admission", 
+                                <?php echo $inst['aps_required']; ?>, 
+                                "[]",
+                                <?php echo $careerRec['aps'] ?? 0; ?>,
+                                <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? "12"), ENT_QUOTES); ?>,
+                                <?php echo htmlspecialchars(json_encode($reportCard['term'] ?? "1"), ENT_QUOTES); ?>,
+                                <?php echo htmlspecialchars(json_encode($reportCard['grades_data'] ?? []), ENT_QUOTES); ?>
+                            )'>
+                                <i class="fas fa-wand-magic-sparkles"></i> Improve Chances
+                            </button>
+
+                            <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($inst['name']); ?>', '<?php echo htmlspecialchars($inst['type']); ?>')" class="btn-applied" style="width: 100% !important; margin-top: 0;">
+                                <i class="fas fa-check-circle"></i> Mark Applied
+                            </button>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -1132,7 +1406,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     gap: 8px;
     transition: all 0.2s;
     text-decoration: none;
-    width: 100px;
+    width: 100%;
     margin-top: 10px;
 }
 
@@ -1162,6 +1436,161 @@ function toggleDetails(button) {
     const content = button.nextElementSibling;
     button.classList.toggle('active');
     content.classList.toggle('active');
+}
+
+// Show Improvement Advice Modal
+function showImprovementAdvice(institution, course, apsReq, subjectReqs, studentAps, grade, term, studentGrades) {
+    const modal = document.getElementById('improvementModal');
+    const content = document.getElementById('improvementModalContent');
+    
+    // Clear previous content
+    content.innerHTML = '<div style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #6366f1;"></i><p style="margin-top:15px; color: #64748b;">AI is analyzing your performance...</p></div>';
+    modal.classList.add('active');
+    
+    // Parse data
+    const sGrades = typeof studentGrades === 'string' ? JSON.parse(studentGrades) : studentGrades;
+    const sReqs = typeof subjectReqs === 'string' ? JSON.parse(subjectReqs) : subjectReqs;
+    
+    // Simulate AI analysis delay
+    setTimeout(() => {
+        let html = `
+            <div style="margin-bottom: 25px;">
+                <h2 style="margin: 0 0 5px 0; color: #1e293b; font-size: 1.4rem;">Improve Your Chances</h2>
+                <p style="margin: 0; color: #64748b; font-size: 0.95rem;">Analysis for <strong>${course}</strong> at <strong>${institution}</strong></p>
+            </div>
+            
+            <div class="improvement-advice-section">
+                <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-bullseye" style="color: #6366f1;"></i> Target Improvements
+                </h3>
+        `;
+        
+        let needsImprovement = false;
+        
+        // Check APS
+        if (studentAps < apsReq) {
+            needsImprovement = true;
+            html += `
+                <div class="advice-card">
+                    <h4><i class="fas fa-chart-line" style="color: #6366f1;"></i> APS Score <span class="target-badge">Target: ${apsReq}</span></h4>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #475569;">You currently have <strong>${studentAps} APS</strong>. You need to increase this by <strong>${apsReq - studentAps} points</strong> to meet the minimum requirement.</p>
+                </div>
+            `;
+        }
+        
+        // Check Subjects
+        if (sReqs && sReqs.length > 0) {
+            sReqs.forEach(req => {
+                const subjName = req.subject || '';
+                const reqLevel = req.min_level || 0;
+                
+                let sMatch = null;
+                for (let sSubj in sGrades) {
+                    if (sSubj.toLowerCase().includes(subjName.toLowerCase()) || subjName.toLowerCase().includes(sSubj.toLowerCase())) {
+                        sMatch = sGrades[sSubj];
+                        break;
+                    }
+                }
+                
+                let sLevel = 0;
+                if (sMatch) {
+                    const pctMatch = sMatch.match(/(\d+)/);
+                    if (pctMatch) {
+                        const pct = parseInt(pctMatch[1]);
+                        if (pct >= 80) sLevel = 7;
+                        else if (pct >= 70) sLevel = 6;
+                        else if (pct >= 60) sLevel = 5;
+                        else if (pct >= 50) sLevel = 4;
+                        else if (pct >= 40) sLevel = 3;
+                        else if (pct >= 30) sLevel = 2;
+                        else sLevel = 1;
+                    }
+                }
+                
+                if (sLevel < reqLevel) {
+                    needsImprovement = true;
+                    const targetPct = reqLevel === 7 ? '80%+' : (reqLevel === 6 ? '70%+' : (reqLevel === 5 ? '60%+' : '50%+'));
+                    html += `
+                        <div class="advice-card">
+                            <h4><i class="fas fa-book" style="color: #6366f1;"></i> ${subjName} <span class="target-badge">Target: Level ${reqLevel} (${targetPct})</span></h4>
+                            <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #475569;">Your current performance is Level ${sLevel}. Focus on ${subjName} to reach the required level.</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        if (!needsImprovement) {
+            html += `
+                <div class="advice-card" style="border-color: #ecfdf5; background: #f0fdf4;">
+                    <h4 style="color: #065f46;"><i class="fas fa-check-circle"></i> Requirements Met!</h4>
+                    <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #065f46;">You already meet the minimum requirements. Focus on maintaining these marks to ensure admission.</p>
+                </div>
+            `;
+        }
+        
+        html += `</div>`; // End section
+        
+        // Time & Strategy
+        const gradeInt = parseInt(grade);
+        const termInt = parseInt(term);
+        let timeAdvice = "";
+        if (gradeInt === 12) {
+            if (termInt === 1) timeAdvice = "You are in Grade 12 Term 1. This is the perfect time to make a massive impact on your final results.";
+            else if (termInt === 2) timeAdvice = "Grade 12 Term 2 marks are critical for provisional admission. Every mark counts now.";
+            else if (termInt === 3) timeAdvice = "You are approaching final exams. Focus on past papers and intensive revision.";
+            else timeAdvice = "Final exams are here. Stay focused and prioritize your weakest subjects.";
+        } else {
+            timeAdvice = `Being in Grade ${gradeInt}, you have a strategic advantage. You have enough time to significantly boost your academic profile before Matric.`;
+        }
+        
+        html += `
+            <div style="margin-bottom: 25px;">
+                <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-lightbulb" style="color: #f59e0b;"></i> Strategy & Time
+                </h3>
+                <p style="font-size: 0.95rem; color: #475569; line-height: 1.6;">${timeAdvice}</p>
+                <ul style="padding-left: 20px; color: #475569; font-size: 0.9rem; line-height: 1.8;">
+                    <li>Set aside 2 extra hours weekly for your lowest subjects.</li>
+                    <li>Use our AI study plan feature to organize your revision.</li>
+                    <li>Download past papers from our "Resources" section.</li>
+                </ul>
+            </div>
+        `;
+        
+        // Alternatives
+        if (studentAps < apsReq - 2 || needsImprovement) {
+            html += `
+                <div>
+                    <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-shuffle" style="color: #6366f1;"></i> Backup Options
+                    </h3>
+                    <div class="alt-option">
+                        <p style="margin: 0; font-size: 0.9rem; color: #1e293b; font-weight: 600;">Consider a related Diploma</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #475569;">Diplomas typically require lower APS (18-22) and can lead to a Degree later via articulation.</p>
+                    </div>
+                    <div class="alt-option" style="border-color: #10b981;">
+                        <p style="margin: 0; font-size: 0.9rem; color: #1e293b; font-weight: 600;">Extended/Foundation Programme</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #475569;">Many universities offer 4-year extended degrees for students who slightly miss the marks.</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        content.innerHTML = html;
+    }, 800);
+}
+
+function closeImprovementModal() {
+    document.getElementById('improvementModal').classList.remove('active');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('improvementModal');
+    if (event.target === modal) {
+        closeImprovementModal();
+    }
 }
 
 // Mark bursary as applied
@@ -1248,6 +1677,23 @@ async function markInstitutionAsApplied(reportCardId, institutionName, instituti
     }
 }
 </script>
+
+<!-- Improvement Advice Modal -->
+<div id="improvementModal" class="glass-modal">
+    <div class="glass-modal-content">
+        <button class="modal-close" onclick="closeImprovementModal()">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="improvementModalContent">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div style="margin-top: 30px; text-align: center;">
+            <button onclick="closeImprovementModal()" class="btn-primary" style="background: linear-gradient(135deg, #6366f1, #a855f7); width: 100%; max-width: none; border-radius: 12px;">
+                Got it, thanks!
+            </button>
+        </div>
+    </div>
+</div>
 
 <?php endif; ?>
 

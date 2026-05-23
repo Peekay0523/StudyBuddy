@@ -9,9 +9,9 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 
 <style>
 .view-study-plan-page {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 40px;
 }
 
 .study-plan-header {
@@ -175,18 +175,18 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 /* Study Plan Card */
 .study-plan-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 35px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
 .study-plan-card h3 {
-    margin: 0 0 20px 0;
+    margin: 0 0 25px 0;
     color: #1e293b;
-    font-size: 18px;
+    font-size: 22px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 /* Study Plan Info List */
@@ -308,9 +308,9 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 }
 
 .accordion-body {
-    padding: 30px 40px 40px 40px;
+    padding: 35px 50px 50px 50px;
     background: #ffffff;
-    line-height: 1.6;
+    line-height: 1.8;
     color: #334155;
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -376,6 +376,62 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 .status-badge.completed {
     background: #d1fae5;
     color: #065f46;
+}
+
+/* WhatsApp Style FABs */
+.study-plan-fabs {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 16px;
+    z-index: 2000;
+}
+
+.fab-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 0;
+    margin: 0;
+    text-decoration: none !important;
+}
+
+.fab-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.fab-btn:active {
+    transform: scale(0.95);
+}
+
+#reciteBtn { background-color: #4f46e5 !important; }
+#stopReciteBtn { background-color: #ef4444 !important; }
+#calendarBtn { background-color: #10b981 !important; }
+#removeScheduleBtn { background-color: #ef4444 !important; }
+
+@media (max-width: 768px) {
+    .study-plan-fabs {
+        bottom: 20px;
+        right: 20px;
+        gap: 12px;
+    }
+    .fab-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
 }
 
 /* Action Buttons */
@@ -448,7 +504,7 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .view-study-plan-page {
-        padding: 15px;
+        padding: 15px 0;
     }
 
     .study-plan-title {
@@ -456,25 +512,30 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     }
 
     .study-plan-card {
-        padding: 20px;
+        padding: 25px 15px;
+        border-radius: 0;
     }
 
     /* Convert info to vertical list on mobile */
     .study-plan-info {
         flex-direction: column;
         gap: 10px;
+        padding: 12px 15px !important;
+        margin: 0 0 20px 0 !important;
+        border-radius: 0;
     }
 
     .study-plan-info li {
         width: 100%;
         justify-content: space-between;
-        padding: 12px 15px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        padding: 12px 0;
+        background: transparent !important;
+        border-bottom: 1px solid #f1f5f9 !important;
     }
 
     .study-plan-actions {
         flex-direction: column;
+        padding: 0 15px;
     }
 
     .study-plan-actions button,
@@ -484,7 +545,7 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
     }
 
     .accordion-body {
-        padding: 20px 20px 25px 20px;
+        padding: 25px 15px 30px 15px;
         font-size: 14px;
     }
 
@@ -552,23 +613,6 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
         </ul>
 
         <div class="study-plan-actions">
-            <button id="reciteBtn" onclick="reciteStudyPlan()" class="btn-primary">
-                <i class="fas fa-volume-up"></i> AI Recite Study Plan
-            </button>
-            <button id="stopReciteBtn" onclick="stopRecitation()" class="btn-secondary" style="display: none;">
-                <i class="fas fa-stop"></i> Stop Recitation
-            </button>
-            
-            <?php if (!$hasReminders): ?>
-                <button id="calendarBtn" onclick="showCalendarModal()" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                    <i class="fas fa-calendar-plus"></i> Add to Calendar
-                </button>
-            <?php else: ?>
-                <button id="removeScheduleBtn" onclick="removeSchedule()" class="btn-secondary" style="color: #ef4444; border-color: #ef4444;">
-                    <i class="fas fa-calendar-minus"></i> Remove from Calendar
-                </button>
-            <?php endif; ?>
-
             <?php if (!$isCompleted): ?>
                 <button onclick="markStudyPlanComplete()" class="btn-primary btn-success">
                     <i class="fas fa-check-circle"></i> Mark as Complete
@@ -577,6 +621,26 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
                 <span class="status-badge completed" style="padding: 12px 20px;">
                     <i class="fas fa-check-circle"></i> Completed
                 </span>
+            <?php endif; ?>
+        </div>
+
+        <!-- WhatsApp Style FABs -->
+        <div class="study-plan-fabs">
+            <button id="reciteBtn" onclick="reciteStudyPlan()" class="fab-btn" title="AI Recite Study Plan">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button id="stopReciteBtn" onclick="stopRecitation()" class="fab-btn" style="display: none;" title="Stop Recitation">
+                <i class="fas fa-stop"></i>
+            </button>
+            
+            <?php if (!$hasReminders): ?>
+                <button id="calendarBtn" onclick="showCalendarModal()" class="fab-btn" title="Add to Calendar">
+                    <i class="fas fa-calendar-plus"></i>
+                </button>
+            <?php else: ?>
+                <button id="removeScheduleBtn" onclick="removeSchedule()" class="fab-btn" title="Remove from Calendar">
+                    <i class="fas fa-calendar-minus"></i>
+                </button>
             <?php endif; ?>
         </div>
 
@@ -979,7 +1043,7 @@ async function reciteStudyPlan() {
     
     btn.classList.remove("btn-primary");
     btn.classList.add("btn-danger");
-    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Recitation';
+    btn.innerHTML = '<i class="fas fa-stop"></i>';
     stopBtn.style.display = 'inline-block';
 }
 
@@ -996,7 +1060,7 @@ function stopRecitation() {
     const stopBtn = document.getElementById("stopReciteBtn");
     btn.classList.remove("btn-danger");
     btn.classList.add("btn-primary");
-    btn.innerHTML = '<i class="fas fa-volume-up"></i> AI Recite Study Plan';
+    btn.innerHTML = '<i class="fas fa-volume-up"></i>';
     stopBtn.style.display = 'none';
 }
 
