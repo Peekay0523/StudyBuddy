@@ -7,6 +7,19 @@ $extraHead = '
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <link rel="stylesheet" href="/css/calculators-core.css">
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [[\'$\', \'$\'], [\'\\\\(\', \'\\\\)\']],
+                displayMath: [[\'$$\', \'$$\'], [\'\\\\[\', \'\\\\]\']]
+            },
+            svg: { fontCache: \'global\' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <style>
         @media (max-width: 768px) {
             .container { padding-left: 10px; padding-right: 10px; }
@@ -274,9 +287,13 @@ include __DIR__ . '/../layouts/header.php';
         </section>
     </div>
 
+<?php include __DIR__ . '/../components/math_calculator.php'; ?>
+
 <?php
 $extraScripts = '
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/calculators-core.js"></script>
+    <script src="/js/math-calculator.js"></script>
     <script src="/js/geometry.js"></script>
     <script src="/js/trig_lab.js"></script>
     <script src="/js/algebra_lab.js"></script>

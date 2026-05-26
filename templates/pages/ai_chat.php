@@ -1,6 +1,108 @@
 <?php
 $pageTitle = 'AI Chat - StudySmart';
 $currentPage = 'ai-chat';
+
+$extraHead = <<<'EOT'
+<!-- MathJax Configuration -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    enableMenu: false
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+    /* Hide layout elements when keyboard is active */
+    body.keyboard-active .sidebar,
+    body.keyboard-active .top-nav,
+    body.keyboard-active .robot-section,
+    body.keyboard-active .title,
+    body.keyboard-active .subtitle,
+    body.keyboard-active .mobile-bottom-nav {
+        display: none !important;
+    }
+    body.keyboard-active {
+        padding-bottom: 0 !important;
+    }
+    body.keyboard-active .content {
+        padding-top: 10px !important;
+        margin-left: 0 !important;
+    }
+    body.keyboard-active #chat-container {
+        height: calc(100vh - 120px) !important;
+        max-height: calc(100vh - 120px) !important;
+    }
+    .chat-input-form {
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+    #message-input {
+        flex: 1;
+        min-width: 0;
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    .chat-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        background: white;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .voice-mode-control {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid #f1f5f9;
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+    }
+    .voice-mode-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    @media (max-width: 480px) {
+        .chat-controls {
+            padding: 8px 12px;
+            gap: 15px;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+        .voice-mode-control {
+            min-width: 0;
+            padding: 6px 10px;
+            width: auto;
+            flex: 1;
+            justify-content: center;
+        }
+        body.keyboard-active #chat-container {
+            height: calc(100vh - 120px) !important;
+            max-height: calc(100vh - 120px) !important;
+        }
+    }
+</style>
+EOT;
 ?>
 <script>
 window.canUseVoiceModeConfig = <?php echo $canUseVoiceMode ? 'true' : 'false'; ?>;
@@ -49,6 +151,49 @@ document.addEventListener("DOMContentLoaded", function() {
     voiceModeToggle = document.getElementById("voice-mode-toggle");
     micButton = document.getElementById("mic-btn");
     micIcon = document.getElementById("mic-icon");
+
+    // Keyboard detection for mobile
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            const isKeyboardVisible = window.visualViewport.height < window.innerHeight * 0.85;
+            if (isKeyboardVisible) {
+                document.body.classList.add('keyboard-active');
+            } else {
+                document.body.classList.remove('keyboard-active');
+            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+    }
+
+    // Focus/Blur listeners for input
+    if (messageInput) {
+        messageInput.addEventListener('focus', () => {
+            document.body.classList.add('keyboard-active');
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 300);
+        });
+
+        messageInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (!window.visualViewport || window.visualViewport.height >= window.innerHeight * 0.85) {
+                    document.body.classList.remove('keyboard-active');
+                }
+            }, 100);
+        });
+    }
+
+    // Initial render for any existing math
+    if (window.renderMathInElement) {
+        renderMathInElement(messagesContainer, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false},
+                {left: "\\(", right: "\\)", display: false},
+                {left: "\\[", right: "\\]", display: true}
+            ]
+        });
+    }
 
     console.log("chatForm:", chatForm);
     console.log("messageInput:", messageInput);
@@ -460,6 +605,12 @@ function addMessage(text, type) {
     
     messagesContainer.appendChild(div);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Render Math in the new message using MathJax
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([div]).catch((err) => console.log('MathJax error:', err));
+    }
+
     return div.id;
 }
 
@@ -471,8 +622,13 @@ function renderMarkdown(text) {
                .replace(/</g, '&lt;')
                .replace(/>/g, '&gt;');
     
-    // Code blocks
-    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    // Code blocks with mathlab support
+    html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, function(match, type, content) {
+        if (type === 'mathlab') {
+            return '<div class="math-lab-box"><div class="math-lab-title"><i class="fas fa-microscope"></i> MATHEMATICS LABORATORY</div>' + content + '</div>';
+        }
+        return '<pre><code class="' + (type || '') + '">' + content + '</code></pre>';
+    });
     
     // Inline code
     html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
@@ -550,8 +706,26 @@ function stopListening() {
 function preprocessMathForSpeech(text) {
     let processed = text;
     
+    // Remove LaTeX delimiters
+    processed = processed.replace(/\$\$/g, "");
+    processed = processed.replace(/\$/g, "");
+
+    // Handle common LaTeX commands
+    processed = processed.replace(/\\frac\{(.+?)\}\{(.+?)\}/g, "$1 divided by $2");
+    processed = processed.replace(/\\sqrt\{(.+?)\}/g, "square root of $1");
+    processed = processed.replace(/\\int/g, "integral of ");
+    processed = processed.replace(/\\sum/g, "sum of ");
+    processed = processed.replace(/\\sin/g, "sine ");
+    processed = processed.replace(/\\cos/g, "cosine ");
+    processed = processed.replace(/\\tan/g, "tangent ");
+    processed = processed.replace(/\\pi/g, " pi ");
+    processed = processed.replace(/\\theta/g, " theta ");
+    processed = processed.replace(/\\alpha/g, " alpha ");
+    processed = processed.replace(/\\beta/g, " beta ");
+    processed = processed.replace(/\\infty/g, " infinity ");
+    processed = processed.replace(/\\Delta/g, " delta ");
+    
     // Remove bullet point dashes first (before processing math symbols)
-    // This handles: "   - Understanding" or "- Understanding"
     processed = processed.replace(/^\s*-\s+/gm, " ");
 
     // Replace division symbols
@@ -563,61 +737,21 @@ function preprocessMathForSpeech(text) {
     processed = processed.replace(/\s*\*\s*/g, " times ");
     processed = processed.replace(/\s*·\s*/g, " times ");
     
-    // Replace addition and subtraction (only when surrounded by numbers/variables, not bullet points)
+    // Replace addition and subtraction
     processed = processed.replace(/(\d)\s*\+\s*(\d)/g, "$1 plus $2");
     processed = processed.replace(/(\d)\s*-\s*(\d)/g, "$1 minus $2");
-    processed = processed.replace(/([a-zA-Z])\s*\+\s*([a-zA-Z])/g, "$1 plus $2");
-    processed = processed.replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, "$1 minus $2");
     
     // Replace equals
     processed = processed.replace(/\s*=\s*/g, " equals ");
     
-    // Replace inequality symbols
-    processed = processed.replace(/\s*≤\s*/g, " less than or equal to ");
-    processed = processed.replace(/\s*≥\s*/g, " greater than or equal to ");
-    processed = processed.replace(/\s*≠\s*/g, " not equal to ");
-    
-    // Remove parentheses silently (don't announce them for regular text)
-    processed = processed.split("(").join("");
-    processed = processed.split(")").join("");
-
-    // Remove square brackets silently
-    processed = processed.split("[").join("");
-    processed = processed.split("]").join("");
-    
     // Replace exponents
     processed = processed.replace(/\^(\d+)/g, " to the power of $1 ");
+    processed = processed.replace(/\^\{(.+?)\}/g, " to the power of $1 ");
     
-    // Replace square root
-    processed = processed.replace(/√/g, " square root of ");
-    
-    // Replace pi
-    processed = processed.replace(/π/g, " pi ");
-    
-    // Replace percentage
-    processed = processed.replace(/%/g, " percent ");
-    
-    // Replace degree symbol
-    processed = processed.replace(/°/g, " degrees ");
-    
-    // Replace angle symbol
-    processed = processed.replace(/∠/g, " angle ");
-    
-    // Replace therefore symbol
-    processed = processed.replace(/∴/g, " therefore ");
-    
-    // Replace because symbol
-    processed = processed.replace(/∵/g, " because ");
-    
-    // Replace infinity
-    processed = processed.replace(/∞/g, " infinity ");
-    
-    // Replace less than and greater than (only in math context with numbers)
-    processed = processed.replace(/(\d)\s*</g, "$1 less than ");
-    processed = processed.replace(/>/g, " greater than ");
-    
-    // Replace "m =" with "m equals" for gradient context
-    processed = processed.replace(/\b([a-zA-Z])\s*=\s*/g, "$1 equals ");
+    // Clean up remaining LaTeX backslashes and braces
+    processed = processed.replace(/\\/g, "");
+    processed = processed.replace(/\{/g, " ");
+    processed = processed.replace(/\}/g, " ");
     
     // Clean up multiple spaces
     processed = processed.replace(/\s+/g, " ").trim();
@@ -762,6 +896,11 @@ function prepareMessageForSentences(messageEl, originalText) {
     }
 
     messageEl.innerHTML = html;
+
+    // Re-render math in the spans using MathJax
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([messageEl]).catch((err) => console.log('MathJax error:', err));
+    }
 }
 
 function clearHighlights() {
@@ -1209,6 +1348,59 @@ include __DIR__ . '/../layouts/header.php';
     background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #667eea;
 }
 
+/* Mathematics Laboratory Result Box - Styled to match data-sheets */
+.math-lab-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    position: relative;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+.math-lab-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #10a37f;
+    border-radius: 14px 14px 0 0;
+}
+.math-lab-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+.math-lab-title i {
+    color: #10a37f;
+    font-size: 1rem;
+}
+.math-lab-box p {
+    margin: 10px 0;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+.math-lab-box .mjx-container {
+    margin: 15px 0 !important;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #f1f5f9;
+    display: block !important;
+}
+
 /* Full viewport height layout */
 #chat-container {
     display: flex;
@@ -1416,17 +1608,12 @@ include __DIR__ . '/../layouts/header.php';
         <?php if ($canUseVoiceMode): ?>
         <div class="voice-mode-control">
             <label for="voice-mode-toggle" class="voice-mode-label">
-                <i class="fas fa-robot"></i> Voice Mode
+                <i class="fas fa-robot"></i> <span>Voice Mode</span>
             </label>
             <label class="toggle-switch">
                 <input type="checkbox" id="voice-mode-toggle">
                 <span class="toggle-slider"></span>
             </label>
-        </div>
-        
-        <?php else: ?>
-        <div class="voice-mode-control" style="flex: 1; text-align: center; color: #f59e0b; font-size: 13px;">
-            <i class="fas fa-lock"></i> Voice Mode available in Basic and Premium plans
         </div>
         <?php endif; ?>
     </div>

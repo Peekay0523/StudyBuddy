@@ -6,6 +6,18 @@ $currentPage = 'chemistry';
 $extraHead = '
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <link rel="stylesheet" href="/css/calculators-core.css">
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [[\'$\', \'$\'], [\'\\\\(\', \'\\\\)\']],
+                displayMath: [[\'$$\', \'$$\'], [\'\\\\[\', \'\\\\]\']]
+            },
+            svg: { fontCache: \'global\' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         .animate-fade { animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -389,10 +401,14 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
+<?php include __DIR__ . '/../components/chemistry_calculator.php'; ?>
+
 <?php
 $extraScripts = '
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/js/calculators-core.js"></script>
+    <script src="/js/chemistry-calculator.js"></script>
     <script src="/js/chemistry.js"></script>
     <script src="/js/organic_chem.js"></script>
     <script src="/js/reactions.js"></script>

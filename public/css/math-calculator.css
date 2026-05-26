@@ -1,0 +1,191 @@
+/* Math Calculator Styles */
+.math-calc-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.math-calc-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6C63FF, #4B45E5);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.math-calc-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.math-calc-panel {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 550px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.math-calc-panel.active {
+    display: flex;
+}
+
+.math-calc-header {
+    padding: 15px;
+    background: rgba(108, 99, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.math-calc-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.math-calc-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.math-calc-display {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    min-height: 100px;
+    max-height: 150px;
+    overflow-y: auto;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+#math-preview {
+    width: 100%;
+    min-height: 40px;
+    text-align: right;
+    word-wrap: break-word;
+}
+
+#math-result {
+    font-weight: bold;
+    color: #6C63FF;
+    margin-top: 10px;
+    font-size: 1.4rem;
+}
+
+.math-calc-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.03);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.math-calc-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.math-tab-btn {
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    color: #666;
+    border-bottom: 2px solid transparent;
+}
+
+.math-tab-btn.active {
+    color: #6C63FF;
+    border-bottom: 2px solid #6C63FF;
+    background: rgba(108, 99, 255, 0.05);
+}
+
+.math-calc-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.math-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.math-btn {
+    padding: 10px 5px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.math-btn:hover {
+    background: #f8f9fa;
+    border-color: #6C63FF;
+}
+
+.math-btn.operator {
+    background: rgba(108, 99, 255, 0.05);
+    color: #6C63FF;
+    font-weight: bold;
+}
+
+.math-btn.action {
+    background: #6C63FF;
+    color: white;
+    grid-column: span 2;
+}
+
+.math-tab-content {
+    display: none;
+}
+
+.math-tab-content.active {
+    display: block;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .math-calc-panel {
+        width: calc(100% - 40px);
+        height: 80vh;
+        bottom: 80px;
+        right: 20px;
+    }
+}

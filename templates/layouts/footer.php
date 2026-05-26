@@ -1,8 +1,14 @@
     </main>
 </div>
 
-<?php if (isLoggedIn()): ?>
+<?php 
+if (isLoggedIn()): 
+    // Do not show bottom nav on simulation pages
+    $simulationPages = ['math', 'chemistry', 'physics'];
+    $showBottomNav = !in_array($currentPage ?? '', $simulationPages);
+?>
 <!-- Modern Mobile Bottom Navigation -->
+<?php if ($showBottomNav): ?>
 <nav class="mobile-bottom-nav">
     <div class="mobile-bottom-nav-inner">
         <a href="/ai-chat" class="nav-item <?php echo ($currentPage ?? '') === 'ai-chat' ? 'active' : ''; ?>">
@@ -28,6 +34,7 @@
         </a>
     </div>
 </nav>
+<?php endif; ?>
 
 <?php include __DIR__ . '/calculator_modal.php'; ?>
 
@@ -144,7 +151,7 @@
 
 /* Page padding to prevent overlap */
 body {
-    padding-bottom: 100px !important;
+    padding-bottom: <?php echo ($showBottomNav ?? true) ? '100px' : '0'; ?> !important;
 }
 
 @media (max-width: 480px) {

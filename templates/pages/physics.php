@@ -6,6 +6,19 @@ $currentPage = 'physics';
 $extraHead = '
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <link rel="stylesheet" href="/css/calculators-core.css">
+    <link rel="stylesheet" href="/css/physics-calculator.css">
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [[\'$\', \'$\'], [\'\\\\(\', \'\\\\)\']],
+                displayMath: [[\'$$\', \'$$\'], [\'\\\\[\', \'\\\\]\']]
+            },
+            svg: { fontCache: \'global\' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; border-radius: 50%; width: 40px; height: 40px; padding: 0; line-height: 40px; background: rgba(255,255,255,0.8); border: 1px solid #ddd; transition: all 0.2s; }
         .nav-btn:hover { background: #007bff; color: white; border-color: #007bff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -178,9 +191,13 @@ include __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
+<?php include __DIR__ . '/../components/physics_calculator.php'; ?>
+
 <?php
 $extraScripts = '
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/calculators-core.js"></script>
+    <script src="/js/physics-calculator.js"></script>
     <script src="/js/physics_lab.js"></script>
 ';
 
