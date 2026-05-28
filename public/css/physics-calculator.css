@@ -104,15 +104,20 @@
     justify-content: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     touch-action: manipulation;
+    pointer-events: auto !important;
+    user-select: none;
+    position: relative;
+    z-index: 1;
 }
 
 .var-select-btn:hover {
     background: #fff3e0;
     border-color: #FF9E00;
+    box-shadow: 0 4px 8px rgba(255, 158, 0, 0.15);
 }
 
 .var-select-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
     background: #ffe0b2 !important;
 }
 
@@ -128,6 +133,7 @@
     grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 16px;
+    pointer-events: auto;
 }
 
 .calc-input-group {
@@ -160,6 +166,7 @@
     transition: all 0.2s;
     background: #fff;
     font-family: inherit;
+    pointer-events: auto;
 }
 
 .calc-var-input:focus {
@@ -181,6 +188,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    pointer-events: auto;
 }
 
 .calc-submit-btn {
@@ -197,11 +205,18 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    user-select: none;
 }
 
 .calc-submit-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(255, 109, 0, 0.3);
+}
+
+.calc-submit-btn:active {
+    transform: scale(0.95);
 }
 
 .calc-reset-btn {
@@ -213,11 +228,18 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    user-select: none;
 }
 
 .calc-reset-btn:hover {
     background: #eeeeee;
     color: #333;
+}
+
+.calc-reset-btn:active {
+    transform: scale(0.95);
 }
 
 /* Tab buttons for Physics */

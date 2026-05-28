@@ -42,33 +42,30 @@ class PhysicsCalculator extends BaseCalculator {
         };
     }
 
-    insert(latex, value) {
-        // Detect if a formula was inserted (contains an equals sign)
+    insert(latex, value, formulaId = null) {
+        // Detect if a complete formula was inserted
         const isAssignment = latex.includes('=');
         
         // Clean LaTeX for variable extraction
         const cleaned = latex.replace(/\\(cdot|frac|times|sqrt|pm|mp|left|right|text|mathbf|s)/g, ' ');
         const varsRegex = /(?:\\Delta\s*[a-zA-Z]|\\lambda|\\theta|\\phi|\\sigma|\\omega|\\epsilon|F_e|E_k|E_p|W_0|f_0|q_1|q_2|[a-zA-Z])(?:_{?[\d\w]*}?)?/g;
         const vars = cleaned.match(varsRegex) || [];
+        const uniqueVars = [...new Set(vars)].filter(v => !/^[0-9]+$/.test(v));
         
-        // Filter unique variables, ignoring common non-variable symbols or numbers
-        const uniqueVars = [...new Set(vars)].filter(v => {
-            if (/^[0-9]+$/.test(v)) return false; // Ignore pure numbers
-            return true;
-        });
-        
-        // Check if it's a simple constant assignment like g = 9.8
+        // Improved constant detection
         const isConstant = /^[a-zA-Z\\]+\s*=\s*[0-9.e\^x\-\+\s\\]+$/.test(latex);
 
-        // If it's a formula assignment, prompt for variables
-        if (isAssignment && uniqueVars.length > 0 && !isConstant) {
-            // ALWAYS clear and start fresh for a new formula assignment
+        // If it's a formula assignment (Ep = mgh) or has a formulaId, reset and start fresh
+        if (formulaId || (isAssignment && uniqueVars.length > 0 && !isConstant)) {
+            console.log(`[Physics Calc] New formula selected: ${latex} (ID: ${formulaId})`);
+            this.reset(); // Full reset to prevent leakage
             this.expression = latex;
             this.rawExpression = latex;
+            this.activeFormulaId = formulaId;
             this.updateDisplay();
             this.promptForVariables(latex, uniqueVars);
         } else {
-            // Normal insertion (numbers, symbols, etc)
+            // Numbers, symbols, constants (like g=9.8) or partial insertions
             super.insert(latex, value);
         }
     }
@@ -76,18 +73,18 @@ class PhysicsCalculator extends BaseCalculator {
     async promptForVariables(formula, uniqueVars) {
         if (!this.result) return;
 
-        this.result.style.textAlign = 'left'; // Overwrite default right alignment for the form
+        this.result.style.textAlign = 'left'; 
         this.result.innerHTML = `
-            <div class="calc-step-container">
+            <div class="calc-step-container" data-formula="${formula}">
                 <div class="calc-formula-header" style="text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
                     <span style="font-size: 0.75rem; color: #999; text-transform: uppercase;">Active Formula</span>
-                    <div style="font-size: 1.2rem; color: #333; margin-top: 5px;">\\[ ${formula} \\]</div>
+                    <div class="active-formula-display" style="font-size: 1.2rem; color: #333; margin-top: 5px;">\\[ ${formula} \\]</div>
                 </div>
                 <span class="calc-step-title">Select Target Variable</span>
                 <p style="font-size: 0.85rem; margin-bottom: 12px; color: #555;">Which value do you want to calculate for?</p>
                 <div class="calc-var-selector">
                     ${uniqueVars.map(v => `
-                        <button class="var-select-btn" data-var="${v}">
+                        <button type="button" class="var-select-btn" data-var="${v}" style="touch-action: manipulation;">
                             $${v}$
                         </button>
                     `).join('')}
@@ -95,45 +92,50 @@ class PhysicsCalculator extends BaseCalculator {
             </div>
         `;
 
-        if (window.MathJax) {
-            this.queueTypeset(this.result);
+        this.queueTypeset(this.result);
+    }
+
+    handleSciButton(btn) {
+        if (btn.dataset.formulaId) {
+            // Formula button clicked - handle specialized insertion
+            this.insert(btn.dataset.latex, btn.dataset.value, btn.dataset.formulaId);
+        } else {
+            // Standard button (AC, DEL, Solve, or partial latex)
+            super.handleSciButton(btn);
         }
     }
 
-    // Delegated event handler for Physics-specific buttons
     handleExtraButtons(btn) {
         if (btn.classList.contains('var-select-btn')) {
             const targetVar = btn.dataset.var;
-            // Get current formula from the active header
-            const formulaDiv = this.result.querySelector('.calc-formula-header div');
-            // Fix: Corrected malformed regex to properly match MathJax delimiters \[ and \]
-            const formula = formulaDiv ? formulaDiv.textContent.replace(/\\\[|\\\]/g, '').trim() : this.expression;
-            
-            // Get unique vars from buttons
+            // ALWAYS use this.expression as the source of truth
+            const formula = this.expression;
             const vars = Array.from(this.result.querySelectorAll('.var-select-btn')).map(b => b.dataset.var);
             
+            console.log(`[Physics Calc] Variable selected: ${targetVar} for formula: ${formula}`);
             this.showInputForm(formula, vars, targetVar);
         } else if (btn.classList.contains('calc-reset-btn')) {
-            this.clear();
+            this.reset();
         } else if (btn.classList.contains('calc-submit-btn')) {
             this.validateAndSolve();
         }
     }
 
     validateAndSolve() {
-        const formulaDiv = this.result.querySelector('.calc-formula-header');
-        // If we are in the form view, find the target var from the submit button text or state
         const submitBtn = this.result.querySelector('.calc-submit-btn');
         if (!submitBtn) return;
 
-        const targetVarMatch = submitBtn.textContent.match(/Solve for \$(.*)\$/);
-        const targetVar = targetVarMatch ? targetVarMatch[1] : '';
+        const targetVar = submitBtn.dataset.target || '';
+        if (!targetVar) {
+            console.error('[Physics Calc] No target variable found');
+            return;
+        }
         
-        // Get formula from the step container or display
-        const formula = this.expression; // Default back to expression
-
+        // Ensure formula is correct
+        const formula = this.expression; 
         const values = {};
         let allFilled = true;
+
         this.result.querySelectorAll('.calc-var-input').forEach(input => {
             const val = input.value.trim();
             if (val === '' || isNaN(parseFloat(val))) {
@@ -147,7 +149,8 @@ class PhysicsCalculator extends BaseCalculator {
             }
         });
 
-        if (allFilled && targetVar) {
+        if (allFilled) {
+            console.log(`[Physics Calc] Solving for ${targetVar} in ${formula}`);
             this.performAIsolve(formula, values, targetVar);
         }
     }
@@ -157,6 +160,10 @@ class PhysicsCalculator extends BaseCalculator {
         
         this.result.innerHTML = `
             <div class="calc-step-container">
+                <div class="calc-formula-header" style="text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+                    <span style="font-size: 0.75rem; color: #999; text-transform: uppercase;">Solving For $${targetVar}$</span>
+                    <div class="active-formula-display" style="font-size: 1.1rem; color: #666; margin-top: 5px;">\\[ ${formula} \\]</div>
+                </div>
                 <span class="calc-step-title">Enter Known Values</span>
                 <div class="calc-input-grid">
                     ${otherVars.map(v => {
@@ -173,15 +180,13 @@ class PhysicsCalculator extends BaseCalculator {
                     }).join('')}
                 </div>
                 <div class="calc-form-actions">
-                    <button class="calc-reset-btn"><i class="fas fa-undo"></i> Reset</button>
-                    <button class="calc-submit-btn">Solve for $${targetVar}$</button>
+                    <button type="button" class="calc-reset-btn" style="touch-action: manipulation;"><i class="fas fa-undo"></i> Reset</button>
+                    <button type="button" class="calc-submit-btn" data-target="${targetVar}" style="touch-action: manipulation;">Solve for $${targetVar}$</button>
                 </div>
             </div>
         `;
 
-        if (window.MathJax) {
-            this.queueTypeset(this.result);
-        }
+        this.queueTypeset(this.result);
     }
 
     async performAIsolve(formula, values, targetVar) {
@@ -265,29 +270,6 @@ class PhysicsCalculator extends BaseCalculator {
                 this.result.style.textAlign = 'right';
             }
         }
-    }
-
-    updateDisplay() {
-        if (this.preview) {
-            // If empty, just clear it completely
-            if (!this.expression) {
-                this.preview.innerHTML = '';
-                return;
-            }
-            this.preview.innerHTML = `\\[ ${this.expression} \\]`;
-            this.queueTypeset(this.preview);
-        }
-    }
-
-    clear() {
-        super.clear();
-        if (this.result) {
-            this.result.style.textAlign = 'right';
-            this.result.innerHTML = '';
-        }
-        if (this.preview) this.preview.innerHTML = '';
-        this.expression = '';
-        this.rawExpression = '';
     }
 }
 

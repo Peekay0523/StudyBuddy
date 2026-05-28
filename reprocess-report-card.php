@@ -155,7 +155,8 @@ $newId = $careerRecModel->create(
     $recommendations['areas_for_improvement'] ?? [],
     json_encode($recommendations['courses'] ?? []),
     json_encode($recommendations['bursaries'] ?? []),
-    $recommendations['aps'] ?? 0
+    $recommendations['aps'] ?? 0,
+    $recommendations['institutions'] ?? []
 );
 
 echo "<p style='color: green; font-size: 18px;'><strong>✓ Career recommendations saved successfully!</strong></p>";

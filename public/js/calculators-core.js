@@ -18,20 +18,29 @@ class BaseCalculator {
         this.result = this.panel.querySelector('.calc-result-area');
         this.loading = this.panel.querySelector('.calc-loading-overlay');
         
+        this.reset();
+        this.initBase();
+    }
+
+    reset() {
         this.expression = '';
         this.rawExpression = '';
-        
-        this.initBase();
+        this.isTypesetting = false;
+        this.typesetQueue = [];
+        if (this.preview) this.preview.innerHTML = '';
+        if (this.result) {
+            this.result.innerHTML = '';
+            this.result.style.textAlign = 'right';
+        }
+        if (this.loading) this.loading.style.display = 'none';
+        console.log(`[${this.subject} Calc] State reset.`);
     }
 
     initBase() {
         if (!this.panel) return;
         this.initDraggable();
-        // initTabs is now merged into initDelegatedEvents for robustness
         this.initClickOutside();
         this.initDelegatedEvents(); 
-        this.isTypesetting = false;
-        this.typesetQueue = [];
     }
 
     initDraggable() {
@@ -100,31 +109,66 @@ class BaseCalculator {
     initDelegatedEvents() {
         if (!this.panel) return;
 
-        // Use a single delegated listener for ALL panel interactions
-        this.panel.addEventListener('click', (e) => {
+        // Optimized event handler for instant responsiveness
+        const handleInteraction = (e) => {
+            // Check if it's a real user interaction
+            if (e.type === 'pointerdown' && e.button !== 0) return; // Only left click/primary touch
+
             // 1. Find the target button or interactive element
             const interactiveEl = e.target.closest('.sci-btn, .var-select-btn, .calc-submit-btn, .calc-reset-btn, .calc-close-btn, .calc-tab-trigger');
-            if (!interactiveEl) return;
+            
+            if (!interactiveEl) {
+                console.debug(`[${this.subject} Calc] Click ignored on:`, e.target);
+                return;
+            }
 
-            // Prevent default for all calculator buttons to avoid any unwanted form behavior
+            console.log(`[${this.subject} Calc] ${e.type} captured on:`, interactiveEl.className || interactiveEl.tagName);
+
+            // Prevent default for all calculator buttons to avoid any unwanted form behavior or double-firing
             e.preventDefault();
             e.stopPropagation();
 
+            // Visual feedback for non-CSS handled states
+            interactiveEl.style.opacity = '0.7';
+            setTimeout(() => interactiveEl.style.opacity = '', 100);
+
             // 2. Route the interaction
-            if (interactiveEl.classList.contains('calc-tab-trigger')) {
-                this.handleTabSwitch(interactiveEl);
-            } else if (interactiveEl.classList.contains('sci-btn')) {
-                this.handleSciButton(interactiveEl);
-            } else if (interactiveEl.classList.contains('calc-close-btn')) {
-                this.close();
-            } else {
-                // Let subclasses handle their specific buttons (var-select, submit, etc)
-                this.handleExtraButtons(interactiveEl);
+            try {
+                if (interactiveEl.classList.contains('calc-tab-trigger')) {
+                    this.handleTabSwitch(interactiveEl);
+                } else if (interactiveEl.classList.contains('sci-btn')) {
+                    this.handleSciButton(interactiveEl);
+                } else if (interactiveEl.classList.contains('calc-close-btn')) {
+                    this.close();
+                } else {
+                    // Let subclasses handle their specific buttons (var-select, submit, etc)
+                    this.handleExtraButtons(interactiveEl);
+                }
+            } catch (err) {
+                console.error(`[${this.subject} Calc] Error handling interaction:`, err);
             }
-        });
+        };
+
+        // Use pointerdown for immediate response, falling back to click for accessibility
+        // Use a flag to prevent double-firing on some environments
+        let lastEventTime = 0;
+        const throttledHandler = (e) => {
+            const now = Date.now();
+            if (now - lastEventTime < 50) return; // Throttle very fast repeated events
+            lastEventTime = now;
+            handleInteraction(e);
+        };
+
+        // Remove existing listener to prevent double-binding if init is called multiple times
+        this.panel.removeEventListener('click', throttledHandler);
+        this.panel.removeEventListener('pointerdown', throttledHandler);
+
+        this.panel.addEventListener('click', throttledHandler);
+        this.panel.addEventListener('pointerdown', throttledHandler);
         
-        // Touch-action optimization
+        // Touch-action optimization to remove click delay
         this.panel.style.touchAction = 'manipulation';
+        this.panel.style.pointerEvents = 'auto';
     }
 
     handleTabSwitch(tab) {
@@ -384,13 +428,7 @@ class BaseCalculator {
     }
 
     clear() {
-        this.expression = '';
-        this.rawExpression = '';
-        if (this.preview) this.preview.innerHTML = '';
-        if (this.result) {
-            this.result.innerHTML = '';
-            this.result.style.textAlign = 'right';
-        }
+        this.reset();
     }
 
     backspace() {

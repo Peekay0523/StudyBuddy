@@ -90,6 +90,55 @@ $extraHead = <<<EOT
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
+
+/* Global Responsive Base */
+* {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    max-width: 100vw;
+}
+
+.career-recommendations-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-bottom: 120px; /* Extra space for bottom nav */
+    margin: 0 auto;
+}
+
+.title {
+    font-size: 1.8rem;
+    word-wrap: break-word;
+    margin-top: 20px;
+    padding: 0 15px;
+}
+
+.subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 25px;
+    padding: 0 15px;
+}
+
+@media (max-width: 640px) {
+    .title {
+        font-size: 1.5rem;
+    }
+    .subtitle {
+        font-size: 0.9rem;
+    }
+    .btn-back {
+        width: 100%;
+        text-align: center;
+    }
+}
 .loading-overlay.active {
     opacity: 1;
     visibility: visible;
@@ -133,6 +182,52 @@ $extraHead = <<<EOT
     gap: 10px !important;
 }
 
+.aps-badge-inline {
+    font-size: 0.75rem;
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    border: 1px solid #e5e7eb;
+}
+
+.institution-type {
+    margin-bottom: 12px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.inst-reason {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 3.4em;
+}
+
+.likelihood-indicator {
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    border: none !important;
+    font-weight: 800 !important;
+    padding: 8px !important;
+}
+
+.inst-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+    margin-top: auto;
+}
+
 /* Prediction Badge Styles */
 .prob-badge {
     display: inline-flex;
@@ -170,6 +265,138 @@ $extraHead = <<<EOT
     box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
 
+/* Institution Card Button Overrides */
+.institution-card a,
+.institution-card button {
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-height: 40px;
+}
+
+/* Mobile Specific Dashboard Layout */
+@media (max-width: 768px) {
+    .institutions-grid {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 5px !important;
+        box-sizing: border-box !important;
+    }
+
+    .institution-card {
+        flex: 1 1 calc(50% - 10px) !important;
+        max-width: calc(50% - 5px) !important;
+        min-width: 0 !important;
+        padding: 12px 10px !important;
+        border-radius: 16px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+    }
+
+    .inst-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+
+    .inst-actions .btn-visit,
+    .inst-actions .btn-improve {
+        flex: 1 1 calc(50% - 3px) !important;
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 8px 4px !important;
+        font-size: 0.7rem !important;
+        min-height: 38px !important;
+        line-height: 1.1 !important;
+        text-align: center !important;
+    }
+
+    .inst-actions .btn-applied {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        padding: 8px 4px !important;
+        font-size: 0.75rem !important;
+        margin-top: 0 !important;
+        min-height: 38px !important;
+    }
+
+    .institution-card h4 {
+        font-size: 0.85rem !important;
+        margin-bottom: 5px !important;
+        min-height: 2.8em !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .aps-badge-inline {
+        font-size: 0.65rem !important;
+        padding: 1px 6px !important;
+        margin-top: 4px !important;
+        margin-left: 0 !important;
+    }
+
+    .institution-type {
+        font-size: 0.65rem !important;
+        margin-bottom: 6px !important;
+    }
+
+    .inst-reason {
+        font-size: 0.75rem !important;
+        margin-bottom: 8px !important;
+        -webkit-line-clamp: 2 !important;
+        min-height: 2.5em !important;
+        line-height: 1.3 !important;
+    }
+
+    .likelihood-indicator {
+        font-size: 0.7rem !important;
+        padding: 4px 6px !important;
+        margin-bottom: 8px !important;
+        width: 100% !important;
+    }
+
+    .institution-card a,
+    .institution-card button {
+        padding: 6px 4px !important;
+        font-size: 0.75rem !important;
+        min-height: 36px !important;
+        border-radius: 10px !important;
+    }
+    
+    .btn-improve {
+        margin-top: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .institution-card {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+}
+
 /* Glassmorphism Modal Styles */
 .glass-modal {
     display: none;
@@ -194,20 +421,27 @@ $extraHead = <<<EOT
 }
 
 .glass-modal-content {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 24px;
-    width: 90%;
+    width: 95%;
     max-width: 550px;
-    max-height: 85vh;
+    max-height: 90vh;
     overflow-y: auto;
-    padding: 30px;
+    padding: 24px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.4);
     transform: scale(0.9);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
+}
+
+@media (max-width: 640px) {
+    .glass-modal-content {
+        padding: 20px 16px;
+        border-radius: 20px;
+    }
 }
 
 .glass-modal.active .glass-modal-content {
@@ -533,7 +767,7 @@ include __DIR__ . '/../layouts/header.php';
 <h1 class="title">Career Recommendations</h1>
 <p class="subtitle">AI-powered career guidance based on your academic performance</p>
 
-<a href="/dashboard" class="btn-primary" style="text-decoration: none; display: inline-block; margin-bottom: 20px;">
+<a href="/dashboard" class="btn-primary btn-back" style="text-decoration: none; display: inline-block; margin-bottom: 20px;">
     <i class="fas fa-arrow-left"></i> Back to Dashboard
 </a>
 
@@ -683,19 +917,41 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                 }
                 ?>
                 <div class="courses-grid">
-                    <?php foreach (array_slice($careerRec['courses'], 0, 5) as $course): ?>
+                    <?php foreach ($careerRec['courses'] as $course): ?>
                         <div class="course-card">
                             <div class="course-top">
                                 <div class="course-icon">
                                     <i class="<?php echo getCourseIcon($course['name'], $courseIcons); ?>"></i>
                                 </div>
-                                <div>
-                                    <h3><?php echo htmlspecialchars($course['name']); ?></h3>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <h3 style="margin-right: 10px;"><?php echo htmlspecialchars($course['name']); ?></h3>
+                                        <?php if (isset($course['suitability_score'])): ?>
+                                            <div class="suitability-badge" style="background: <?php echo $course['suitability_score'] >= 80 ? '#ecfdf5' : '#fef3c7'; ?>; color: <?php echo $course['suitability_score'] >= 80 ? '#059669' : '#d97706'; ?>; padding: 4px 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">
+                                                <?php echo $course['suitability_score']; ?>% Match
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                     <span class="duration">
                                         <i class="fas fa-clock"></i> <?php echo htmlspecialchars($course['duration'] ?? '3-4 years'); ?>
                                     </span>
                                 </div>
                             </div>
+
+                            <?php if (isset($course['why_it_matches'])): ?>
+                                <p style="font-size: 0.85rem; color: #4b5563; margin: 10px 0; line-height: 1.4; border-left: 3px solid #667eea; padding-left: 10px;">
+                                    <strong>Why it matches:</strong> <?php echo htmlspecialchars($course['why_it_matches']); ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <?php if (isset($course['career_outlook'])): ?>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+                                    <span style="background: #eef2ff; color: #4f46e5; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                                        <i class="fas fa-arrow-trend-up"></i> Outlook
+                                    </span>
+                                    <span style="font-size: 0.8rem; color: #6b7280;"><?php echo htmlspecialchars($course['career_outlook']); ?></span>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="divider"></div>
                             
@@ -747,7 +1003,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                             <!-- Institutions -->
                             <?php if (!empty($course['institutions']) && is_array($course['institutions'])): ?>
                                 <button type="button" class="details-toggle mt" onclick="toggleDetails(this)">
-                                    <span><i class="fas fa-building-columns"></i> Institutions</span>
+                                    <span><i class="fas fa-building-columns"></i> Potential Institutions</span>
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
                                 <div class="details-content">
@@ -756,45 +1012,27 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                             <?php
                                             $instName = is_array($inst) ? ($inst['name'] ?? null) : $inst;
                                             $instAps = is_array($inst) ? ($inst['aps_required'] ?? null) : null;
-                                            
-                                            // Prediction
-                                            $prediction = calculateAdmissionProbability(
-                                                $instAps ?: ($course['aps_required'] ?? 0),
-                                                $careerRec['aps'] ?? 0,
-                                                $reportCard['grade'] ?? '12',
-                                                $reportCard['term'] ?? '1',
-                                                $course['subject_requirements'] ?? [],
-                                                $reportCard['grades_data'] ?? []
-                                            );
+                                            $instReason = is_array($inst) ? ($inst['reason'] ?? null) : null;
+                                            $instLikelihood = is_array($inst) ? ($inst['admission_likelihood'] ?? null) : null;
                                             ?>
                                             <?php if ($instName): ?>
-                                                <div class="institution-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                                <div class="institution-item" style="flex-direction: column; align-items: flex-start; gap: 5px; padding: 12px;">
                                                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                                        <span><?php echo htmlspecialchars($instName); ?></span>
-                                                        <?php if ($instAps): ?>
-                                                            <div class="aps-badge">APS <?php echo $instAps; ?></div>
+                                                        <span style="font-weight: 700;">
+                                                            <?php echo htmlspecialchars($instName); ?>
+                                                            <?php if ($instAps): ?>
+                                                                <span style="font-size: 0.7rem; color: #6b7280; font-weight: 400; margin-left: 5px;">(APS <?php echo $instAps; ?>)</span>
+                                                            <?php endif; ?>
+                                                        </span>
+                                                        <?php if ($instLikelihood): ?>
+                                                            <span style="font-size: 0.7rem; font-weight: 800; color: <?php echo strtolower($instLikelihood) === 'high' ? '#10b981' : '#f59e0b'; ?>; background: <?php echo strtolower($instLikelihood) === 'high' ? '#ecfdf5' : '#fffbeb'; ?>; padding: 2px 6px; border-radius: 4px;"><?php echo strtoupper($instLikelihood); ?> CHANCE</span>
                                                         <?php endif; ?>
                                                     </div>
-                                                    
-                                                    <!-- Admission Probability Badge -->
-                                                    <div class="prob-badge" style="color: <?php echo $prediction['color']; ?>; background: <?php echo $prediction['color']; ?>15;">
-                                                        <i class="fas fa-chart-pie"></i>
-                                                        <span>Admission Probability: <?php echo $prediction['percent']; ?>% (<?php echo $prediction['label']; ?>)</span>
-                                                    </div>
-                                                    
-                                                    <!-- Improve Chances Button -->
-                                                    <button type="button" class="btn-improve" onclick='showImprovementAdvice(
-                                                        <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
-                                                        <?php echo htmlspecialchars(json_encode($course['name']), ENT_QUOTES); ?>, 
-                                                        <?php echo $instAps ?: ($course['aps_required'] ?? 0); ?>, 
-                                                        <?php echo htmlspecialchars(json_encode($course['subject_requirements'] ?? []), ENT_QUOTES); ?>,
-                                                        <?php echo $careerRec['aps'] ?? 0; ?>,
-                                                        <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? '12'), ENT_QUOTES); ?>,
-                                                        <?php echo htmlspecialchars(json_encode($reportCard['term'] ?? '1'), ENT_QUOTES); ?>,
-                                                        <?php echo htmlspecialchars(json_encode($reportCard['grades_data'] ?? []), ENT_QUOTES); ?>
-                                                    )'>
-                                                        <i class="fas fa-wand-magic-sparkles"></i> Improve Chances
-                                                    </button>
+                                                    <?php if ($instReason): ?>
+                                                        <p style="font-size: 0.75rem; color: #6b7280; margin: 0; font-style: italic;">
+                                                            <?php echo htmlspecialchars($instReason); ?>
+                                                        </p>
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
@@ -871,22 +1109,28 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         <div class="card-content">
             <div class="institutions-grid">
                 <?php
-                $institutions = [
-                    ['name' => 'University of Cape Town', 'type' => 'Public', 'website' => 'https://www.uct.ac.za', 'aps_required' => 30],
-                    ['name' => 'Wits University', 'type' => 'Public', 'website' => 'https://www.wits.ac.za', 'aps_required' => 28],
-                    ['name' => 'Stellenbosch University', 'type' => 'Public', 'website' => 'https://www.sun.ac.za', 'aps_required' => 28],
-                    ['name' => 'University of Pretoria', 'type' => 'Public', 'website' => 'https://www.up.ac.za', 'aps_required' => 26],
-                    ['name' => 'University of Johannesburg', 'type' => 'Public', 'website' => 'https://www.uj.ac.za', 'aps_required' => 24],
-                    ['name' => 'UKZN', 'type' => 'Public', 'website' => 'https://www.ukzn.ac.za', 'aps_required' => 26],
-                    ['name' => 'UNISA', 'type' => 'Distance Learning', 'website' => 'https://www.unisa.ac.za', 'aps_required' => 20],
-                    ['name' => 'Tshwane University of Technology (TUT)', 'type' => 'Public', 'website' => 'https://www.tut.ac.za', 'aps_required' => 20],
-                    ['name' => 'Cape Peninsula University of Technology', 'type' => 'Public', 'website' => 'https://www.cput.ac.za', 'aps_required' => 20],
-                    ['name' => 'Durban University of Technology', 'type' => 'Public', 'website' => 'https://www.dut.ac.za', 'aps_required' => 18],
+                $institutions = !empty($careerRec['institutions']) ? $careerRec['institutions'] : [
+                    ['name' => 'University of Cape Town', 'type' => 'Public', 'website' => 'https://www.uct.ac.za', 'aps_required' => 30, 'reason' => 'Top ranked university in Africa', 'admission_likelihood' => 'Moderate'],
+                    ['name' => 'Wits University', 'type' => 'Public', 'website' => 'https://www.wits.ac.za', 'aps_required' => 28, 'reason' => 'Excellent research facilities', 'admission_likelihood' => 'Moderate'],
+                    ['name' => 'University of Pretoria', 'type' => 'Public', 'website' => 'https://www.up.ac.za', 'aps_required' => 26, 'reason' => 'Strong industry connections', 'admission_likelihood' => 'High'],
+                    ['name' => 'University of Johannesburg', 'type' => 'Public', 'website' => 'https://www.uj.ac.za', 'aps_required' => 24, 'reason' => 'Modern campuses and tech-focused', 'admission_likelihood' => 'High'],
+                    ['name' => 'UNISA', 'type' => 'Distance Learning', 'website' => 'https://www.unisa.ac.za', 'aps_required' => 20, 'reason' => 'Flexible distance learning', 'admission_likelihood' => 'High'],
+                    ['name' => 'Stellenbosch University', 'type' => 'Public', 'website' => 'https://www.sun.ac.za', 'aps_required' => 28, 'reason' => 'Prestigious academic reputation', 'admission_likelihood' => 'Moderate'],
+                    ['name' => 'UKZN', 'type' => 'Public', 'website' => 'https://www.ukzn.ac.za', 'aps_required' => 26, 'reason' => 'Leading research in health and sciences', 'admission_likelihood' => 'High'],
+                    ['name' => 'Tshwane University of Technology', 'type' => 'Public', 'website' => 'https://www.tut.ac.za', 'aps_required' => 20, 'reason' => 'Focus on vocational and tech training', 'admission_likelihood' => 'High'],
+                    ['name' => 'Cape Peninsula University of Technology', 'type' => 'Public', 'website' => 'https://www.cput.ac.za', 'aps_required' => 20, 'reason' => 'Innovation-led technical university', 'admission_likelihood' => 'High'],
+                    ['name' => 'North-West University', 'type' => 'Public', 'website' => 'https://www.nwu.ac.za', 'aps_required' => 24, 'reason' => 'Strong community and student life', 'admission_likelihood' => 'High'],
                 ];
                 foreach ($institutions as $inst):
+                    $instName = is_array($inst) ? ($inst['name'] ?? 'Unknown') : $inst;
+                    $instType = is_array($inst) ? ($inst['type'] ?? 'Public') : 'Public';
+                    $instAps = is_array($inst) ? ($inst['aps_required'] ?? 24) : 24;
+                    $instReason = is_array($inst) ? ($inst['reason'] ?? null) : null;
+                    $instWebsite = is_array($inst) ? ($inst['website'] ?? null) : null;
+
                     // Prediction for general entry
                     $prediction = calculateAdmissionProbability(
-                        $inst['aps_required'],
+                        $instAps,
                         $careerRec['aps'] ?? 0,
                         $reportCard['grade'] ?? '12',
                         $reportCard['term'] ?? '1',
@@ -894,25 +1138,42 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                         $reportCard['grades_data'] ?? []
                     );
                 ?>
-                    <div class="institution-card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
-                        <h4 style="margin-bottom: 5px;"><?php echo htmlspecialchars($inst['name']); ?></h4>
-                        <span class="institution-type" style="margin-bottom: 10px;"><?php echo htmlspecialchars($inst['type']); ?></span>
+                    <div class="institution-card">
+                        <h4>
+                            <?php echo htmlspecialchars($instName); ?>
+                            <span class="aps-badge-inline">
+                                APS <?php echo $instAps; ?>
+                            </span>
+                        </h4>
+                        <span class="institution-type"><?php echo htmlspecialchars($instType); ?></span>
                         
+                        <?php if ($instReason): ?>
+                            <p class="inst-reason">
+                                <?php echo htmlspecialchars($instReason); ?>
+                            </p>
+                        <?php endif; ?>
+
                         <!-- Admission Probability Badge -->
-                        <div class="prob-badge" style="color: <?php echo $prediction['color']; ?>; background: <?php echo $prediction['color']; ?>15; margin-bottom: 10px; width: 100%; justify-content: center;">
+                        <div class="prob-badge likelihood-indicator">
                             <i class="fas fa-chart-pie"></i>
-                            <span><?php echo $prediction['percent']; ?>% Chance</span>
+                            <span><?php echo $prediction['percent']; ?>% Likelihood</span>
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center;">
-                            <a href="<?php echo htmlspecialchars($inst['website']); ?>" target="_blank" class="btn-visit" style="margin-top: 0; width: 100%;">
-                                <i class="fas fa-external-link-alt"></i> Visit Website
-                            </a>
+                        <div class="inst-actions">
+                            <?php if ($instWebsite): ?>
+                                <a href="<?php echo htmlspecialchars($instWebsite); ?>" target="_blank" class="btn-visit">
+                                    <i class="fas fa-external-link-alt"></i> Visit Website
+                                </a>
+                            <?php elseif (is_string($inst)): ?>
+                                <a href="https://www.google.com/search?q=<?php echo urlencode($instName); ?>" target="_blank" class="btn-visit">
+                                    <i class="fas fa-search"></i> Search Info
+                                </a>
+                            <?php endif; ?>
                             
-                            <button type="button" class="btn-improve" style="width: 100% !important; margin-top: 0;" onclick='showImprovementAdvice(
-                                <?php echo htmlspecialchars(json_encode($inst['name']), ENT_QUOTES); ?>, 
+                            <button type="button" class="btn-improve" onclick='showImprovementAdvice(
+                                <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
                                 "General Admission", 
-                                <?php echo $inst['aps_required']; ?>, 
+                                <?php echo $instAps; ?>, 
                                 "[]",
                                 <?php echo $careerRec['aps'] ?? 0; ?>,
                                 <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? "12"), ENT_QUOTES); ?>,
@@ -922,8 +1183,8 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                 <i class="fas fa-wand-magic-sparkles"></i> Improve Chances
                             </button>
 
-                            <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($inst['name']); ?>', '<?php echo htmlspecialchars($inst['type']); ?>')" class="btn-applied" style="width: 100% !important; margin-top: 0;">
-                                <i class="fas fa-check-circle"></i> Mark Applied
+                            <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($instName); ?>', '<?php echo htmlspecialchars($instType); ?>')" class="btn-applied">
+                                <i class="fas fa-check-circle"></i> Applied
                             </button>
                         </div>
                     </div>
@@ -934,19 +1195,6 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 </div>
 
 <style>
-.career-recommendations-container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.recommendation-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -954,6 +1202,32 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     margin-bottom: 15px;
     padding-bottom: 12px;
     border-bottom: 2px solid #f3f4f6;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.career-recommendations-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 120px; /* Space for floating bottom navigation */
+    overflow-x: hidden;
+    width: 100%;
+}
+
+.recommendation-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f3f4f6;
+    overflow: hidden;
+    width: 100%;
 }
 
 .card-header h3 {
@@ -962,7 +1236,14 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .card-header h3 {
+        font-size: 1rem;
+    }
 }
 
 .card-header h3 i {
@@ -990,8 +1271,14 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .strengths-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 10px;
+}
+
+@media (max-width: 400px) {
+    .strengths-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .strength-item {
@@ -1027,8 +1314,15 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 25px;
+}
+
+@media (max-width: 768px) {
+    .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
 }
 
 .course-card {
@@ -1040,6 +1334,22 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .course-card {
+        padding: 16px;
+    }
+    
+    .course-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .course-card h3 {
+        font-size: 1rem !important;
+    }
 }
 
 .course-card:hover {
@@ -1202,6 +1512,20 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     padding: 20px;
 }
 
+@media (max-width: 768px) {
+    .bursary-card {
+        padding: 16px;
+    }
+    
+    .bursary-header h4 {
+        font-size: 1rem;
+    }
+    
+    .bursary-details p {
+        font-size: 0.85rem;
+    }
+}
+
 .bursary-header {
     display: flex;
     justify-content: space-between;
@@ -1230,6 +1554,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .bursary-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 15px;
 }
@@ -1268,89 +1593,78 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
 
 .institutions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
 }
 
 .institution-card {
-    background: #f9fafb;
-    padding: 20px;
-    border-radius: 12px;
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
     text-align: center;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-.institution-card h4 {
-    margin: 0 0 10px;
-    color: #1f2937;
-    font-size: 15px;
-}
-
-.institution-type {
-    background: #e5e7eb;
-    color: #6b7280;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-}
-
-.btn-sm {
-    padding: 8px 16px;
-    font-size: 13px;
-    min-height: 36px;
-}
-
-.no-data {
-    color: #6b7280;
-    font-style: italic;
+.institution-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
-    .card-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+    .institutions-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+    }
+
+    .institution-card, .bursary-card {
+        padding: 16px;
+        border-radius: 16px;
     }
     
-    .bursary-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+    .institution-card h4 {
+        font-size: 1rem !important;
     }
     
-    .bursary-actions {
-        flex-direction: column;
+    .institution-card p {
+        font-size: 0.8rem !important;
+        margin-bottom: 12px !important;
+        line-height: 1.4 !important;
     }
-    
-    .courses-grid {
+}
+
+@media (max-width: 480px) {
+    .institutions-grid {
         grid-template-columns: 1fr;
     }
 
-    .institutions-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    .bursary-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
     }
 
-    .institution-card {
-        padding: 15px 10px;
+    .bursary-actions .btn-apply, 
+    .bursary-actions .btn-search {
+        flex: 1 1 calc(50% - 4px) !important;
+        justify-content: center !important;
+        padding: 10px 5px !important;
+        font-size: 0.8rem !important;
+        width: auto !important;
+        min-width: 0 !important;
     }
 
-    .institution-card h4 {
-        font-size: 13px;
-        min-height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .institution-type {
-        font-size: 10px;
-        padding: 2px 8px;
-    }
-
-    .btn-visit, .btn-applied {
-        padding: 8px 10px;
-        font-size: 11px;
-        width: 100%;
+    .bursary-actions .btn-applied {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        padding: 10px 5px !important;
+        font-size: 0.8rem !important;
     }
 }
 
@@ -1407,7 +1721,6 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     transition: all 0.2s;
     text-decoration: none;
     width: 100%;
-    margin-top: 10px;
 }
 
 .btn-applied:hover {

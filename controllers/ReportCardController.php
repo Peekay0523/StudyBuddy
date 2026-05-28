@@ -249,7 +249,8 @@ class ReportCardController {
                 $recommendations['areas_for_improvement'],
                 json_encode($courses),
                 json_encode($bursaries),
-                $aps
+                $aps,
+                $recommendations['institutions'] ?? []
             );
 
             error_log("Career recommendations created successfully for report card: " . $reportCardId);

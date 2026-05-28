@@ -622,164 +622,121 @@ Content to process: " . substr($content, 0, 8000)]
 
     public function generateCareerRecommendations($gradesData) {
         $defaultRecommendations = [
-            'careers' => ['Teacher', 'Engineer', 'Doctor'],
-            'strengths' => ['Mathematics', 'Science'],
-            'areas_for_improvement' => ['Writing', 'History'],
+            'careers' => ['Teacher', 'Software Developer', 'Accountant', 'Nurse', 'Electrician'],
+            'strengths' => ['Communication', 'Problem Solving'],
+            'areas_for_improvement' => ['Time Management'],
             'courses' => [],
             'institutions' => [],
             'bursaries' => [],
             'aps' => 0
         ];
 
-        // Calculate APS score locally (always do this, even without OpenAI)
+        // Calculate APS score locally
         $aps = $this->calculateAPS($gradesData);
-        error_log("Calculated APS: $aps");
+        error_log("Calculated APS for recommendations: $aps");
 
         if (!$this->isValidApiKey() || empty($gradesData)) {
-            error_log("Using fallback - API key invalid or no grades");
-            // Return fallback with calculated APS
             $defaultRecommendations['aps'] = $aps;
-
-            // Generate meaningful strengths from subjects
-            $subjectList = array_keys($gradesData);
-            $strengths = [];
-
-            foreach ($subjectList as $subject) {
-                if (stripos($subject, 'Math') !== false) {
-                    $strengths[] = 'Mathematical proficiency';
-                } elseif (stripos($subject, 'Science') !== false || stripos($subject, 'Physics') !== false || stripos($subject, 'Chemistry') !== false) {
-                    $strengths[] = 'Scientific understanding';
-                } elseif (stripos($subject, 'English') !== false || stripos($subject, 'Language') !== false) {
-                    $strengths[] = 'Language skills';
-                } elseif (stripos($subject, 'Geography') !== false) {
-                    $strengths[] = 'Geographical knowledge';
-                } elseif (stripos($subject, 'History') !== false) {
-                    $strengths[] = 'Historical analysis';
-                } elseif (stripos($subject, 'Accounting') !== false || stripos($subject, 'Business') !== false) {
-                    $strengths[] = 'Business acumen';
-                } else {
-                    $strengths[] = $subject;
-                }
-            }
-
-            $defaultRecommendations['strengths'] = array_slice(array_unique($strengths), 0, 5);
             $defaultRecommendations['careers'] = $this->getCareersForSubjects($gradesData);
-
             return $defaultRecommendations;
         }
 
-        // Determine career theme based on strongest subjects
         $careerTheme = $this->determineCareerTheme($gradesData);
-
         $subjectsGrades = implode(', ', array_map(function($k, $v) {
             return "$k: $v";
         }, array_keys($gradesData), $gradesData));
 
-        error_log("Sending to OpenAI API with APS: $aps");
-
         $messages = [
-            ['role' => 'system', 'content' => 'You are an expert South African career counselor. Analyze academic performance and provide comprehensive career guidance. IMPORTANT: All recommendations must be CONSISTENT and RELATED to each other. Focus on the suggested career theme based on the student\'s subjects. Consider APS scores and subject requirements for South African universities. Format as JSON.'],
-            ['role' => 'user', 'content' => "Based on these South African National Senior Certificate results: {$subjectsGrades}, with an APS score of {$aps}.
+            ['role' => 'system', 'content' => 'You are a HIGHLY EXPERIENCED South African Academic & Career Advisor. 
+            Your goal is to provide realistic, data-driven, and employable career paths for students based on their National Senior Certificate (NSC) results.
+            
+            ADVISORY PRINCIPLES:
+            1. BE REALISTIC: Only suggest courses the student QUALIFIES for based on their APS and specific subject marks.
+            2. DEMAND-DRIVEN: Prioritize careers that are in high demand in the South African economy.
+            3. ACCURATE: Understand the difference between Degree, Diploma, and Higher Certificate requirements.
+            4. CONTEXTUAL: Use South African university and TVET college context (APS systems, subject weightings).'],
+            ['role' => 'user', 'content' => "Analyze these results: {$subjectsGrades}. Calculated APS: {$aps}.
+            
+            Theme: {$careerTheme}
 
-The student's strongest subjects suggest a career theme of: {$careerTheme}
+            CRITICAL: RECOMMEND EXACTLY 5 COURSES AND EXACTLY 10 INSTITUTIONS.
 
-CRITICAL INSTRUCTION - QUALIFICATION CHECKING:
-The grades shown above are the student's ACTUAL achievements. You MUST convert these percentages to NSC Achievement Levels and ONLY recommend courses where the student's levels meet or exceed the entry requirements.
+            THINK STEP-BY-STEP:
+            1. Convert percentages to NSC Levels (1-7).
+            2. Compare levels and APS against South African university/college requirements.
+            3. Identify high-growth careers relevant to these marks.
+            4. Select 5 diverse but realistic courses.
+            5. Select 10 specific institutions where the student has a realistic chance of admission.
 
-NSC Achievement Level Conversion:
-- Level 7 = 80-100% (Distinction)
-- Level 6 = 70-79% (Merit)
-- Level 5 = 60-69% (Substantial achievement)
-- Level 4 = 50-59% (Adequate achievement)
-- Level 3 = 40-49% (Moderate achievement)
-- Level 2 = 30-39% (Elementary achievement)
-- Level 1 = 0-29% (Not achieved)
+            RETURN ONLY A JSON OBJECT with this structure:
+            {
+                \"careers\": [\"Career 1\", \"Career 2\", \"Career 3\", \"Career 4\", \"Career 5\"],
+                \"courses\": [
+                    {
+                        \"name\": \"Course Name\",
+                        \"aps_required\": 28,
+                        \"suitability_score\": 95,
+                        \"why_it_matches\": \"Reason based on specific subjects and marks\",
+                        \"career_outlook\": \"Demand and growth in SA\",
+                        \"requirements\": \"Detailed requirements string\",
+                        \"subject_requirements\": [{\"subject\": \"Math\", \"min_level\": 5}],
+                        \"duration\": \"3 years\",
+                        \"institutions\": [
+                             {\"name\": \"University Name\", \"aps_required\": 28, \"reason\": \"Why this is realistic for this student\", \"admission_likelihood\": \"High/Moderate\"}
+                        ]
+                    }
+                ],
+                \"recommended_institutions\": [
+                    {
+                        \"name\": \"Institution Name\",
+                        \"type\": \"University/TVET\",
+                        \"aps_required\": 24,
+                        \"reason\": \"Why it suits the student\",
+                        \"admission_likelihood\": \"High\",
+                        \"website\": \"URL\"
+                    }
+                ],
+                \"bursaries\": [
+                    {\"name\": \"Name\", \"provider\": \"Provider\", \"eligibility\": \"Criteria\", \"deadline\": \"Date\", \"apply_url\": \"URL\"}
+                ],
+                \"strengths\": [\"Strength 1\", \"Strength 2\"],
+                \"areas_for_improvement\": [\"Area 1\", \"Area 2\"]
+            }
 
-EXAMPLE: If Physical Sciences shows 45%, that's Level 3. DO NOT suggest courses requiring Level 5 in Physical Sciences.
-
-IMPORTANT RULES FOR COURSE RECOMMENDATIONS:
-1. Check EACH subject requirement against the student's ACTUAL grade/level
-2. ONLY recommend courses where the student QUALIFIES based on their current levels
-3. If the student doesn't qualify for degree programs, suggest diploma or certificate pathways
-4. Provide alternative courses that match what they DO qualify for
-5. Be realistic - don't suggest Engineering (requires Level 6 Math & Science) to someone with Level 3 in those subjects
-
-REQUIRED OUTPUT - ALL items must be thematically consistent with {$careerTheme}:
-
-1. 5 recommended careers - ALL from the {$careerTheme} field, appropriate for the student's achievement level
-2. 5 suitable bachelor's degree/diploma/certificate courses - ALL must be {$careerTheme}-related.
-   - EACH COURSE MUST INCLUDE:
-     - aps_required: A single numeric value for the overall APS required (e.g., 28)
-     - subject_requirements: An array of objects, each with 'subject' and 'min_level' (numeric 1-7). 
-       - EXAMPLE: [{\"subject\": \"Mathematics\", \"min_level\": 5}, {\"subject\": \"Physical Sciences\", \"min_level\": 4}]
-     - requirements: A summary string of all requirements (e.g., \"APS 28, Mathematics (Level 5), Physical Sciences (Level 4)\")
-     - duration: A string (e.g., \"3 years\")
-     - institutions: An array of 3-5 South African institutions with their specific entry requirements
-
-Return as JSON with keys:
-- careers (array of career names, all from {$careerTheme} field, appropriate for achievement level)
-- courses (array with: name, aps_required, requirements, subject_requirements (array of {subject, min_level}), duration, institutions (array with name, location, website, entry_requirements, aps_required)) - ONLY courses student qualifies for
-- bursaries (array with: name, provider, eligibility, deadline, apply_url)"]
+            STRICT RULES:
+            - Exactly 5 items in 'careers' and 'courses'.
+            - Exactly 10 items in 'recommended_institutions'.
+            - Course suitability_score should be 0-100.
+            - Ensure institutions are geographically reasonable for South Africa.
+            - If marks are low, include TVET colleges and Diploma options.
+            - Avoid halluncinating unrealistic admission requirements.
+            - Use South African Rand context for any financial mentions.
+            
+            Return ONLY the raw JSON."]
         ];
 
-        $response = $this->makeRequest($messages, 1200, 0.5);
-
-        error_log("Career Recommendations API Response: " . substr($response ?: 'NULL', 0, 500));
+        $response = $this->makeRequest($messages, 2000, 0.4);
 
         if ($response) {
-            // Try to parse JSON from response
             $jsonMatch = [];
             if (preg_match('/\{.*\}/s', $response, $jsonMatch)) {
                 $parsed = json_decode($jsonMatch[0], true);
-                error_log("Parsed JSON: " . json_encode($parsed));
                 if ($parsed) {
-                    // Generate meaningful strengths from subjects
-                    $subjectList = array_keys($gradesData);
-                    $strengths = [];
-
-                    // Create strength statements based on subjects
-                    foreach ($subjectList as $subject) {
-                        if (stripos($subject, 'Math') !== false) {
-                            $strengths[] = 'Strong analytical and problem-solving skills';
-                        } elseif (stripos($subject, 'Science') !== false || stripos($subject, 'Physics') !== false || stripos($subject, 'Chemistry') !== false) {
-                            $strengths[] = 'Scientific thinking and research abilities';
-                        } elseif (stripos($subject, 'English') !== false || stripos($subject, 'Language') !== false) {
-                            $strengths[] = 'Effective communication skills';
-                        } elseif (stripos($subject, 'Geography') !== false) {
-                            $strengths[] = 'Spatial awareness and environmental understanding';
-                        } elseif (stripos($subject, 'History') !== false) {
-                            $strengths[] = 'Critical thinking and research skills';
-                        } elseif (stripos($subject, 'Accounting') !== false || stripos($subject, 'Business') !== false) {
-                            $strengths[] = 'Financial literacy and business acumen';
-                        } else {
-                            $strengths[] = "Proficiency in $subject";
-                        }
-                    }
-
-                    // Limit to top 5 strengths
-                    $strengths = array_slice(array_unique($strengths), 0, 5);
-
-                    $result = [
-                        'careers' => $parsed['careers'] ?? $defaultRecommendations['careers'],
-                        'strengths' => !empty($strengths) ? $strengths : $subjectList,
-                        'areas_for_improvement' => array_slice($subjectList, 0, 2),
-                        'courses' => $parsed['courses'] ?? [],
-                        'institutions' => $this->extractInstitutionsFromCourses($parsed['courses'] ?? []),
+                    // Enrich and format for the UI
+                    return [
+                        'careers' => array_slice($parsed['careers'] ?? [], 0, 5),
+                        'strengths' => $parsed['strengths'] ?? array_keys($gradesData),
+                        'areas_for_improvement' => $parsed['areas_for_improvement'] ?? [],
+                        'courses' => array_slice($parsed['courses'] ?? [], 0, 5),
+                        'institutions' => array_slice($parsed['recommended_institutions'] ?? [], 0, 10),
                         'bursaries' => $parsed['bursaries'] ?? [],
-                        'aps' => $aps  // Always use calculated APS
+                        'aps' => $aps
                     ];
-                    
-                    error_log("Returning AI recommendations with APS: " . $result['aps']);
-                    return $result;
                 }
             }
         }
 
-        // Fallback: Return calculated APS with default recommendations
-        error_log("API failed, returning fallback with APS: $aps");
         $defaultRecommendations['aps'] = $aps;
-        $defaultRecommendations['strengths'] = array_keys($gradesData);
-        $defaultRecommendations['careers'] = $this->getCareersForSubjects($gradesData);
         return $defaultRecommendations;
     }
 
