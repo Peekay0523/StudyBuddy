@@ -62,10 +62,9 @@ $isPending = $status === 'pending';
                 <i class="fas fa-info-circle"></i> Important Next Steps
             </h3>
             <ul style="margin: 0; padding-left: 20px; color: #78350f; line-height: 2;">
-                <li>Email your proof of payment to <strong>billing@studysmart.co.za</strong></li>
-                <li>Use reference: <strong><?php echo htmlspecialchars($user['username']); ?>-<?php echo strtoupper($plan); ?></strong></li>
+
                 <li>Your subscription will be activated within <strong>24-48 hours</strong></li>
-                <li>You'll receive a confirmation email once verified</li>
+                
             </ul>
         </div>
         <?php else: ?>
@@ -91,10 +90,7 @@ $isPending = $status === 'pending';
             </a>
         </div>
 
-        <p style="margin-top: 30px; color: #9ca3af; font-size: 14px;">
-            <i class="fas fa-envelope"></i> 
-            <?php echo $isPending ? 'A confirmation will be sent after verification' : 'A receipt has been sent to your email address'; ?>
-        </p>
+        
     </div>
 </div>
 

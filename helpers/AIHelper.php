@@ -378,8 +378,8 @@ IMPORTANT: Before finishing, check that you have answered ALL questions (e.g., i
 Content to process: " . substr($content, 0, 8000)]
         ];
 
-        // Using 2000 tokens and 0.1 temperature for accuracy and completeness
-        $response = $this->makeRequest($messages, 2000, 0.1);
+        // Using 4000 tokens and 0.1 temperature for accuracy and completeness
+        $response = $this->makeRequest($messages, 4000, 0.1);
 
         // Clean up any remaining markdown formatting
         if ($response) {

@@ -275,7 +275,8 @@ async function evaluateAnswer(answer) {
                 feedbackTitle.style.color = '#fca5a5';
             }
             
-            feedbackText.textContent = explanation;
+            feedbackText.innerHTML = explanation;
+            renderFeedbackMath();
             voiceStatus.textContent = 'Evaluation complete.';
             nextBtnContainer.style.display = 'block';
             
@@ -368,4 +369,29 @@ if (window.speechSynthesis) {
     window.speechSynthesis.onvoiceschanged = () => {
         // Just to ensure voices are loaded
     };
+}
+
+function renderFeedbackMath() {
+    const feedback = document.getElementById("feedback-text");
+    if (!feedback) return;
+    let content = feedback.innerHTML;
+    // Convert common math into LaTeX-friendly syntax
+    content = content
+        .replace(/1\/2/g, "\\frac{1}{2}")
+        .replace(/x1/g, "x_1")
+        .replace(/x2/g, "x_2")
+        .replace(/x3/g, "x_3")
+        .replace(/y1/g, "y_1")
+        .replace(/y2/g, "y_2")
+        .replace(/y3/g, "y_3");
+    feedback.innerHTML = content;
+    renderMathInElement(feedback, {
+        delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true }
+        ],
+        throwOnError: false
+    });
 }

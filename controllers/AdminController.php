@@ -195,7 +195,7 @@ class AdminController {
                         WHEN 'cancelled' THEN 5
                         ELSE 6
                     END,
-                    s.created_at DESC
+                    s.updated_at DESC
             ")->fetchAll();
         } else if (in_array($filter, ['bobpay', 'card'])) {
             // Filter by payment method
@@ -204,7 +204,7 @@ class AdminController {
                 FROM subscriptions s
                 JOIN users u ON s.user_id = u.id
                 WHERE s.payment_method = ?
-                ORDER BY s.created_at DESC
+                ORDER BY s.updated_at DESC
             ");
             $stmt->execute([$filter]);
             $subscriptions = $stmt->fetchAll();
@@ -214,7 +214,7 @@ class AdminController {
                 FROM subscriptions s
                 JOIN users u ON s.user_id = u.id
                 WHERE s.status = ?
-                ORDER BY s.created_at DESC
+                ORDER BY s.updated_at DESC
             ");
             $stmt->execute([$filter]);
             $subscriptions = $stmt->fetchAll();
@@ -480,17 +480,26 @@ class AdminController {
             $update = $db->prepare("UPDATE subscriptions SET status = ?, cancelled_at = datetime('now') WHERE id = ?");
             $update->execute([$newStatus, $subscriptionId]);
         } elseif ($newStatus === 'active' || $newStatus === 'trial') {
+            // Smart renewal logic: 
+            // If current_period_end is in the future, extend it by 1 month.
+            // Otherwise, set it to now + 1 month.
+            $newEnd = "datetime('now', '+1 month')";
+            if (!empty($subscription['current_period_end']) && strtotime($subscription['current_period_end']) > time()) {
+                $newEnd = "datetime(current_period_end, '+1 month')";
+            }
+            
             // Reactivate - clear cancelled_at and extend period
             $update = $db->prepare("
                 UPDATE subscriptions
                 SET status = ?,
                     cancelled_at = NULL,
-                    current_period_end = datetime('now', '+1 month')
+                    current_period_end = $newEnd,
+                    updated_at = datetime('now')
                 WHERE id = ?
             ");
             $update->execute([$newStatus, $subscriptionId]);
         } else {
-            $update = $db->prepare("UPDATE subscriptions SET status = ? WHERE id = ?");
+            $update = $db->prepare("UPDATE subscriptions SET status = ?, updated_at = datetime('now') WHERE id = ?");
             $update->execute([$newStatus, $subscriptionId]);
         }
 
@@ -524,8 +533,8 @@ class AdminController {
 
         $db = Database::getInstance()->getConnection();
 
-        // Get the subscription to check user_id
-        $stmt = $db->prepare("SELECT user_id, status FROM subscriptions WHERE id = ?");
+        // Get the subscription details
+        $stmt = $db->prepare("SELECT * FROM subscriptions WHERE id = ?");
         $stmt->execute([$subscriptionId]);
         $subscription = $stmt->fetch();
 
@@ -535,34 +544,26 @@ class AdminController {
             exit;
         }
 
-        // Check if user already has an active subscription (excluding this one)
-        $checkStmt = $db->prepare("
-            SELECT COUNT(*) FROM subscriptions
-            WHERE user_id = ?
-            AND id != ?
-            AND status IN ('active', 'trial')
-        ");
-        $checkStmt->execute([$subscription['user_id'], $subscriptionId]);
-        $count = $checkStmt->fetchColumn();
-
-        if ($count > 0) {
-            setFlashMessage('error', 'This user already has an active subscription. Please cancel the existing subscription first.');
-            header('Location: /admin/subscriptions');
-            exit;
+        // Smart renewal logic: 
+        // If current_period_end is in the future, extend it by 1 month.
+        // Otherwise, set it to now + 1 month.
+        $newEnd = "datetime('now', '+1 month')";
+        if (!empty($subscription['current_period_end']) && strtotime($subscription['current_period_end']) > time()) {
+            $newEnd = "datetime(current_period_end, '+1 month')";
         }
 
         // Update subscription to active
         $update = $db->prepare("
             UPDATE subscriptions
             SET status = 'active',
-                current_period_start = datetime('now'),
-                current_period_end = datetime('now', '+1 month'),
-                cancelled_at = NULL
+                current_period_end = $newEnd,
+                cancelled_at = NULL,
+                updated_at = datetime('now')
             WHERE id = ?
         ");
         $update->execute([$subscriptionId]);
 
-        setFlashMessage('success', 'EFT payment approved. Subscription activated for 1 month.');
+        setFlashMessage('success', 'EFT payment approved. Subscription extended successfully.');
         header('Location: /admin/subscriptions');
     }
 
@@ -616,7 +617,7 @@ class AdminController {
             exit;
         }
 
-        $filePath = __DIR__ . '/../../../public/' . $subscription['proof_path'];
+        $filePath = __DIR__ . '/../public/' . $subscription['proof_path'];
 
         if (!file_exists($filePath)) {
             setFlashMessage('error', 'File not found');
@@ -678,7 +679,7 @@ class AdminController {
         
         // Delete the proof file if it exists
         if ($subscription && !empty($subscription['proof_path'])) {
-            $filePath = __DIR__ . '/../../../public/' . $subscription['proof_path'];
+            $filePath = __DIR__ . '/../public/' . $subscription['proof_path'];
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
@@ -929,7 +930,7 @@ class AdminController {
             // Delete proof of payment files
             foreach ($userSubscriptions as $subscription) {
                 if (!empty($subscription['proof_path'])) {
-                    $filePath = __DIR__ . '/../../../public/' . $subscription['proof_path'];
+                    $filePath = __DIR__ . '/../public/' . $subscription['proof_path'];
                     if (file_exists($filePath)) {
                         unlink($filePath);
                     }

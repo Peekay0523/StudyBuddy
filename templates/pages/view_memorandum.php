@@ -452,6 +452,9 @@ $extraHead = '
     min-width: 50px;
     text-align: center;
 }
+#feedback-text .katex {
+    font-size: 1.05em;
+}
      @media screen and (max-width: 770px) {
 
     * {
@@ -952,24 +955,44 @@ include __DIR__ . '/../layouts/header.php';
             </div>
         </div>
 
+        <!-- Quiz Options -->
+        <div style="text-align: right; margin-bottom: 15px;">
+            <button id="input-mode-toggle" onclick="toggleInputMode()" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;">
+                Switch to Type Answer
+            </button>
+        </div>
+
         <!-- Question Display -->
         <div id="question-container" style="background: white; color: #1e293b; padding: 25px; border-radius: 10px; margin-bottom: 20px; min-height: 120px;">
             <h4 style="margin-top: 0; color: #667eea;"><i class="fas fa-question"></i> Question:</h4>
             <p id="current-question" style="font-size: 18px; line-height: 1.6; margin-bottom: 0;"></p>
         </div>
 
-        <!-- Voice Answer Controls -->
-        <div id="voice-controls" style="text-align: center; margin-bottom: 20px;">
-            <button id="mic-btn" onclick="toggleVoiceInput()" style="background: white; color: #667eea; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-                <i class="fas fa-microphone"></i> Click to Answer (Voice)
-            </button>
-            <p id="voice-status" style="margin-top: 10px; font-size: 14px; opacity: 0.9;"></p>
+        <!-- Answer UI Area -->
+        <div id="voice-answer-ui">
+            <!-- Voice Answer Controls -->
+            <div id="voice-controls" style="text-align: center; margin-bottom: 20px;">
+                <button id="mic-btn" onclick="toggleVoiceInput()" style="background: white; color: #667eea; border: none; padding: 15px 40px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                    <i class="fas fa-microphone"></i> Click to Answer (Voice)
+                </button>
+                <p id="voice-status" style="margin-top: 10px; font-size: 14px; opacity: 0.9;"></p>
+            </div>
+
+            <!-- Answer Display -->
+            <div id="answer-display" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px; min-height: 50px;">
+                <strong>Your Answer:</strong>
+                <p id="user-answer" style="margin: 5px 0 0 0; font-size: 16px;"></p>
+            </div>
         </div>
 
-        <!-- Answer Display -->
-        <div id="answer-display" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px; min-height: 50px;">
-            <strong>Your Answer:</strong>
-            <p id="user-answer" style="margin: 5px 0 0 0; font-size: 16px;"></p>
+        <!-- Text Answer UI -->
+        <div id="text-answer-ui" style="display: none; margin-bottom: 20px;">
+            <textarea id="user-answer-text" placeholder="Type your answer here..." style="width: 100%; height: 100px; padding: 15px; border-radius: 10px; border: none; font-family: inherit; font-size: 16px; margin-bottom: 10px;"></textarea>
+            <div style="text-align: center;">
+                <button onclick="submitTextAnswer()" style="background: white; color: #667eea; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    Submit Answer
+                </button>
+            </div>
         </div>
 
         <!-- Feedback Display -->

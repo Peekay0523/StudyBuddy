@@ -23,78 +23,26 @@ include __DIR__ . '/../layouts/header.php';
 <!-- Sample Results Section -->
 <div class="sample-results-section">
     <h2 class="section-heading">
-        <i class="fas fa-star" style="color: #fbbf24;"></i> Success Stories
+        <i class="fas fa-star" style="color: #fbbf24;"></i> Goal
     </h2>
-    <p class="section-subheading">
-        See how StudySmart is helping South African students excel
-    </p>
 
-    <div class="sample-testimonials-grid">
-        <!-- Testimonial 1 -->
-        <div class="sample-testimonial-card">
-            <div class="testimonial-header">
-                <div class="testimonial-avatar avatar-T">T</div>
-                <div class="testimonial-info">
-                    <h4>Thabo M.</h4>
-                    <p>Grade 12, Johannesburg</p>
-                </div>
-            </div>
-            <p class="testimonial-text">"StudySmart helped me identify my weak areas in Mathematics. The AI-generated study plan was exactly what I needed!"</p>
-            <div class="testimonial-badges">
-                <span class="badge-success">
-                    <i class="fas fa-arrow-up"></i> Math improved from 58% to 82%
-                </span>
-            </div>
-        </div>
-
-        <!-- Testimonial 2 -->
-        <div class="sample-testimonial-card">
-            <div class="testimonial-header">
-                <div class="testimonial-avatar avatar-P">P</div>
-                <div class="testimonial-info">
-                    <h4>Precious N.</h4>
-                    <p>Grade 11, Cape Town</p>
-                </div>
-            </div>
-            <p class="testimonial-text">"The career recommendations opened my eyes to opportunities I didn't know existed. Now I know exactly what subjects to focus on!"</p>
-            <div class="testimonial-badges">
-                <span class="badge-info">
-                    <i class="fas fa-compass"></i> Discovered 5 career paths
-                </span>
-            </div>
-        </div>
-
-        <!-- Testimonial 3 -->
-        <div class="sample-testimonial-card">
-            <div class="testimonial-header">
-                <div class="testimonial-avatar avatar-L">L</div>
-                <div class="testimonial-info">
-                    <h4>Lerato K.</h4>
-                    <p>Grade 10, Durban</p>
-                </div>
-            </div>
-            <p class="testimonial-text">"I was struggling with Physical Sciences. The memorandum summaries made everything click. Highly recommend!"</p>
-            <div class="testimonial-badges">
-                <span class="badge-purple">
-                    <i class="fas fa-chart-line"></i> Sciences up by 25%
-                </span>
-            </div>
-        </div>
-    </div>
 
     <!-- Stats -->
     <div class="sample-stats-grid">
         <div class="stat-item">
+            
+            <div class="stat-label">Number of students to help</div>
             <div class="stat-value stat-blue">100+</div>
-            <div class="stat-label">Students Helped</div>
         </div>
         <div class="stat-item">
+            
+            <div class="stat-label">Scripts uploaded</div>
             <div class="stat-value stat-gold">100+</div>
-            <div class="stat-label">Scripts Analyzed</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value stat-green">84%</div>
-            <div class="stat-label">Improved Grades</div>
+            
+            <div class="stat-label">Improve grades by</div>
+            <div class="stat-value stat-green">48%</div>
         </div>
     </div>
 </div>

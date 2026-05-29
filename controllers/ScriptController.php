@@ -345,7 +345,7 @@ class ScriptController {
         $topics = json_decode($script['processed_topics'], true) ?? [];
         $topicsStr = implode(', ', $topics);
         
-        $memoContent = substr($memorandum['content'], 0, 4000); 
+        $memoContent = substr($memorandum['content'], 0, 10000); 
 
         $systemPrompt = "You are an educational assessment expert. Your goal is to generate ONE challenging, clear quiz question based on the provided memorandum content.
         
@@ -402,7 +402,7 @@ class ScriptController {
             $memorandum = $this->memorandumModel->findByScriptId($scriptId);
         }
 
-        $memoContext = $memorandum ? "\nMemorandum Reference:\n" . substr($memorandum['content'], 0, 3000) : "";
+        $memoContext = $memorandum ? "\nMemorandum Reference:\n" . substr($memorandum['content'], 0, 10000) : "";
 
         $systemPrompt = "You are an expert tutor evaluating a student's answer to a quiz question. 
         Compare the student's answer with the question and the provided memorandum context.

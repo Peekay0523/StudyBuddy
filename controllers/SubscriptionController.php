@@ -130,9 +130,9 @@ class SubscriptionController {
             exit;
         }
 
-        // Check if user already has an active or pending subscription
-        if ($this->userHasActiveSubscription($user['id'])) {
-            setFlashMessage('error', 'You already have an active subscription. Please cancel your current subscription before subscribing to a new plan.');
+        // Check if user already has a pending EFT subscription
+        if ($this->userHasPendingEFT($user['id'])) {
+            setFlashMessage('info', 'You already have a pending payment verification. Please wait for the admin to approve it.');
             header('Location: /subscription');
             exit;
         }
@@ -154,7 +154,7 @@ class SubscriptionController {
             $proofPath = null;
             if (isset($_FILES['proof_upload']) && $_FILES['proof_upload']['error'] !== UPLOAD_ERR_NO_FILE) {
                 // Upload directory - files go in public/uploads/eft_proofs/ for web access
-                $uploadDir = __DIR__ . '/../../../public/uploads/eft_proofs/';
+                $uploadDir = __DIR__ . '/../public/uploads/eft_proofs/';
 
                 // Create upload directory if it doesn't exist
                 if (!is_dir($uploadDir)) {
@@ -205,14 +205,13 @@ class SubscriptionController {
                 exit;
             }
 
-            // Create pending subscription for EFT
+            // Create or Update subscription for EFT
             $this->activateSubscriptionEFT($user['id'], $plan, $eftReference, $eftAmount, $eftDate, $proofPath);
 
             setFlashMessage(
                 'info',
-                "Your EFT payment reference <strong>{$eftReference}</strong> has been recorded. " .
-                "Your subscription will be activated within 24-48 hours after payment verification. " .
-                "Please email proof of payment to <strong>billing@studysmart.co.za</strong>"
+                "Your payment details for reference <strong>{$eftReference}</strong> have been recorded. " .
+                "The admin will verify your payment and update your subscription status shortly."
             );
             header('Location: /subscription/success?plan=' . $plan . '&status=pending');
             exit;
@@ -339,7 +338,7 @@ class SubscriptionController {
             // Get transaction ID from GET parameters
             $transactionId = $_GET['transaction_id'] ?? $_SESSION['bobpay_transaction']['transaction_id'] ?? null;
 
-            // Activate subscription
+            // Activate subscription (Update existing if available)
             $this->activateSubscription($userId, $plan, 'bobpay', $transactionId);
 
             // Clear session transaction data
@@ -432,14 +431,7 @@ class SubscriptionController {
             exit;
         }
 
-        // Check if subscription already activated
-        if ($this->userHasActiveSubscription($userId)) {
-            http_response_code(200);
-            echo 'Subscription already active';
-            exit;
-        }
-
-        // Activate subscription
+        // Activate subscription (Update existing if available)
         $transactionId = $postData['id'] ?? $postData['transaction_id'] ?? null;
         $this->activateSubscription($userId, $plan, 'bobpay', $transactionId);
 
@@ -454,23 +446,45 @@ class SubscriptionController {
     private function activateSubscriptionEFT($userId, $plan, $reference, $amount, $paymentDate, $proofPath = null) {
         $db = Database::getInstance()->getConnection();
 
-        try {
-            // Create subscription with 'pending_eft' status
+        // Check if there is an existing subscription to update
+        $existing = $this->getRawUserSubscription($userId);
+
+        if ($existing) {
+            // Smart grace period for renewals:
+            // If already expired, give 7 days grace while admin verifies.
+            // If not expired, keep current end date.
+            $isExpired = strtotime($existing['current_period_end'] ?? 'now') < time();
+            $newEnd = $isExpired ? "datetime('now', '+7 days')" : "current_period_end";
+
+            // Update existing record to pending_eft
             $stmt = $db->prepare("
-                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_reference, payment_date, proof_path)
-                VALUES (?, ?, ?, 'pending_eft', datetime('now'), datetime('now', '+7 days'), datetime('now'), ?, ?, ?)
+                UPDATE subscriptions 
+                SET plan = ?, 
+                    price = ?, 
+                    status = 'pending_eft', 
+                    payment_reference = ?, 
+                    payment_date = ?, 
+                    proof_path = ?,
+                    current_period_end = $newEnd,
+                    updated_at = datetime('now')
+                WHERE id = ?
             ");
-            $stmt->execute([$userId, $plan, $amount, $reference, $paymentDate, $proofPath]);
-        } catch (Exception $e) {
-            // Table might not have these columns, try without proof_path
+            $stmt->execute([$plan, $amount, $reference, $paymentDate, $proofPath, $existing['id']]);
+        } else {
+            // Create new subscription record
             try {
+                $stmt = $db->prepare("
+                    INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_reference, payment_date, proof_path)
+                    VALUES (?, ?, ?, 'pending_eft', datetime('now'), datetime('now', '+7 days'), datetime('now'), ?, ?, ?)
+                ");
+                $stmt->execute([$userId, $plan, $amount, $reference, $paymentDate, $proofPath]);
+            } catch (Exception $e) {
+                // Table might not have all columns
                 $stmt = $db->prepare("
                     INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_reference, payment_date)
                     VALUES (?, ?, ?, 'pending_eft', datetime('now'), datetime('now', '+7 days'), datetime('now'), ?, ?)
                 ");
                 $stmt->execute([$userId, $plan, $amount, $reference, $paymentDate]);
-            } catch (Exception $e2) {
-                // Ignore if table doesn't exist
             }
         }
     }
@@ -524,12 +538,16 @@ class SubscriptionController {
         // Check if subscriptions table exists
         try {
             // Get active or trial subscriptions (trial users have access to basic features)
+            // Also allow pending_eft if they are within their grace period or existing period
             $stmt = $db->prepare("
                 SELECT * FROM subscriptions
                 WHERE user_id = ?
-                AND status IN ('active', 'trial')
+                AND (
+                    status IN ('active', 'trial') 
+                    OR (status = 'pending_eft' AND datetime(current_period_end) > datetime('now'))
+                )
                 AND datetime(current_period_end) > datetime('now')
-                ORDER BY created_at DESC
+                ORDER BY current_period_end DESC
                 LIMIT 1
             ");
             $stmt->execute([$userId]);
@@ -548,18 +566,59 @@ class SubscriptionController {
     }
 
     /**
+     * Get raw subscription record regardless of status
+     */
+    private function getRawUserSubscription($userId) {
+        $db = Database::getInstance()->getConnection();
+        try {
+            $stmt = $db->prepare("SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+            $stmt->execute([$userId]);
+            return $stmt->fetch();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Check if user has a pending EFT verification
+     */
+    private function userHasPendingEFT($userId) {
+        $db = Database::getInstance()->getConnection();
+        try {
+            // A pending EFT that is NOT a renewal (i.e. they don't have active access)
+            // Or maybe just ANY pending EFT should block another request to avoid spamming
+            $stmt = $db->prepare("
+                SELECT COUNT(*) FROM subscriptions
+                WHERE user_id = ?
+                AND status = 'pending_eft'
+                AND (datetime(current_period_end) <= datetime('now') OR current_period_start = current_period_end)
+            ");
+            // If they are renewing, they will have status='pending_eft' but current_period_end > now.
+            // But we want to allow them to submit payment details ONCE.
+            // If they already submitted payment details (pending_eft), we should probably wait.
+            
+            // Simplified: if they already have a pending_eft record, don't allow another submission 
+            // until admin processes it.
+            $stmt = $db->prepare("SELECT COUNT(*) FROM subscriptions WHERE user_id = ? AND status = 'pending_eft'");
+            $stmt->execute([$userId]);
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
      * Check if user has any active or pending subscription
      */
     private function userHasActiveSubscription($userId) {
         $db = Database::getInstance()->getConnection();
 
         try {
-            // Check for active paid subscriptions only (exclude free tier users)
-            // A user can have a subscription record but still be on free tier if it's cancelled or expired
+            // Check for active paid subscriptions only
             $stmt = $db->prepare("
                 SELECT COUNT(*) FROM subscriptions
                 WHERE user_id = ?
-                AND status IN ('active', 'trial', 'pending_eft')
+                AND status IN ('active', 'trial')
                 AND datetime(current_period_end) > datetime('now')
             ");
             $stmt->execute([$userId]);
@@ -573,21 +632,48 @@ class SubscriptionController {
     private function activateSubscription($userId, $plan, $paymentMethod = 'card', $transactionId = null) {
         $db = Database::getInstance()->getConnection();
 
-        try {
-            $stmt = $db->prepare("
-                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
-                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
-            ");
-            $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
-        } catch (Exception $e) {
-            // Table might not exist, create it
-            $this->createSubscriptionsTable();
+        $existing = $this->getRawUserSubscription($userId);
 
+        if ($existing) {
+            // Smart renewal logic: 
+            // If current_period_end is in the future, extend it by 1 month.
+            // Otherwise, set it to now + 1 month.
+            $newEnd = "datetime('now', '+1 month')";
+            if (!empty($existing['current_period_end']) && strtotime($existing['current_period_end']) > time()) {
+                $newEnd = "datetime(current_period_end, '+1 month')";
+            }
+
+            // Update existing record
             $stmt = $db->prepare("
-                INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
-                VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
+                UPDATE subscriptions 
+                SET plan = ?, 
+                    price = ?, 
+                    status = 'active', 
+                    payment_method = ?, 
+                    transaction_id = ?,
+                    current_period_end = $newEnd,
+                    cancelled_at = NULL,
+                    updated_at = datetime('now')
+                WHERE id = ?
             ");
-            $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
+            $stmt->execute([$plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId, $existing['id']]);
+        } else {
+            try {
+                $stmt = $db->prepare("
+                    INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
+                    VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
+                ");
+                $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
+            } catch (Exception $e) {
+                // Table might not exist, create it
+                $this->createSubscriptionsTable();
+
+                $stmt = $db->prepare("
+                    INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
+                    VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
+                ");
+                $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
+            }
         }
     }
 

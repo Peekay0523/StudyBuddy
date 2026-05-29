@@ -60,44 +60,7 @@ include __DIR__ . '/../layouts/header.php';
 
 <!-- Points & Rewards Banner (Free Tier Only) -->
 <?php if ($isFreeTier): ?>
-<div class="points-banner" style="max-width: 800px; margin: 20px auto; padding: 20px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                <i class="fas fa-coins" style="font-size: 28px; color: white;"></i>
-            </div>
-            <div>
-                <h3 style="margin: 0 0 5px 0; color: #1e40af; font-size: 18px;">
-                    <i class="fas fa-gift"></i> Your Rewards
-                </h3>
-                <div style="display: flex; gap: 20px; align-items: center;">
-                    <p style="margin: 0; color: #1e3a8a; font-size: 14px;">
-                        <strong style="color: #f59e0b; font-size: 18px;"><?php echo $scanInfo['points']; ?> Points</strong>
-                        <span style="color: #64748b; font-size: 12px;">| Earn 100 points per friend who joins!</span>
-                    </p>
-                    <?php if ($scanInfo['free_scans'] > 0): ?>
-                        <span style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                            <i class="fas fa-check-circle"></i> <?php echo $scanInfo['free_scans']; ?> Free Scan(s) Available
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <p style="margin: 5px 0 0 0; color: #3b82f6; font-size: 13px;">
-                    <i class="fas fa-bolt"></i> 500 points = 1 Free Scan
-                </p>
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="/dashboard" class="btn-secondary" style="padding: 10px 16px; font-size: 14px; text-decoration: none; border: 2px solid #3b82f6; color: #3b82f6; background: white;">
-                <i class="fas fa-users"></i> Invite Friends
-            </a>
-            <?php if ($scanInfo['points'] >= 500): ?>
-                <button onclick="convertPointsToScan()" class="btn-primary" style="padding: 10px 16px; font-size: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none;">
-                    <i class="fas fa-exchange-alt"></i> Convert 500 Points to Free Scan
-                </button>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
+
 <?php endif; ?>
 
 <div class="scan-container" style="max-width: 800px; margin: 0 auto;">
