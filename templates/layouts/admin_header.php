@@ -391,6 +391,70 @@
 </head>
 <body>
 
+<!-- Global 3D Tower Loader -->
+<div class="global-loader-overlay active" id="globalLoader">
+    <div class="loader-container">
+        <div class="loader-tower">
+            <div class="box box-1">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-2">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-3">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-4">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLoader(text = null) {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            loader.classList.add('active');
+        }
+    }
+
+    function hideLoader() {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            // Add a small delay for smoother transition
+            setTimeout(() => {
+                loader.classList.remove('active');
+            }, 500);
+        }
+    }
+
+    // Hide loader when page is fully loaded
+    window.addEventListener('load', function() {
+        hideLoader();
+    });
+
+    // Show loader on page transitions (when clicking links)
+    window.addEventListener('beforeunload', function() {
+        showLoader();
+    });
+
+    // Handle back/forward cache
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            hideLoader();
+        }
+    });
+</script>
+
 <!-- Hamburger Menu Button (Mobile) -->
 <button class="hamburger-menu" onclick="toggleSidebar()">
     <i class="fas fa-bars"></i>
@@ -444,6 +508,9 @@
                     <i class="fas fa-university"></i> Banking Settings
                 </a>
             </div>
+            <a href="/profile" class="<?php echo ($currentPage ?? '') === 'profile' ? 'active' : ''; ?>">
+                <i class="fas fa-user-circle"></i> My Profile
+            </a>
             <a href="/" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                 <i class="fas fa-arrow-left"></i> Back to Site
             </a>

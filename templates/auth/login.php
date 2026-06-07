@@ -2,13 +2,34 @@
 $pageTitle = 'Login - StudySmart';
 $currentPage = 'login';
 $extraHead = '<style>
+
+    .grid-wrapper::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(90deg, #ccc 1px, transparent 1px);
+        background-size: 50px 100%;
+        pointer-events: none;
+        mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 0) 70%
+        );
+        -webkit-mask-image: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 0) 70%
+        );
+    }
     .auth-container {
+        position: relative;
+        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        background: #f5f8ff;
         padding: 20px 15px;
+        background: transparent !important;
     }
     .auth-box {
         background: white;
@@ -48,6 +69,46 @@ $extraHead = '<style>
         color: #1e40af;
         border: 1px solid #bfdbfe;
     }
+    .btn-primary {
+        border: none;
+        outline: none;
+        background-color: #6c5ce7;
+        padding: 10px 20px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        border-radius: 5px;
+        transition: all ease 0.1s;
+        box-shadow: 0px 5px 0px 0px #a29bfe;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .btn-primary:active {
+        transform: translateY(5px);
+        box-shadow: 0px 0px 0px 0px #a29bfe;
+    }
+    .btn-admin {
+        border: none;
+        outline: none;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        padding: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        border-radius: 5px;
+        transition: all ease 0.1s;
+        box-shadow: 0px 5px 0px 0px #d97706;
+        width: 100%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-admin:active {
+        transform: translateY(5px);
+        box-shadow: 0px 0px 0px 0px #d97706;
+    }
 </style>';
 ?>
 <!DOCTYPE html>
@@ -58,11 +119,13 @@ $extraHead = '<style>
     <title><?php echo $pageTitle; ?></title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <?php echo $extraHead; ?>
 </head>
 <body>
 
-<div class="auth-container">
-    <div class="auth-box">
+<div class="grid-wrapper">
+    <div class="auth-container">
+        <div class="auth-box">
         <h2><i class="fas fa-sign-in-alt icon"></i> Welcome Back</h2>
 
         <?php
@@ -96,6 +159,12 @@ $extraHead = '<style>
                 </label>
             </div>
 
+            <!-- Parent Login Info Message -->
+            <div id="parent-info" style="display: none; margin-bottom: 20px; padding: 12px 15px; background: #fefce8; border: 1px solid #fef08a; border-radius: 12px; color: #854d0e; font-size: 13px; line-height: 1.5; animation: fadeIn 0.3s ease-in;">
+                <i class="fas fa-circle-info" style="margin-right: 5px;"></i>
+                <strong>Note:</strong> Parent/Guardian login details are the same as the child's login details.
+            </div>
+
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required>
@@ -116,8 +185,8 @@ $extraHead = '<style>
         </form>
 
         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <button type="button" onclick="fillAdminCredentials()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <i class="fas fa-shield-halved"></i> Login as Admin
+            <button type="button" onclick="fillAdminCredentials()" class="btn-admin" title="Fills default credentials (Peekay / admin123)">
+                <i class="fas fa-shield-halved"></i> Default Admin Login
             </button>
         </div>
 
@@ -126,11 +195,13 @@ $extraHead = '<style>
         </div>
     </div>
 </div>
+</div>
 
 <script>
 function updateRoleSelection() {
     const studentCard = document.getElementById('student-card');
     const parentCard = document.getElementById('parent-card');
+    const parentInfo = document.getElementById('parent-info');
     const isStudent = document.querySelector('input[name="role"]:checked').value === 'student';
 
     if (isStudent) {
@@ -143,6 +214,8 @@ function updateRoleSelection() {
         parentCard.style.background = 'white';
         parentCard.querySelector('i').style.color = '#6b7280';
         parentCard.querySelector('div').style.color = '#4b5563';
+        
+        parentInfo.style.display = 'none';
     } else {
         parentCard.style.borderColor = '#3b82f6';
         parentCard.style.background = '#eff6ff';
@@ -153,6 +226,8 @@ function updateRoleSelection() {
         studentCard.style.background = 'white';
         studentCard.querySelector('i').style.color = '#6b7280';
         studentCard.querySelector('div').style.color = '#4b5563';
+        
+        parentInfo.style.display = 'block';
     }
 }
 function fillAdminCredentials() {

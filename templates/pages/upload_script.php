@@ -299,32 +299,36 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     gap: 8px;
     padding: 12px 24px;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all ease 0.1s;
     text-decoration: none;
     border: none;
+    outline: none;
 }
 
 .btn-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    box-shadow: 0px 5px 0px 0px #a29bfe;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
+.btn-primary:active {
+    transform: translateY(5px);
+    box-shadow: 0px 0px 0px 0px #a29bfe;
 }
 
 .btn-secondary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
+    box-shadow: 0px 5px 0px 0px #a29bfe;
 }
 
-.btn-secondary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+.btn-secondary:active {
+    transform: translateY(5px);
+    box-shadow: 0px 0px 0px 0px #a29bfe;
 }
 
 /* Browse Grade Card */
@@ -357,7 +361,7 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 /* Grade Links */
 .grade-links {
     display: grid;
-    gap: 10px;
+    gap: 15px;
 }
 
 .grade-link-btn {
@@ -367,44 +371,46 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     padding: 12px 16px;
     border-radius: 8px;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
-    transition: all 0.2s;
-    border: 2px solid;
+    transition: all ease 0.1s;
+    border: none;
+    outline: none;
 }
 
 .grade-link-btn.grade-8 {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-color: #bae6fd;
     color: #0369a1;
+    box-shadow: 0px 5px 0px 0px #bae6fd;
 }
 
 .grade-link-btn.grade-9 {
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border-color: #86efac;
     color: #15803d;
+    box-shadow: 0px 5px 0px 0px #86efac;
 }
 
 .grade-link-btn.grade-10 {
     background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
-    border-color: #fde047;
     color: #a16207;
+    box-shadow: 0px 5px 0px 0px #fde047;
 }
 
 .grade-link-btn.grade-11 {
     background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-    border-color: #fb923c;
     color: #c2410c;
+    box-shadow: 0px 5px 0px 0px #fb923c;
 }
 
 .grade-link-btn.grade-12 {
     background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-    border-color: #c4b5fd;
     color: #6d28d9;
+    box-shadow: 0px 5px 0px 0px #c4b5fd;
 }
 
-.grade-link-btn:hover {
-    transform: translateX(5px);
+.grade-link-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0px 0px 0px 0px transparent;
 }
 
 /* Scripts Section */
@@ -459,7 +465,6 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 .script-item:hover {
     border-color: #6d28d9;
     box-shadow: 0 10px 20px -5px rgba(109, 40, 217, 0.1);
-    transform: translateY(-2px);
 }
 
 .script-main {
@@ -495,25 +500,120 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 .badge.orange { background: #fffaf0; color: #d97706; }
 .badge.green { background: #f0fdf4; color: #15803d; }
 
+/* Script Item Landscape Themes */
+.script-card-landscape {
+    position: relative;
+    width: 100%;
+    height: 60px;
+    overflow: hidden;
+    margin-bottom: 0;
+    border-radius: 12px 12px 0 0;
+}
+
+.script-card-landscape * { position: absolute; }
+
+.script-card-landscape .sky { width: 100%; height: 100%; }
+.script-card-landscape .sun { border-radius: 50%; width: 18px; height: 18px; }
+.script-card-landscape .ocean { bottom: 0; width: 100%; height: 20%; overflow: hidden; }
+.script-card-landscape .hill { border-radius: 50%; }
+.script-card-landscape .reflection { background: white; opacity: 0.3; }
+.script-card-landscape .tree { z-index: 3; bottom: 5%; }
+.script-card-landscape .filter { height: 100%; width: 100%; z-index: 5; opacity: 0.2; background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 40%); }
+
+/* Theme Variants */
+.theme-summer .sky { background: linear-gradient(0deg, #f7e157 0%, #e96594 100%); }
+.theme-summer .sun { background: white; bottom: 35%; left: 15%; filter: drop-shadow(0px 0px 8px white); }
+.theme-summer .ocean { background: linear-gradient(0deg, #f1c07d 0%, #f7da96 100%); }
+.theme-summer .hill-1 { right: -15%; bottom: 20%; width: 50px; height: 15px; background-color: #e6b29d; }
+.theme-summer .hill-2 { right: -20%; bottom: 10%; width: 70px; height: 25px; background-color: #c29182; }
+.theme-summer .hill-3 { left: -10%; bottom: -15%; width: 90px; height: 40px; background-color: #b77873; z-index: 3; }
+.theme-summer .hill-4 { right: -10%; bottom: -20%; width: 90px; height: 40px; background-color: #a16773; z-index: 3; }
+.theme-summer .tree svg { fill: #b77873; }
+
+.theme-night .sky { background: linear-gradient(0deg, #0f172a 0%, #1e1b4b 100%); }
+.theme-night .sun { background: #f1f5f9; bottom: 50%; left: 70%; filter: drop-shadow(0px 0px 8px #fff); width: 12px; height: 12px; }
+.theme-night .sun::after { content: ""; position: absolute; width: 10px; height: 10px; background: #1e1b4b; border-radius: 50%; left: 4px; top: -2px; }
+.theme-night .ocean { background: linear-gradient(0deg, #020617 0%, #1e293b 100%); opacity: 0.8; }
+.theme-night .hill-1 { right: -15%; bottom: 20%; width: 50px; height: 15px; background-color: #334155; }
+.theme-night .hill-2 { right: -20%; bottom: 10%; width: 70px; height: 25px; background-color: #1e293b; }
+.theme-night .hill-3 { left: -10%; bottom: -15%; width: 90px; height: 40px; background-color: #0f172a; z-index: 3; }
+.theme-night .hill-4 { right: -10%; bottom: -20%; width: 90px; height: 40px; background-color: #020617; z-index: 3; }
+.theme-night .tree svg { fill: #0f172a; }
+.theme-night .filter { background: linear-gradient(0deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0) 60%); }
+
+.theme-winter .sky { background: linear-gradient(0deg, #e2e8f0 0%, #94a3b8 100%); }
+.theme-winter .sun { background: #fff; bottom: 60%; left: 20%; opacity: 0.5; filter: blur(4px); }
+.theme-winter .ocean { background: linear-gradient(0deg, #f1f5f9 0%, #cbd5e1 100%); }
+.theme-winter .hill-1 { right: -15%; bottom: 20%; width: 50px; height: 15px; background-color: #cbd5e1; }
+.theme-winter .hill-2 { right: -20%; bottom: 10%; width: 70px; height: 25px; background-color: #94a3b8; }
+.theme-winter .hill-3 { left: -10%; bottom: -15%; width: 90px; height: 40px; background-color: #f8fafc; z-index: 3; border-top: 1px solid #e2e8f0; }
+.theme-winter .hill-4 { right: -10%; bottom: -20%; width: 90px; height: 40px; background-color: #ffffff; z-index: 3; border-top: 1px solid #f1f5f9; }
+.theme-winter .tree svg { fill: #94a3b8; }
+.theme-winter .filter { background: linear-gradient(0deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%); }
+
+.theme-autumn .sky { background: linear-gradient(0deg, #fed7aa 0%, #ea580c 100%); }
+.theme-autumn .sun { background: #fef3c7; bottom: 40%; left: 75%; opacity: 0.4; }
+.theme-autumn .ocean { background: linear-gradient(0deg, #7c2d12 0%, #9a3412 100%); opacity: 0.4; }
+.theme-autumn .hill-1 { right: -15%; bottom: 20%; width: 50px; height: 15px; background-color: #9a3412; }
+.theme-autumn .hill-2 { right: -20%; bottom: 10%; width: 70px; height: 25px; background-color: #7c2d12; }
+.theme-autumn .hill-3 { left: -10%; bottom: -15%; width: 90px; height: 40px; background-color: #431407; z-index: 3; }
+.theme-autumn .hill-4 { right: -10%; bottom: -20%; width: 90px; height: 40px; background-color: #451a03; z-index: 3; }
+.theme-autumn .tree svg { fill: #7c2d12; }
+
+.theme-forest .sky { background: linear-gradient(0deg, #bbf7d0 0%, #22c55e 100%); }
+.theme-forest .sun { background: #fef9c3; bottom: 65%; left: 10%; opacity: 0.3; }
+.theme-forest .ocean { background: linear-gradient(0deg, #064e3b 0%, #065f46 100%); opacity: 0.3; }
+.theme-forest .hill-1 { right: -15%; bottom: 20%; width: 50px; height: 15px; background-color: #166534; }
+.theme-forest .hill-2 { right: -20%; bottom: 10%; width: 70px; height: 25px; background-color: #14532d; }
+.theme-forest .hill-3 { left: -10%; bottom: -15%; width: 90px; height: 40px; background-color: #064e3b; z-index: 3; }
+.theme-forest .hill-4 { right: -10%; bottom: -20%; width: 90px; height: 40px; background-color: #022c22; z-index: 3; }
+.theme-forest .tree svg { fill: #064e3b; }
+.theme-forest .filter { background: linear-gradient(0deg, rgba(20,83,45,0.2) 0%, rgba(20,83,45,0) 60%); }
+
+/* Tree Positions */
+.tree-1 { bottom: 15%; left: 5%; width: 15px; height: 22px; }
+.tree-2 { bottom: 10%; left: 15%; width: 12px; height: 18px; }
+.tree-3 { bottom: 5%; right: 5%; width: 18px; height: 25px; }
+
+.script-item {
+    padding: 0;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow: hidden;
+}
+
+.script-content-wrapper {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
 .script-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 /* Small Button Styles */
 .btn-sm {
     height: 34px;
     padding: 0 14px;
-    font-size: 12.5px;
-    border-radius: 9px;
-    font-weight: 600;
+    font-size: 12px;
+    border-radius: 5px;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all ease 0.1s;
     border: none;
+    outline: none;
     cursor: pointer;
     box-sizing: border-box;
     white-space: nowrap;
@@ -522,34 +622,34 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
 .btn-sm-primary {
     background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-    box-shadow: 0 4px 10px rgba(109, 40, 217, 0.2);
+    box-shadow: 0px 4px 0px 0px #a29bfe;
 }
 
-.btn-sm-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(109, 40, 217, 0.3);
+.btn-sm-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0px 0px 0px 0px #a29bfe;
 }
 
 .btn-sm-secondary {
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    box-shadow: 0px 4px 0px 0px #a5b4fc;
 }
 
-.btn-sm-secondary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+.btn-sm-secondary:active {
+    transform: translateY(4px);
+    box-shadow: 0px 0px 0px 0px #a5b4fc;
 }
 
 .btn-sm-danger {
     background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
     color: white;
-    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.15);
+    box-shadow: 0px 4px 0px 0px #fca5a5;
 }
 
-.btn-sm-danger:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(225, 29, 72, 0.25);
+.btn-sm-danger:active {
+    transform: translateY(4px);
+    box-shadow: 0px 0px 0px 0px #fca5a5;
 }
 
 .memo-result:empty {
@@ -1109,27 +1209,48 @@ async function loadUploadedScripts() {
                                </button>`;
                         }
 
+                        const themes = ['summer', 'night', 'winter', 'autumn', 'forest'];
+                        const themeClass = 'theme-' + themes[script.id % themes.length];
+
                         return `
                             <div class="script-item">
-                                <div class="script-main">
-                                    <div class="script-info">
-                                        <h4>${script.title}</h4>
-                                        <div class="script-meta">
-                                            <span class="badge blue"><i class="fas fa-book"></i> ${script.subject || 'General'}</span>
-                                            <span class="badge orange"><i class="fas fa-graduation-cap"></i> Grade ${script.grade_level || '-'}</span>
-                                            <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(script.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                <div class="script-card-landscape ${themeClass}">
+                                    <div class="sky"></div>
+                                    <div class="sun"></div>
+                                    <div class="hill hill-1"></div>
+                                    <div class="hill hill-2"></div>
+                                    <div class="ocean">
+                                        <div class="reflection" style="width: 15px; height: 2px; top: 10%; left: 20%; clip-path: polygon(0% 0%, 100% 0%, 50% 100%);"></div>
+                                        <div class="reflection" style="width: 25px; height: 4px; top: 30%; left: 35%; clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);"></div>
+                                    </div>
+                                    <div class="hill hill-3"></div>
+                                    <div class="hill hill-4"></div>
+                                    <div class="tree tree-1"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                                    <div class="tree tree-2"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                                    <div class="tree tree-3"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                                    <div class="filter"></div>
+                                </div>
+                                <div class="script-content-wrapper">
+                                    <div class="script-main">
+                                        <div class="script-info">
+                                            <h4>${script.title}</h4>
+                                            <div class="script-meta">
+                                                <span class="badge blue"><i class="fas fa-book"></i> ${script.subject || 'General'}</span>
+                                                <span class="badge orange"><i class="fas fa-graduation-cap"></i> Grade ${script.grade_level || '-'}</span>
+                                                <span class="badge green"><i class="fas fa-calendar-alt"></i> ${new Date(script.uploaded_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                            </div>
+                                        </div>
+                                        <div class="script-actions">
+                                            ${buttonHtml}
+                                            <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
+                                                <button type="submit" class="btn-sm btn-sm-danger" title="Delete Script">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
-                                    <div class="script-actions">
-                                        ${buttonHtml}
-                                        <form method="POST" action="/delete-script/${script.id}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this script?');">
-                                            <button type="submit" class="btn-sm btn-sm-danger" title="Delete Script">
-                                                <i class="fas fa-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <div id="memo-result-${script.id}" class="memo-result"></div>
                                 </div>
-                                <div id="memo-result-${script.id}" class="memo-result"></div>
                             </div>
                         `;
                     }).join("");
@@ -1396,6 +1517,11 @@ if (form) {
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        }
+        
+        // Show global 3D loader
+        if (typeof showLoader === 'function') {
+            showLoader('Uploading and analyzing your script...');
         }
     });
 }

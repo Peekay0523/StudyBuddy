@@ -12,13 +12,46 @@ $step = $step ?? '1';
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        .grid-wrapper {
+            min-height: 100vh;
+            width: 100%;
+            background: linear-gradient(
+                to bottom,
+                #fff 0%,
+                #fff 40%,
+                rgba(255, 255, 255, 0) 100%
+            ),
+            linear-gradient(to right, #0ed2da, #5f29c7);
+            position: relative;
+            overflow: hidden;
+        }
+        .grid-wrapper::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(90deg, #ccc 1px, transparent 1px);
+            background-size: 50px 100%;
+            pointer-events: none;
+            mask-image: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0) 70%
+            );
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(0, 0, 0, 0) 70%
+            );
+        }
         .auth-container {
+            position: relative;
+            z-index: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: #f5f8ff;
             padding: 20px 15px;
+            background: transparent !important;
         }
         .auth-box {
             background: white;
@@ -191,6 +224,7 @@ $step = $step ?? '1';
 </head>
 <body>
 
+<div class="grid-wrapper">
 <div class="auth-container">
     <div class="auth-box">
         <?php if ($step === '1'): ?>
@@ -315,6 +349,7 @@ $step = $step ?? '1';
             </p>
         </div>
     </div>
+</div>
 </div>
 
 <?php if ($step === '2'): ?>

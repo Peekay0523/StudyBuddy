@@ -197,18 +197,18 @@
 .sci-btn {
     height: 48px;
     border-radius: 14px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: none;
     background: white;
     color: #374151;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.1s, background-color 0.1s, box-shadow 0.1s;
+    transition: all ease 0.1s !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0px 5px 0px 0px rgba(0, 0, 0, 0.1);
     touch-action: manipulation;
     user-select: none;
     pointer-events: auto !important;
@@ -218,14 +218,13 @@
 
 .sci-btn:hover {
     background: #f9fafb;
-    border-color: #6366f1;
-    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.15);
+    box-shadow: 0px 6px 0px 0px rgba(99, 102, 241, 0.2);
 }
 
 .sci-btn:active {
-    transform: scale(0.92);
+    transform: translateY(5px) !important;
     background: #f3f4f6 !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0px 0px 0px 0px transparent !important;
 }
 
 .sci-btn * {
@@ -235,26 +234,31 @@
 .sci-btn.operator {
     background: rgba(99, 102, 241, 0.05);
     color: #4f46e5;
+    box-shadow: 0px 5px 0px 0px rgba(99, 102, 241, 0.1);
 }
 
 .sci-btn.action {
     background: #4f46e5;
     color: white;
     grid-column: span 2;
+    box-shadow: 0px 5px 0px 0px #4338ca;
 }
 
 .sci-btn.action:active {
     background: #4338ca !important;
+    box-shadow: 0px 0px 0px 0px transparent !important;
 }
 
 .sci-btn.action-secondary {
     background: #ef4444;
     color: white;
     grid-column: span 2;
+    box-shadow: 0px 5px 0px 0px #dc2626;
 }
 
 .sci-btn.action-secondary:active {
     background: #dc2626 !important;
+    box-shadow: 0px 0px 0px 0px transparent !important;
 }
 
 .sci-btn small {

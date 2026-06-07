@@ -170,7 +170,7 @@ include __DIR__ . '/../layouts/header.php';
 .script-card-modern {
     background: white;
     border-radius: 16px;
-    padding: 24px;
+    padding: 0;
     border: 1px solid #e2e8f0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -180,26 +180,91 @@ include __DIR__ . '/../layouts/header.php';
     animation: fadeIn 0.3s ease-in;
 }
 
-.script-card-modern::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: #7c3aed;
-    opacity: 0;
-    transition: opacity 0.2s;
+.script-card-content {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
+
+/* Script Card Landscape Themes */
+.script-card-landscape {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.script-card-landscape * { position: absolute; }
+
+.script-card-landscape .sky { width: 100%; height: 100%; }
+.script-card-landscape .sun { border-radius: 50%; width: 20px; height: 20px; }
+.script-card-landscape .ocean { bottom: 0; width: 100%; height: 25%; overflow: hidden; }
+.script-card-landscape .hill { border-radius: 50%; }
+.script-card-landscape .reflection { background: white; opacity: 0.3; }
+.script-card-landscape .tree { z-index: 3; bottom: 5%; }
+.script-card-landscape .filter { height: 100%; width: 100%; z-index: 5; opacity: 0.2; background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 40%); }
+
+/* Theme Variants */
+.theme-summer .sky { background: linear-gradient(0deg, #f7e157 0%, #e96594 100%); }
+.theme-summer .sun { background: white; bottom: 35%; left: 15%; filter: drop-shadow(0px 0px 8px white); }
+.theme-summer .ocean { background: linear-gradient(0deg, #f1c07d 0%, #f7da96 100%); }
+.theme-summer .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #e6b29d; }
+.theme-summer .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #c29182; }
+.theme-summer .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #b77873; z-index: 3; }
+.theme-summer .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #a16773; z-index: 3; }
+.theme-summer .tree svg { fill: #b77873; }
+
+.theme-night .sky { background: linear-gradient(0deg, #0f172a 0%, #1e1b4b 100%); }
+.theme-night .sun { background: #f1f5f9; bottom: 50%; left: 70%; filter: drop-shadow(0px 0px 8px #fff); width: 15px; height: 15px; }
+.theme-night .sun::after { content: ""; position: absolute; width: 12px; height: 12px; background: #1e1b4b; border-radius: 50%; left: 5px; top: -2px; }
+.theme-night .ocean { background: linear-gradient(0deg, #020617 0%, #1e293b 100%); opacity: 0.8; }
+.theme-night .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #334155; }
+.theme-night .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #1e293b; }
+.theme-night .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #0f172a; z-index: 3; }
+.theme-night .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #020617; z-index: 3; }
+.theme-night .tree svg { fill: #0f172a; }
+.theme-night .filter { background: linear-gradient(0deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0) 60%); }
+
+.theme-winter .sky { background: linear-gradient(0deg, #e2e8f0 0%, #94a3b8 100%); }
+.theme-winter .sun { background: #fff; bottom: 60%; left: 20%; opacity: 0.5; filter: blur(4px); }
+.theme-winter .ocean { background: linear-gradient(0deg, #f1f5f9 0%, #cbd5e1 100%); }
+.theme-winter .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #cbd5e1; }
+.theme-winter .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #94a3b8; }
+.theme-winter .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #f8fafc; z-index: 3; border-top: 1px solid #e2e8f0; }
+.theme-winter .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #ffffff; z-index: 3; border-top: 1px solid #f1f5f9; }
+.theme-winter .tree svg { fill: #94a3b8; }
+.theme-winter .filter { background: linear-gradient(0deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%); }
+
+.theme-autumn .sky { background: linear-gradient(0deg, #fed7aa 0%, #ea580c 100%); }
+.theme-autumn .sun { background: #fef3c7; bottom: 40%; left: 75%; opacity: 0.4; }
+.theme-autumn .ocean { background: linear-gradient(0deg, #7c2d12 0%, #9a3412 100%); opacity: 0.4; }
+.theme-autumn .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #9a3412; }
+.theme-autumn .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #7c2d12; }
+.theme-autumn .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #431407; z-index: 3; }
+.theme-autumn .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #451a03; z-index: 3; }
+.theme-autumn .tree svg { fill: #7c2d12; }
+
+.theme-forest .sky { background: linear-gradient(0deg, #bbf7d0 0%, #22c55e 100%); }
+.theme-forest .sun { background: #fef9c3; bottom: 65%; left: 10%; opacity: 0.3; }
+.theme-forest .ocean { background: linear-gradient(0deg, #064e3b 0%, #065f46 100%); opacity: 0.3; }
+.theme-forest .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #166534; }
+.theme-forest .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #14532d; }
+.theme-forest .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #064e3b; z-index: 3; }
+.theme-forest .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #022c22; z-index: 3; }
+.theme-forest .tree svg { fill: #064e3b; }
+.theme-forest .filter { background: linear-gradient(0deg, rgba(20,83,45,0.2) 0%, rgba(20,83,45,0) 60%); }
+
+/* Tree Positions */
+.tree-1 { bottom: 15%; left: 5%; width: 18px; height: 26px; }
+.tree-2 { bottom: 10%; left: 20%; width: 15px; height: 22px; }
+.tree-3 { bottom: 5%; right: 5%; width: 22px; height: 30px; }
 
 .script-card-modern:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 24px -8px rgba(102, 126, 234, 0.2);
     border-color: #cbd5e1;
-}
-
-.script-card-modern:hover::before {
-    opacity: 1;
 }
 
 .script-card-title {
@@ -296,54 +361,76 @@ include __DIR__ . '/../layouts/header.php';
                 <p style="color: #94a3b8; max-width: 400px; margin: 0 auto;">No study scripts have been uploaded for Grade <?php echo htmlspecialchars($grade); ?> yet. Check back later!</p>
             </div>
         <?php else: ?>
-            <?php foreach ($scripts as $script): ?>
+            <?php 
+            $themes = ['summer', 'night', 'winter', 'autumn', 'forest'];
+            foreach ($scripts as $idx => $script): 
+                $themeClass = 'theme-' . $themes[$script['id'] % count($themes)];
+            ?>
                 <div class="script-card-modern" data-subject="<?php echo htmlspecialchars($script['subject']); ?>" data-year="<?php echo htmlspecialchars($script['year'] ?? ''); ?>">
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px;">
-                        <div style="flex: 1;">
-                            <h3 class="script-card-title"><?php echo htmlspecialchars($script['title']); ?></h3>
-                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                <span class="badge-modern" style="background: #f5f3ff; color: #7c3aed;">
-                                    <i class="fas fa-book"></i> <?php echo htmlspecialchars($script['subject']); ?>
-                                </span>
-                                <span class="badge-modern" style="background: #fff7ed; color: #ea580c;">
-                                    <i class="fas fa-graduation-cap"></i> Grade <?php echo htmlspecialchars($script['grade_level']); ?>
-                                </span>
-                                <?php if (!empty($script['year'])): ?>
-                                    <span class="badge-modern" style="background: #eff6ff; color: #2563eb;">
-                                        <i class="fas fa-calendar-alt"></i> <?php echo htmlspecialchars($script['year']); ?>
+                    <div class="script-card-landscape <?php echo $themeClass; ?>">
+                        <div class="sky"></div>
+                        <div class="sun"></div>
+                        <div class="hill hill-1"></div>
+                        <div class="hill hill-2"></div>
+                        <div class="ocean">
+                            <div class="reflection" style="width: 15px; height: 2px; top: 10%; left: 20%; clip-path: polygon(0% 0%, 100% 0%, 50% 100%);"></div>
+                            <div class="reflection" style="width: 25px; height: 4px; top: 30%; left: 35%; clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);"></div>
+                        </div>
+                        <div class="hill hill-3"></div>
+                        <div class="hill hill-4"></div>
+                        <div class="tree tree-1"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                        <div class="tree tree-2"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                        <div class="tree tree-3"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                        <div class="filter"></div>
+                    </div>
+                    <div class="script-card-content">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px;">
+                            <div style="flex: 1;">
+                                <h3 class="script-card-title"><?php echo htmlspecialchars($script['title']); ?></h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <span class="badge-modern" style="background: #f5f3ff; color: #7c3aed;">
+                                        <i class="fas fa-book"></i> <?php echo htmlspecialchars($script['subject']); ?>
                                     </span>
-                                <?php endif; ?>
-                                <?php if (!empty($script['paper'])): ?>
-                                    <span class="badge-modern" style="background: #fdf2f8; color: #db2777;">
-                                        <i class="fas fa-file-alt"></i> P<?php echo htmlspecialchars($script['paper']); ?>
+                                    <span class="badge-modern" style="background: #fff7ed; color: #ea580c;">
+                                        <i class="fas fa-graduation-cap"></i> Grade <?php echo htmlspecialchars($script['grade_level']); ?>
                                     </span>
-                                <?php endif; ?>
-                                <?php if (!empty($script['memorandum_file_path'])): ?>
-                                    <span class="badge-modern" style="background: #f0fdf4; color: #16a34a;">
-                                        <i class="fas fa-check-circle"></i> Memo
-                                    </span>
-                                <?php endif; ?>
+                                    <?php if (!empty($script['year'])): ?>
+                                        <span class="badge-modern" style="background: #eff6ff; color: #2563eb;">
+                                            <i class="fas fa-calendar-alt"></i> <?php echo htmlspecialchars($script['year']); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($script['paper'])): ?>
+                                        <span class="badge-modern" style="background: #fdf2f8; color: #db2777;">
+                                            <i class="fas fa-file-alt"></i> P<?php echo htmlspecialchars($script['paper']); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($script['memorandum_file_path'])): ?>
+                                        <span class="badge-modern" style="background: #f0fdf4; color: #16a34a;">
+                                            <i class="fas fa-check-circle"></i> Memo
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div style="width: 40px; height: 40px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 15px;">
+                                <i class="fas fa-file-pdf" style="font-size: 20px; color: #94a3b8;"></i>
                             </div>
                         </div>
-                        <div style="width: 40px; height: 40px; background: #f8fafc; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 15px;">
-                            <i class="fas fa-file-pdf" style="font-size: 20px; color: #94a3b8;"></i>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #f1f5f9; display: flex; gap: 12px;">
-                        <a href="/view-script/<?php echo $script['id']; ?>" target="_blank" style="flex: 1.5; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; transition: all 0.2s;">
-                            <i class="fas fa-eye"></i> View Script
-                        </a>
-                        <?php if (!empty($script['memorandum_file_path'])): ?>
-                            <a href="/download-memorandum/<?php echo $script['id']; ?>" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f8fafc; color: #475569; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.2s;">
-                                <i class="fas fa-file-download"></i> Memo
+                        
+                        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #f1f5f9; display: flex; gap: 12px;">
+                            <a href="/view-script/<?php echo $script['id']; ?>" target="_blank" style="flex: 1.5; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; transition: all 0.2s;">
+                                <i class="fas fa-eye"></i> View Script
                             </a>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <div style="margin-top: 15px; font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px; justify-content: center;">
-                        <i class="fas fa-clock-rotate-left"></i>
-                        Uploaded <?php echo date('M d, Y', strtotime($script['uploaded_at'])); ?>
+                            <?php if (!empty($script['memorandum_file_path'])): ?>
+                                <a href="/download-memorandum/<?php echo $script['id']; ?>" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f8fafc; color: #475569; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1px solid #e2e8f0; transition: all 0.2s;">
+                                    <i class="fas fa-file-download"></i> Memo
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div style="margin-top: 15px; font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px; justify-content: center;">
+                            <i class="fas fa-clock-rotate-left"></i>
+                            Uploaded <?php echo date('M d, Y', strtotime($script['uploaded_at'])); ?>
+                        </div>
                     </div>
                 </div>
             <?php endforeach; ?>

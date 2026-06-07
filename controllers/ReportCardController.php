@@ -221,8 +221,8 @@ class ReportCardController {
             // CRITICAL: Filter courses to only show what student actually qualifies for
             $courses = $this->filterCoursesByQualifications($courses, $gradesData);
 
-            // If we have fewer than 5 qualifying courses, supplement with appropriate ones
-            if (count($courses) < 5) {
+            // If we have fewer than 10 qualifying courses, supplement with appropriate ones
+            if (count($courses) < 10) {
                 $fallbackCourses = $this->getFallbackCoursesForAchievementLevel($gradesData, $recommendations['careers'] ?? []);
                 $courses = $this->mergeAndDeduplicateCourses($courses, $fallbackCourses);
             }
@@ -232,8 +232,8 @@ class ReportCardController {
                 $courses = $this->getFallbackCoursesForAchievementLevel($gradesData, $recommendations['careers'] ?? []);
             }
 
-            // Limit to top 5 courses
-            $courses = array_slice($courses, 0, 5);
+            // Limit to top 10 courses
+            $courses = array_slice($courses, 0, 10);
 
             $studentModel = new Student();
             $student = $studentModel->findByUserId($reportCard['user_id']);
@@ -360,12 +360,22 @@ class ReportCardController {
             exit;
         }
 
+        // Check if already reprocessed
+        if ($this->reportCardModel->isRegenerated($reportCardId)) {
+            setFlashMessage('error', 'You have already used your one-time regeneration for this report card.');
+            header('Location: /view-career-recommendations/' . $reportCardId);
+            exit;
+        }
+
         // Delete existing career recommendations
         $db = Database::getInstance()->getConnection();
         $db->prepare("DELETE FROM career_recommendations WHERE report_card_id = ?")->execute([$reportCardId]);
 
         // Reprocess the report card
         $this->processReportCard($reportCardId);
+
+        // Mark as regenerated
+        $this->reportCardModel->setRegenerated($reportCardId);
 
         setFlashMessage('success', 'Report card reprocessed successfully with AI-powered extraction!');
         header('Location: /view-career-recommendations/' . $reportCardId);
@@ -1093,25 +1103,33 @@ Return ONLY the JSON, no other text.'
      * Extract percentage from grade string
      */
     private function extractPercentageFromGrade($grade) {
+        if (empty($grade)) return 65;
+
         if (is_numeric($grade)) {
-            return floatval($grade);
+            $val = floatval($grade);
+            return ($val <= 7) ? $this->percentageToLevel($val) : $val; // Handle level vs percentage
         }
         
-        // Extract from percentage like "65%"
+        // Extract from percentage like "Level 5 (65%)" or "65%"
         if (preg_match('/(\d+)%/', $grade, $matches)) {
             return floatval($matches[1]);
         }
         
         // Extract number from "Level X" format
-        if (preg_match('/[Ll]evel\s*(\d+)/', $grade, $matches)) {
+        if (preg_match('/[Ll]evel\s*([1-7])/', $grade, $matches)) {
             $level = intval($matches[1]);
             $levelMap = [7 => 85, 6 => 75, 5 => 65, 4 => 55, 3 => 45, 2 => 35, 1 => 20];
             return $levelMap[$level] ?? 65;
         }
         
-        // Extract any number
+        // Extract any number - check if it's 1-7 (level) or 10-100 (percentage)
         if (preg_match('/(\d+)/', $grade, $matches)) {
-            return floatval($matches[1]);
+            $num = intval($matches[1]);
+            if ($num >= 1 && $num <= 7) {
+                $levelMap = [7 => 85, 6 => 75, 5 => 65, 4 => 55, 3 => 45, 2 => 35, 1 => 20];
+                return $levelMap[$num] ?? 65;
+            }
+            return floatval($num);
         }
         
         return 65; // Default

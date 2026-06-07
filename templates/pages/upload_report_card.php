@@ -723,18 +723,14 @@ let isFreeTierGlobal = false;
 
 // Show/hide loading overlay
 function showLoading(message) {
-    const overlay = document.getElementById('loadingOverlay');
-    const text = document.querySelector('.loading-text');
-    if (overlay) {
-        if (message) text.textContent = message;
-        overlay.classList.add('active');
+    if (typeof showLoader === 'function') {
+        showLoader(message);
     }
 }
 
 function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.remove('active');
+    if (typeof hideLoader === 'function') {
+        hideLoader();
     }
 }
 
@@ -1435,8 +1431,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
 
-            // Show loading overlay
-            showLoading('Uploading report card...');
+            // Show global 3D loader
+            if (typeof showLoader === 'function') {
+                showLoader('Uploading and analyzing your report card...');
+            }
         });
     }
 

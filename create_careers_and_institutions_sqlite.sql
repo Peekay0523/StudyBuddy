@@ -72,7 +72,27 @@ INSERT INTO careers (name, description, category, min_aps_score) VALUES
 ('Dentist', 'Medical professional specializing in oral health', 'Healthcare', 36),
 ('Data Scientist', 'Professional analyzing complex data', 'Technology', 30),
 ('Marketing Specialist', 'Professional promoting products and services', 'Commerce', 24),
-('Environmental Scientist', 'Scientist studying the environment', 'Sciences', 28);
+('Environmental Scientist', 'Scientist studying the environment', 'Sciences', 28),
+('Civil Engineer', 'Designs and oversees construction of infrastructure like roads and bridges', 'Engineering', 32),
+('Mechanical Engineer', 'Designs and builds mechanical systems and machinery', 'Engineering', 32),
+('Chemical Engineer', 'Develops chemical processes for manufacturing products', 'Engineering', 32),
+('Graphic Designer', 'Creates visual concepts to communicate ideas that inspire and inform', 'Media', 24),
+('UI/UX Designer', 'Focuses on the user experience and interface of digital products', 'Technology', 26),
+('Cybersecurity Analyst', 'Protects computer networks and systems from cyber attacks', 'Technology', 30),
+('Financial Analyst', 'Provides guidance to businesses and individuals making investment decisions', 'Commerce', 28),
+('Human Resources Manager', 'Coordinates the administrative functions of an organization', 'Commerce', 24),
+('Physiotherapist', 'Helps patients improve their physical movement and manage pain', 'Healthcare', 30),
+('Occupational Therapist', 'Helps patients develop, recover, and improve skills for daily living', 'Healthcare', 28),
+('Radiographer', 'Uses medical imaging equipment to help diagnose and treat illnesses', 'Healthcare', 26),
+('Biomedical Scientist', 'Conducts research to improve human health through laboratory tests', 'Sciences', 32),
+('Microbiologist', 'Studies microorganisms such as bacteria, viruses, and fungi', 'Sciences', 28),
+('Actuary', 'Uses mathematics and statistics to assess risk in insurance and finance', 'Commerce', 36),
+('Quantity Surveyor', 'Manages all costs relating to building and civil engineering projects', 'Engineering', 28),
+('Town Planner', 'Develops plans and programs for the use of land', 'Social Sciences', 26),
+('Aviation Pilot', 'Operates and controls aircraft to transport passengers or cargo', 'Media', 30),
+('Geologist', 'Studies the Earth, including its composition and structure', 'Sciences', 26),
+('Zoologist', 'Studies animals and their behavior, physiology, and ecosystems', 'Sciences', 26),
+('Animator', 'Creates multiple images, known as frames, to create an illusion of movement', 'Media', 22);
 
 -- Insert sample institutions
 INSERT INTO institutions (name, type, location, province, website) VALUES

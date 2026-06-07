@@ -260,11 +260,10 @@ foreach ($totalPages as $page) {
 <script>
 // Show loading overlay on page load
 window.addEventListener('load', function() {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    loadingOverlay.classList.add('active');
-    setTimeout(function() {
-        loadingOverlay.classList.remove('active');
-    }, 500);
+    if (typeof showLoader === 'function') {
+        showLoader('Loading SEO pages...');
+        setTimeout(hideLoader, 500);
+    }
 });
 
 // Show loading overlay when clicking links
@@ -273,8 +272,7 @@ document.addEventListener('click', function(e) {
     if (link && link.target !== '_blank' && !link.href.includes('#')) {
         const href = link.getAttribute('href');
         if (!href.includes('javascript') && !href.includes('mailto')) {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.classList.add('active');
+            if (typeof showLoader === 'function') showLoader();
         }
     }
 });

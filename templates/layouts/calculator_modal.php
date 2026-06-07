@@ -678,12 +678,12 @@ document.addEventListener('keydown', function(e) {
     font-family: Arial, sans-serif;
     min-height: 32px;
     position: relative;
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 4px 0px 0px rgba(0, 0, 0, 0.4);
 }
 
 .calc-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 2px 3px rgba(0, 0, 0, 0.3);
+    transform: translateY(4px) !important;
+    box-shadow: 0px 0px 0px 0px transparent !important;
 }
 
 .calc-shift-label {
@@ -805,7 +805,8 @@ document.addEventListener('keydown', function(e) {
     }
 
     .calc-btn:active {
-        transform: scale(0.95);
+        transform: translateY(4px) !important;
+        box-shadow: 0px 0px 0px 0px transparent !important;
     }
 
     .calc-shift-label {
@@ -954,7 +955,8 @@ document.addEventListener('keydown', function(e) {
     }
 
     .calc-btn:active {
-        transform: scale(0.95);
+        transform: translateY(4px) !important;
+        box-shadow: 0px 0px 0px 0px transparent !important;
         opacity: 0.8;
     }
 }

@@ -423,7 +423,7 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 
 @media (max-width: 768px) {
     .study-plan-fabs {
-        bottom: 20px;
+        bottom: 100px;
         right: 20px;
         gap: 12px;
     }
@@ -626,13 +626,6 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
 
         <!-- WhatsApp Style FABs -->
         <div class="study-plan-fabs">
-            <button id="reciteBtn" onclick="reciteStudyPlan()" class="fab-btn" title="AI Recite Study Plan">
-                <i class="fas fa-volume-up"></i>
-            </button>
-            <button id="stopReciteBtn" onclick="stopRecitation()" class="fab-btn" style="display: none;" title="Stop Recitation">
-                <i class="fas fa-stop"></i>
-            </button>
-            
             <?php if (!$hasReminders): ?>
                 <button id="calendarBtn" onclick="showCalendarModal()" class="fab-btn" title="Add to Calendar">
                     <i class="fas fa-calendar-plus"></i>
@@ -642,6 +635,13 @@ $isCompleted = isset($studyPlan['is_completed']) && $studyPlan['is_completed'];
                     <i class="fas fa-calendar-minus"></i>
                 </button>
             <?php endif; ?>
+
+            <button id="reciteBtn" onclick="reciteStudyPlan()" class="fab-btn" title="AI Recite Study Plan">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button id="stopReciteBtn" onclick="stopRecitation()" class="fab-btn" style="display: none;" title="Stop Recitation">
+                <i class="fas fa-stop"></i>
+            </button>
         </div>
 
         <!-- Calendar Start Date Modal -->

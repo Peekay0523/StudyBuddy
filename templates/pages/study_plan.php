@@ -111,12 +111,98 @@ $extraHead = <<<'HTML'
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
-    padding: 24px;
+    padding: 0;
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
-    min-height: 240px;
+    min-height: 280px;
+    overflow: hidden;
+}
+
+.plan-card-landscape {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+}
+
+.plan-card-landscape * { position: absolute; }
+
+.plan-card-landscape .sky { width: 100%; height: 100%; }
+.plan-card-landscape .sun { border-radius: 50%; width: 25px; height: 25px; }
+.plan-card-landscape .ocean { bottom: 0; width: 100%; height: 28%; overflow: hidden; }
+.plan-card-landscape .hill { border-radius: 50%; }
+.plan-card-landscape .reflection { background: white; opacity: 0.3; }
+.plan-card-landscape .tree { z-index: 3; }
+.plan-card-landscape .filter { height: 100%; width: 100%; z-index: 5; opacity: 0.2; background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 40%); }
+
+/* Summer Theme (Sunset) */
+.theme-summer .sky { background: linear-gradient(0deg, #f7e157 0%, #e96594 100%); }
+.theme-summer .sun { background: white; bottom: 35%; left: 15%; filter: drop-shadow(0px 0px 8px white); }
+.theme-summer .ocean { background: linear-gradient(0deg, #f1c07d 0%, #f7da96 100%); }
+.theme-summer .hill-1 { right: -15%; bottom: 20%; width: 80px; height: 25px; background-color: #e6b29d; }
+.theme-summer .hill-2 { right: -20%; bottom: 10%; width: 100px; height: 40px; background-color: #c29182; }
+.theme-summer .hill-3 { left: -10%; bottom: -15%; width: 120px; height: 60px; background-color: #b77873; z-index: 3; }
+.theme-summer .hill-4 { right: -10%; bottom: -20%; width: 120px; height: 60px; background-color: #a16773; z-index: 3; }
+.theme-summer .tree svg { fill: #b77873; }
+
+/* Night Theme (Moonlight) */
+.theme-night .sky { background: linear-gradient(0deg, #0f172a 0%, #1e1b4b 100%); }
+.theme-night .sun { background: #f1f5f9; bottom: 50%; left: 70%; filter: drop-shadow(0px 0px 8px #fff); width: 18px; height: 18px; }
+.theme-night .sun::after { content: ""; position: absolute; width: 14px; height: 14px; background: #1e1b4b; border-radius: 50%; left: 6px; top: -2px; }
+.theme-night .ocean { background: linear-gradient(0deg, #020617 0%, #1e293b 100%); opacity: 0.8; }
+.theme-night .hill-1 { right: -15%; bottom: 20%; width: 80px; height: 25px; background-color: #334155; }
+.theme-night .hill-2 { right: -20%; bottom: 10%; width: 100px; height: 40px; background-color: #1e293b; }
+.theme-night .hill-3 { left: -10%; bottom: -15%; width: 120px; height: 60px; background-color: #0f172a; z-index: 3; }
+.theme-night .hill-4 { right: -10%; bottom: -20%; width: 120px; height: 60px; background-color: #020617; z-index: 3; }
+.theme-night .tree svg { fill: #0f172a; }
+.theme-night .filter { background: linear-gradient(0deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0) 60%); }
+
+/* Winter Theme (Snowy) */
+.theme-winter .sky { background: linear-gradient(0deg, #e2e8f0 0%, #94a3b8 100%); }
+.theme-winter .sun { background: #fff; bottom: 60%; left: 20%; opacity: 0.5; filter: blur(4px); }
+.theme-winter .ocean { background: linear-gradient(0deg, #f1f5f9 0%, #cbd5e1 100%); }
+.theme-winter .hill-1 { right: -15%; bottom: 20%; width: 80px; height: 25px; background-color: #cbd5e1; }
+.theme-winter .hill-2 { right: -20%; bottom: 10%; width: 100px; height: 40px; background-color: #94a3b8; }
+.theme-winter .hill-3 { left: -10%; bottom: -15%; width: 120px; height: 60px; background-color: #f8fafc; z-index: 3; border-top: 1px solid #e2e8f0; }
+.theme-winter .hill-4 { right: -10%; bottom: -20%; width: 120px; height: 60px; background-color: #ffffff; z-index: 3; border-top: 1px solid #f1f5f9; }
+.theme-winter .tree svg { fill: #94a3b8; }
+.theme-winter .filter { background: linear-gradient(0deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%); }
+
+/* Autumn Theme (Fall) */
+.theme-autumn .sky { background: linear-gradient(0deg, #fed7aa 0%, #ea580c 100%); }
+.theme-autumn .sun { background: #fef3c7; bottom: 40%; left: 75%; opacity: 0.4; }
+.theme-autumn .ocean { background: linear-gradient(0deg, #7c2d12 0%, #9a3412 100%); opacity: 0.4; }
+.theme-autumn .hill-1 { right: -15%; bottom: 20%; width: 80px; height: 25px; background-color: #9a3412; }
+.theme-autumn .hill-2 { right: -20%; bottom: 10%; width: 100px; height: 40px; background-color: #7c2d12; }
+.theme-autumn .hill-3 { left: -10%; bottom: -15%; width: 120px; height: 60px; background-color: #431407; z-index: 3; }
+.theme-autumn .hill-4 { right: -10%; bottom: -20%; width: 120px; height: 60px; background-color: #451a03; z-index: 3; }
+.theme-autumn .tree svg { fill: #7c2d12; }
+
+/* Forest Theme (Deep Green) */
+.theme-forest .sky { background: linear-gradient(0deg, #bbf7d0 0%, #22c55e 100%); }
+.theme-forest .sun { background: #fef9c3; bottom: 65%; left: 10%; opacity: 0.3; }
+.theme-forest .ocean { background: linear-gradient(0deg, #064e3b 0%, #065f46 100%); opacity: 0.3; }
+.theme-forest .hill-1 { right: -15%; bottom: 20%; width: 80px; height: 25px; background-color: #166534; }
+.theme-forest .hill-2 { right: -20%; bottom: 10%; width: 100px; height: 40px; background-color: #14532d; }
+.theme-forest .hill-3 { left: -10%; bottom: -15%; width: 120px; height: 60px; background-color: #064e3b; z-index: 3; }
+.theme-forest .hill-4 { right: -10%; bottom: -20%; width: 120px; height: 60px; background-color: #022c22; z-index: 3; }
+.theme-forest .tree svg { fill: #064e3b; }
+.theme-forest .filter { background: linear-gradient(0deg, rgba(20,83,45,0.2) 0%, rgba(20,83,45,0) 60%); }
+
+/* Tree Positions */
+.tree-1 { bottom: 15%; left: 5%; width: 25px; height: 35px; }
+.tree-2 { bottom: 10%; left: 20%; width: 25px; height: 35px; }
+.tree-3 { bottom: 5%; right: 5%; width: 30px; height: 40px; }
+
+.plan-card-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    z-index: 6;
+    background: white;
 }
 
 .plan-card:hover {
@@ -129,19 +215,19 @@ $extraHead = <<<'HTML'
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .plan-icon-wrapper {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     background: #f5f3ff;
     color: #7c3aed;
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
@@ -1029,40 +1115,69 @@ details[open] summary i.fa-chevron-down {
         <i class="fas fa-book" style="color: #7c3aed;"></i> Your Study Plans
     </h2>
     <div class="study-plan-grid">
-        <?php foreach ($studyPlans as $plan): ?>
+        <?php 
+        $themes = ['summer', 'night', 'winter', 'autumn', 'forest'];
+        foreach ($studyPlans as $index => $plan): 
+            $themeClass = 'theme-' . $themes[$plan['id'] % count($themes)];
+        ?>
             <div class="plan-card">
-                <div class="plan-card-header">
-                    <div class="plan-icon-wrapper">
-                        <i class="fas fa-graduation-cap"></i>
+                <div class="plan-card-landscape <?php echo $themeClass; ?>">
+                    <div class="sky"></div>
+                    <div class="sun"></div>
+                    <div class="hill hill-1"></div>
+                    <div class="hill hill-2"></div>
+                    <div class="ocean">
+                        <div class="reflection" style="width: 20px; height: 3px; top: 10%; left: 25%; clip-path: polygon(0% 0%, 100% 0%, 50% 100%);"></div>
+                        <div class="reflection" style="width: 30px; height: 5px; top: 25%; left: 30%; clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);"></div>
+                        <div class="reflection" style="width: 25px; height: 2px; top: 45%; right: 15%; clip-path: polygon(0% 50%, 40% 0%, 60% 0%, 100% 50%, 60% 100%, 40% 100%);"></div>
                     </div>
-                    <div style="flex: 1;">
-                        <h3 class="plan-card-title"><?php echo htmlspecialchars($plan['title']); ?></h3>
+                    <div class="hill hill-3"></div>
+                    <div class="hill hill-4"></div>
+                    <div class="tree tree-1">
+                        <svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg>
                     </div>
+                    <div class="tree tree-2">
+                        <svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg>
+                    </div>
+                    <div class="tree tree-3">
+                        <svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg>
+                    </div>
+                    <div class="filter"></div>
                 </div>
-                
-                <div class="plan-card-body">
-                    <p class="plan-preview">
-                        <?php echo htmlspecialchars(substr($plan['content'], 0, 120)); ?>...
-                    </p>
-                </div>
+                <div class="plan-card-content">
+                    <div class="plan-card-header">
+                        <div class="plan-icon-wrapper">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 class="plan-card-title"><?php echo htmlspecialchars($plan['title']); ?></h3>
+                        </div>
+                    </div>
+                    
+                    <div class="plan-card-body">
+                        <p class="plan-preview">
+                            <?php echo htmlspecialchars(substr($plan['content'], 0, 120)); ?>...
+                        </p>
+                    </div>
 
-                <div class="plan-card-meta">
-                    <span><i class="fas fa-calendar-alt"></i> <?php echo date('M d, Y', strtotime($plan['created_at'])); ?></span>
-                    <?php if (isset($plan['shared_count']) && $plan['shared_count'] > 0): ?>
-                        <span><i class="fas fa-share-alt"></i> Shared <?php echo $plan['shared_count']; ?></span>
-                    <?php endif; ?>
-                </div>
+                    <div class="plan-card-meta">
+                        <span><i class="fas fa-calendar-alt"></i> <?php echo date('M d, Y', strtotime($plan['created_at'])); ?></span>
+                        <?php if (isset($plan['shared_count']) && $plan['shared_count'] > 0): ?>
+                            <span><i class="fas fa-share-alt"></i> Shared <?php echo $plan['shared_count']; ?></span>
+                        <?php endif; ?>
+                    </div>
 
-                <div class="plan-actions-overlay">
-                    <a href="/view-study-plan/<?php echo $plan['id']; ?>" class="btn-card-action btn-card-view">
-                        <i class="fas fa-eye"></i> View
-                    </a>
-                    <button class="btn-card-action btn-card-danger delete-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>" style="background: #fee2e2; color: #ef4444;">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                    <button class="btn-card-action btn-card-reminder add-reminder-to-plan" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
-                        <i class="fas fa-bell"></i> Remind
-                    </button>
+                    <div class="plan-actions-overlay">
+                        <a href="/view-study-plan/<?php echo $plan['id']; ?>" class="btn-card-action btn-card-view">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <button class="btn-card-action btn-card-danger delete-plan-btn" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>" style="background: #fee2e2; color: #ef4444;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                        <button class="btn-card-action btn-card-reminder add-reminder-to-plan" data-id="<?php echo $plan['id']; ?>" data-title="<?php echo htmlspecialchars($plan['title']); ?>">
+                            <i class="fas fa-bell"></i> Remind
+                        </button>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -1333,15 +1448,15 @@ let currentMonth = new Date().getMonth() + 1;
 let calendarData = {};
 
 function showLoading(message) {
-    const overlay = document.getElementById('loadingOverlay');
-    const text = overlay.querySelector('.loading-text');
-    if (text) text.textContent = message;
-    if (overlay) overlay.classList.add('active');
+    if (typeof showLoader === 'function') {
+        showLoader(message);
+    }
 }
 
 function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.classList.remove('active');
+    if (typeof hideLoader === 'function') {
+        hideLoader();
+    }
 }
 
 async function loadCalendarData(year, month) {

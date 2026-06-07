@@ -361,11 +361,10 @@ convertBtn.addEventListener('click', async () => {
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
     
-    // Show loading overlay
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = loadingOverlay.querySelector('.loading-text');
-    if (loadingText) loadingText.textContent = 'Converting to PDF...';
-    if (loadingOverlay) loadingOverlay.classList.add('active');
+    // Show global 3D loader
+    if (typeof showLoader === 'function') {
+        showLoader('Converting your images to PDF...');
+    }
 
     const formData = new FormData();
     selectedImages.forEach((file, index) => {
@@ -417,8 +416,8 @@ convertBtn.addEventListener('click', async () => {
             console.log('currentScanId is now:', currentScanId);
             console.log('currentScanId truthy?:', !!currentScanId);
             
-            // Hide loading overlay
-            if (loadingOverlay) loadingOverlay.classList.remove('active');
+            // Hide global 3D loader
+            if (typeof hideLoader === 'function') hideLoader();
         } else {
             console.error('API returned success=false:', data.error);
             throw new Error(data.error || 'Conversion failed');
@@ -429,8 +428,8 @@ convertBtn.addEventListener('click', async () => {
         processingSection.style.display = 'none';
         previewSection.style.display = 'block';
         
-        // Hide loading overlay on error
-        if (loadingOverlay) loadingOverlay.classList.remove('active');
+        // Hide global 3D loader
+        if (typeof hideLoader === 'function') hideLoader();
     }
 });
 
@@ -455,11 +454,10 @@ convertBwBtn.addEventListener('click', async () => {
     previewSection.style.display = 'none';
     processingSection.style.display = 'block';
     
-    // Show loading overlay
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = loadingOverlay.querySelector('.loading-text');
-    if (loadingText) loadingText.textContent = 'Converting to B&W PDF...';
-    if (loadingOverlay) loadingOverlay.classList.add('active');
+    // Show global 3D loader
+    if (typeof showLoader === 'function') {
+        showLoader('Converting to B&W PDF...');
+    }
 
     const formData = new FormData();
     selectedImages.forEach((file, index) => {
@@ -492,8 +490,8 @@ convertBwBtn.addEventListener('click', async () => {
             currentScanId = data.scan_id;
             console.log('currentScanId set to:', currentScanId);
             
-            // Hide loading overlay
-            if (loadingOverlay) loadingOverlay.classList.remove('active');
+            // Hide global 3D loader
+            if (typeof hideLoader === 'function') hideLoader();
         } else {
             throw new Error(data.error || 'Conversion failed');
         }
@@ -503,8 +501,8 @@ convertBwBtn.addEventListener('click', async () => {
         processingSection.style.display = 'none';
         previewSection.style.display = 'block';
         
-        // Hide loading overlay on error
-        if (loadingOverlay) loadingOverlay.classList.remove('active');
+        // Hide global 3D loader
+        if (typeof hideLoader === 'function') hideLoader();
     }
 });
 

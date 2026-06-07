@@ -479,48 +479,59 @@ Content to process: " . substr($content, 0, 8000)]
     /**
      * Calculate APS (Admission Point Score) from grades
      * South African NSC APS calculation
+     * Standard: Best 6 subjects excluding Life Orientation
      */
     private function calculateAPS($gradesData) {
-        $total = 0;
-        $count = 0;
+        $pointsList = [];
         
         foreach ($gradesData as $subject => $grade) {
             // Skip Life Orientation for APS (doesn't count for most universities)
-            if (stripos($subject, 'Life Orientation') !== false || stripos($subject, 'LO') !== false) {
+            if (stripos($subject, 'Life Orientation') !== false || 
+                stripos($subject, 'LO') === 0 || 
+                $subject === 'LO') {
                 continue;
             }
             
             $percentage = $this->extractPercentage($grade);
             $points = $this->percentageToAPSPoints($percentage);
-            $total += $points;
-            $count++;
+            $pointsList[] = $points;
         }
         
-        return $count > 0 ? $total : 0;
+        // Sort points in descending order and take the top 6
+        rsort($pointsList);
+        $top6 = array_slice($pointsList, 0, 6);
+        
+        return array_sum($top6);
     }
     
     /**
      * Extract percentage from grade string
      */
     private function extractPercentage($grade) {
-        // Handle percentage format like "75%"
+        if (empty($grade)) return 0;
+
+        // Handle string format like "Level 5 (65%)" or "65%"
+        if (preg_match('/(\d+)%/', $grade, $matches)) {
+            return intval($matches[1]);
+        }
+        
+        // Handle explicit "Level X" format
+        if (preg_match('/[Ll]evel\s*([1-7])/', $grade, $matches)) {
+            $level = intval($matches[1]);
+            return $this->levelToPercentage($level);
+        }
+
+        // If it's just a number 1-7, it might be a level
+        if (is_numeric($grade) && intval($grade) >= 1 && intval($grade) <= 7) {
+            return $this->levelToPercentage(intval($grade));
+        }
+        
+        // Handle any other number as a percentage
         if (preg_match('/(\d+)/', $grade, $matches)) {
             return intval($matches[1]);
         }
         
-        // Handle level format like "Level 5" or just "5"
-        if (preg_match('/[Ll]evel\s*(\d+)/', $grade, $matches)) {
-            $level = intval($matches[1]);
-            return $this->levelToPercentage($level);
-        }
-        
-        // Handle range like "70-79%"
-        if (preg_match('/(\d+)-(\d+)/', $grade, $matches)) {
-            return intval(($matches[1] + $matches[2]) / 2);
-        }
-        
-        // Default to 65% if can't parse
-        return 65;
+        return 0;
     }
     
     /**
@@ -659,18 +670,18 @@ Content to process: " . substr($content, 0, 8000)]
             
             Theme: {$careerTheme}
 
-            CRITICAL: RECOMMEND EXACTLY 5 COURSES AND EXACTLY 10 INSTITUTIONS.
+            CRITICAL: RECOMMEND EXACTLY 10 COURSES AND EXACTLY 10 INSTITUTIONS.
 
             THINK STEP-BY-STEP:
             1. Convert percentages to NSC Levels (1-7).
             2. Compare levels and APS against South African university/college requirements.
             3. Identify high-growth careers relevant to these marks.
-            4. Select 5 diverse but realistic courses.
+            4. Select 10 diverse but realistic courses.
             5. Select 10 specific institutions where the student has a realistic chance of admission.
 
             RETURN ONLY A JSON OBJECT with this structure:
             {
-                \"careers\": [\"Career 1\", \"Career 2\", \"Career 3\", \"Career 4\", \"Career 5\"],
+                \"careers\": [\"Career 1\", \"Career 2\", ..., \"Career 10\"],
                 \"courses\": [
                     {
                         \"name\": \"Course Name\",
@@ -704,7 +715,7 @@ Content to process: " . substr($content, 0, 8000)]
             }
 
             STRICT RULES:
-            - Exactly 5 items in 'careers' and 'courses'.
+            - Exactly 10 items in 'careers' and 'courses'.
             - Exactly 10 items in 'recommended_institutions'.
             - Course suitability_score should be 0-100.
             - Ensure institutions are geographically reasonable for South Africa.
@@ -715,7 +726,7 @@ Content to process: " . substr($content, 0, 8000)]
             Return ONLY the raw JSON."]
         ];
 
-        $response = $this->makeRequest($messages, 2000, 0.4);
+        $response = $this->makeRequest($messages, 3000, 0.4);
 
         if ($response) {
             $jsonMatch = [];
@@ -724,10 +735,10 @@ Content to process: " . substr($content, 0, 8000)]
                 if ($parsed) {
                     // Enrich and format for the UI
                     return [
-                        'careers' => array_slice($parsed['careers'] ?? [], 0, 5),
+                        'careers' => array_slice($parsed['careers'] ?? [], 0, 10),
                         'strengths' => $parsed['strengths'] ?? array_keys($gradesData),
                         'areas_for_improvement' => $parsed['areas_for_improvement'] ?? [],
-                        'courses' => array_slice($parsed['courses'] ?? [], 0, 5),
+                        'courses' => array_slice($parsed['courses'] ?? [], 0, 10),
                         'institutions' => array_slice($parsed['recommended_institutions'] ?? [], 0, 10),
                         'bursaries' => $parsed['bursaries'] ?? [],
                         'aps' => $aps

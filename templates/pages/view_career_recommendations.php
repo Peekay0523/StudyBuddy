@@ -221,10 +221,10 @@ html, body {
 
 .inst-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
     width: 100%;
-    align-items: center;
+    justify-content: center;
     margin-top: auto;
 }
 
@@ -301,7 +301,7 @@ html, body {
         flex: 1 1 calc(50% - 10px) !important;
         max-width: calc(50% - 5px) !important;
         min-width: 0 !important;
-        padding: 12px 10px !important;
+        padding: 0 !important;
         border-radius: 16px !important;
         margin: 0 !important;
         box-sizing: border-box !important;
@@ -506,6 +506,81 @@ html, body {
     border-radius: 0 12px 12px 0;
     margin-top: 10px;
 }
+
+/* Institution Card Landscape Themes */
+.institution-card-landscape {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    overflow: hidden;
+    margin-bottom: 0;
+    border-radius: 16px 16px 0 0;
+}
+
+.institution-card-landscape * { position: absolute; }
+
+.institution-card-landscape .sky { width: 100%; height: 100%; }
+.institution-card-landscape .sun { border-radius: 50%; width: 20px; height: 20px; }
+.institution-card-landscape .ocean { bottom: 0; width: 100%; height: 25%; overflow: hidden; }
+.institution-card-landscape .hill { border-radius: 50%; }
+.institution-card-landscape .reflection { background: white; opacity: 0.3; }
+.institution-card-landscape .tree { z-index: 3; bottom: 5%; }
+.institution-card-landscape .filter { height: 100%; width: 100%; z-index: 5; opacity: 0.2; background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 40%); }
+
+/* Theme Variants */
+.theme-summer .sky { background: linear-gradient(0deg, #f7e157 0%, #e96594 100%); }
+.theme-summer .sun { background: white; bottom: 35%; left: 15%; filter: drop-shadow(0px 0px 8px white); }
+.theme-summer .ocean { background: linear-gradient(0deg, #f1c07d 0%, #f7da96 100%); }
+.theme-summer .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #e6b29d; }
+.theme-summer .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #c29182; }
+.theme-summer .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #b77873; z-index: 3; }
+.theme-summer .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #a16773; z-index: 3; }
+.theme-summer .tree svg { fill: #b77873; }
+
+.theme-night .sky { background: linear-gradient(0deg, #0f172a 0%, #1e1b4b 100%); }
+.theme-night .sun { background: #f1f5f9; bottom: 50%; left: 70%; filter: drop-shadow(0px 0px 8px #fff); width: 15px; height: 15px; }
+.theme-night .sun::after { content: ""; position: absolute; width: 12px; height: 12px; background: #1e1b4b; border-radius: 50%; left: 5px; top: -2px; }
+.theme-night .ocean { background: linear-gradient(0deg, #020617 0%, #1e293b 100%); opacity: 0.8; }
+.theme-night .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #334155; }
+.theme-night .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #1e293b; }
+.theme-night .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #0f172a; z-index: 3; }
+.theme-night .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #020617; z-index: 3; }
+.theme-night .tree svg { fill: #0f172a; }
+.theme-night .filter { background: linear-gradient(0deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0) 60%); }
+
+.theme-winter .sky { background: linear-gradient(0deg, #e2e8f0 0%, #94a3b8 100%); }
+.theme-winter .sun { background: #fff; bottom: 60%; left: 20%; opacity: 0.5; filter: blur(4px); }
+.theme-winter .ocean { background: linear-gradient(0deg, #f1f5f9 0%, #cbd5e1 100%); }
+.theme-winter .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #cbd5e1; }
+.theme-winter .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #94a3b8; }
+.theme-winter .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #f8fafc; z-index: 3; border-top: 1px solid #e2e8f0; }
+.theme-winter .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #ffffff; z-index: 3; border-top: 1px solid #f1f5f9; }
+.theme-winter .tree svg { fill: #94a3b8; }
+.theme-winter .filter { background: linear-gradient(0deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%); }
+
+.theme-autumn .sky { background: linear-gradient(0deg, #fed7aa 0%, #ea580c 100%); }
+.theme-autumn .sun { background: #fef3c7; bottom: 40%; left: 75%; opacity: 0.4; }
+.theme-autumn .ocean { background: linear-gradient(0deg, #7c2d12 0%, #9a3412 100%); opacity: 0.4; }
+.theme-autumn .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #9a3412; }
+.theme-autumn .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #7c2d12; }
+.theme-autumn .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #431407; z-index: 3; }
+.theme-autumn .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #451a03; z-index: 3; }
+.theme-autumn .tree svg { fill: #7c2d12; }
+
+.theme-forest .sky { background: linear-gradient(0deg, #bbf7d0 0%, #22c55e 100%); }
+.theme-forest .sun { background: #fef9c3; bottom: 65%; left: 10%; opacity: 0.3; }
+.theme-forest .ocean { background: linear-gradient(0deg, #064e3b 0%, #065f46 100%); opacity: 0.3; }
+.theme-forest .hill-1 { right: -15%; bottom: 20%; width: 60px; height: 20px; background-color: #166534; }
+.theme-forest .hill-2 { right: -20%; bottom: 10%; width: 80px; height: 30px; background-color: #14532d; }
+.theme-forest .hill-3 { left: -10%; bottom: -15%; width: 100px; height: 50px; background-color: #064e3b; z-index: 3; }
+.theme-forest .hill-4 { right: -10%; bottom: -20%; width: 100px; height: 50px; background-color: #022c22; z-index: 3; }
+.theme-forest .tree svg { fill: #064e3b; }
+.theme-forest .filter { background: linear-gradient(0deg, rgba(20,83,45,0.2) 0%, rgba(20,83,45,0) 60%); }
+
+/* Tree Positions */
+.tree-1 { bottom: 15%; left: 5%; width: 18px; height: 26px; }
+.tree-2 { bottom: 10%; left: 20%; width: 15px; height: 22px; }
+.tree-3 { bottom: 5%; right: 5%; width: 22px; height: 30px; }
 </style>
 EOT;
 
@@ -835,9 +910,16 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
     <div class="recommendation-card">
         <div class="card-header">
             <h3><i class="fas fa-compass"></i> Recommended Careers</h3>
-            <button id="speech-btn-careers" class="btn-primary btn-sm" onclick="toggleSpeech('careers')">
-                <i class="fas fa-volume-high"></i> Recite
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <?php if (!($reportCard['career_recommendations_regenerated'] ?? 0)): ?>
+                <button onclick="reprocessReportCard()" class="btn-primary btn-sm" style="background: linear-gradient(135deg, #10b981, #059669); border: none;">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate New
+                </button>
+                <?php endif; ?>
+                <button id="speech-btn-careers" class="btn-primary btn-sm" onclick="toggleSpeech('careers')">
+                    <i class="fas fa-volume-high"></i> Recite
+                </button>
+            </div>
         </div>
         <div id="careers" class="card-content">
             <?php if (!empty($careerRec['recommended_careers'])): ?>
@@ -1109,6 +1191,7 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
         <div class="card-content">
             <div class="institutions-grid">
                 <?php
+                $themes = ['summer', 'night', 'winter', 'autumn', 'forest'];
                 $institutions = !empty($careerRec['institutions']) ? $careerRec['institutions'] : [
                     ['name' => 'University of Cape Town', 'type' => 'Public', 'website' => 'https://www.uct.ac.za', 'aps_required' => 30, 'reason' => 'Top ranked university in Africa', 'admission_likelihood' => 'Moderate'],
                     ['name' => 'Wits University', 'type' => 'Public', 'website' => 'https://www.wits.ac.za', 'aps_required' => 28, 'reason' => 'Excellent research facilities', 'admission_likelihood' => 'Moderate'],
@@ -1121,12 +1204,13 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                     ['name' => 'Cape Peninsula University of Technology', 'type' => 'Public', 'website' => 'https://www.cput.ac.za', 'aps_required' => 20, 'reason' => 'Innovation-led technical university', 'admission_likelihood' => 'High'],
                     ['name' => 'North-West University', 'type' => 'Public', 'website' => 'https://www.nwu.ac.za', 'aps_required' => 24, 'reason' => 'Strong community and student life', 'admission_likelihood' => 'High'],
                 ];
-                foreach ($institutions as $inst):
+                foreach ($institutions as $idx => $inst):
                     $instName = is_array($inst) ? ($inst['name'] ?? 'Unknown') : $inst;
                     $instType = is_array($inst) ? ($inst['type'] ?? 'Public') : 'Public';
                     $instAps = is_array($inst) ? ($inst['aps_required'] ?? 24) : 24;
                     $instReason = is_array($inst) ? ($inst['reason'] ?? null) : null;
                     $instWebsite = is_array($inst) ? ($inst['website'] ?? null) : null;
+                    $themeClass = 'theme-' . $themes[$idx % count($themes)];
 
                     // Prediction for general entry
                     $prediction = calculateAdmissionProbability(
@@ -1139,53 +1223,71 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                     );
                 ?>
                     <div class="institution-card">
-                        <h4>
-                            <?php echo htmlspecialchars($instName); ?>
-                            <span class="aps-badge-inline">
-                                APS <?php echo $instAps; ?>
-                            </span>
-                        </h4>
-                        <span class="institution-type"><?php echo htmlspecialchars($instType); ?></span>
-                        
-                        <?php if ($instReason): ?>
-                            <p class="inst-reason">
-                                <?php echo htmlspecialchars($instReason); ?>
-                            </p>
-                        <?php endif; ?>
-
-                        <!-- Admission Probability Badge -->
-                        <div class="prob-badge likelihood-indicator">
-                            <i class="fas fa-chart-pie"></i>
-                            <span><?php echo $prediction['percent']; ?>% Likelihood</span>
+                        <div class="institution-card-landscape <?php echo $themeClass; ?>">
+                            <div class="sky"></div>
+                            <div class="sun"></div>
+                            <div class="hill hill-1"></div>
+                            <div class="hill hill-2"></div>
+                            <div class="ocean">
+                                <div class="reflection" style="width: 15px; height: 2px; top: 10%; left: 20%; clip-path: polygon(0% 0%, 100% 0%, 50% 100%);"></div>
+                                <div class="reflection" style="width: 25px; height: 4px; top: 30%; left: 35%; clip-path: polygon(0% 0%, 100% 0%, 60% 100%, 40% 100%);"></div>
+                            </div>
+                            <div class="hill hill-3"></div>
+                            <div class="hill hill-4"></div>
+                            <div class="tree tree-1"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                            <div class="tree tree-2"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                            <div class="tree tree-3"><svg viewBox="0 0 64 64"><path d="M32,0C18.148,0,12,23.188,12,32c0,9.656,6.883,17.734,16,19.594V60c0,2.211,1.789,4,4,4s4-1.789,4-4v-8.406 C45.117,49.734,52,41.656,52,32C52,22.891,46.051,0,32,0z"></path></svg></div>
+                            <div class="filter"></div>
                         </div>
-
-                        <div class="inst-actions">
-                            <?php if ($instWebsite): ?>
-                                <a href="<?php echo htmlspecialchars($instWebsite); ?>" target="_blank" class="btn-visit">
-                                    <i class="fas fa-external-link-alt"></i> Visit Website
-                                </a>
-                            <?php elseif (is_string($inst)): ?>
-                                <a href="https://www.google.com/search?q=<?php echo urlencode($instName); ?>" target="_blank" class="btn-visit">
-                                    <i class="fas fa-search"></i> Search Info
-                                </a>
-                            <?php endif; ?>
+                        <div class="institution-card-content" style="padding: 20px; display: flex; flex-direction: column; flex: 1;">
+                            <h4>
+                                <?php echo htmlspecialchars($instName); ?>
+                                <span class="aps-badge-inline">
+                                    APS <?php echo $instAps; ?>
+                                </span>
+                            </h4>
+                            <span class="institution-type"><?php echo htmlspecialchars($instType); ?></span>
                             
-                            <button type="button" class="btn-improve" onclick='showImprovementAdvice(
-                                <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
-                                "General Admission", 
-                                <?php echo $instAps; ?>, 
-                                "[]",
-                                <?php echo $careerRec['aps'] ?? 0; ?>,
-                                <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? "12"), ENT_QUOTES); ?>,
-                                <?php echo htmlspecialchars(json_encode($reportCard['term'] ?? "1"), ENT_QUOTES); ?>,
-                                <?php echo htmlspecialchars(json_encode($reportCard['grades_data'] ?? []), ENT_QUOTES); ?>
-                            )'>
-                                <i class="fas fa-wand-magic-sparkles"></i> Improve Chances
-                            </button>
+                            <?php if ($instReason): ?>
+                                <p class="inst-reason">
+                                    <?php echo htmlspecialchars($instReason); ?>
+                                </p>
+                            <?php endif; ?>
 
-                            <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($instName); ?>', '<?php echo htmlspecialchars($instType); ?>')" class="btn-applied">
-                                <i class="fas fa-check-circle"></i> Applied
-                            </button>
+                            <!-- Admission Probability Badge -->
+                            <div class="prob-badge likelihood-indicator">
+                                <i class="fas fa-chart-pie"></i>
+                                <span><?php echo $prediction['percent']; ?>% Likelihood</span>
+                            </div>
+
+                            <div class="inst-actions">
+                                <?php if ($instWebsite): ?>
+                                    <a href="<?php echo htmlspecialchars($instWebsite); ?>" target="_blank" class="btn-visit" title="Visit Website">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                <?php elseif (is_string($inst)): ?>
+                                    <a href="https://www.google.com/search?q=<?php echo urlencode($instName); ?>" target="_blank" class="btn-visit" title="Search Info">
+                                        <i class="fas fa-search"></i>
+                                    </a>
+                                <?php endif; ?>
+                                
+                                <button type="button" class="btn-improve" onclick='showImprovementAdvice(
+                                    <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
+                                    "General Admission", 
+                                    <?php echo $instAps; ?>, 
+                                    "[]",
+                                    <?php echo $careerRec['aps'] ?? 0; ?>,
+                                    <?php echo htmlspecialchars(json_encode($reportCard['grade'] ?? "12"), ENT_QUOTES); ?>,
+                                    <?php echo htmlspecialchars(json_encode($reportCard['term'] ?? "1"), ENT_QUOTES); ?>,
+                                    <?php echo htmlspecialchars(json_encode($reportCard['grades_data'] ?? []), ENT_QUOTES); ?>
+                                )' title="Improve Chances">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                </button>
+
+                                <button type="button" onclick="markInstitutionAsApplied(<?php echo $reportCard['id']; ?>, '<?php echo htmlspecialchars($instName); ?>', '<?php echo htmlspecialchars($instType); ?>')" class="btn-applied" title="Applied">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -1599,7 +1701,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .institution-card {
     background: white;
-    padding: 24px;
+    padding: 0;
     border-radius: 20px;
     text-align: center;
     border: 1px solid #e5e7eb;
@@ -1608,6 +1710,7 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .institution-card:hover {
@@ -1677,33 +1780,28 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 600px;
     margin: 0 auto;
 }
-
 .no-recommendations-content i {
     font-size: 64px;
     color: #667eea;
     margin-bottom: 20px;
     display: block;
 }
-
 .no-recommendations-content h3 {
     color: #1f2937;
     margin-bottom: 15px;
     font-size: 24px;
 }
-
 .no-recommendations-content p {
     color: #6b7280;
     margin-bottom: 30px;
     font-size: 16px;
 }
-
 .no-recommendations-actions {
     display: flex;
     gap: 15px;
     justify-content: center;
     flex-wrap: wrap;
 }
-
 /* Mark as Applied Button */
 .btn-applied {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -1722,21 +1820,17 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration: none;
     width: 100%;
 }
-
 .btn-applied:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
-
 .btn-applied:active {
     transform: translateY(0);
 }
-
 .btn-applied.applied {
     background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     cursor: not-allowed;
 }
-
 .btn-applied.applied:hover {
     transform: none;
     box-shadow: none;

@@ -64,9 +64,9 @@ class AIRouter {
     /**
      * Route career recommendations
      */
-    public function generateCareerRecommendations($gradesData) {
+    public function generateCareerRecommendations($gradesData, $excludeCareers = []) {
         // Career recommendations are complex - use OpenAI
-        return $this->openAIHelper->generateCareerRecommendations($gradesData);
+        return $this->openAIHelper->generateCareerRecommendations($gradesData, $excludeCareers);
     }
     
     /**

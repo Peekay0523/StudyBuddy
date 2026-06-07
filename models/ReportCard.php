@@ -52,6 +52,18 @@ class ReportCard {
         $stmt->execute([json_encode($gradesData), $id]);
         return true;
     }
+
+    public function setRegenerated($id) {
+        $stmt = $this->db->prepare("UPDATE report_cards SET career_recommendations_regenerated = 1 WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    public function isRegenerated($id) {
+        $stmt = $this->db->prepare("SELECT career_recommendations_regenerated FROM report_cards WHERE id = ?");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch();
+        return ($result['career_recommendations_regenerated'] ?? 0) == 1;
+    }
     
     public function countByStudent($studentId) {
         // Keep for backwards compatibility - maps to user_id

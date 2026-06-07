@@ -14,6 +14,70 @@
 </head>
 <body>
 
+<!-- Global 3D Tower Loader -->
+<div class="global-loader-overlay active" id="globalLoader">
+    <div class="loader-container">
+        <div class="loader-tower">
+            <div class="box box-1">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-2">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-3">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+            <div class="box box-4">
+                <div class="side-left"></div>
+                <div class="side-right"></div>
+                <div class="side-top"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLoader(text = null) {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            loader.classList.add('active');
+        }
+    }
+
+    function hideLoader() {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            // Add a small delay for smoother transition
+            setTimeout(() => {
+                loader.classList.remove('active');
+            }, 500);
+        }
+    }
+
+    // Hide loader when page is fully loaded
+    window.addEventListener('load', function() {
+        hideLoader();
+    });
+
+    // Show loader on page transitions (when clicking links)
+    window.addEventListener('beforeunload', function() {
+        showLoader();
+    });
+
+    // Handle back/forward cache
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            hideLoader();
+        }
+    });
+</script>
+
 <div class="app-container">
 
     <!-- SIDEBAR -->
@@ -76,6 +140,9 @@
                         <a href="/simulate" class="<?php echo ($currentPage ?? '') === 'simulate' ? 'active' : ''; ?>"><i class="fas fa-vial icon-sm"></i> Simulate</a>
                         <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
                     <?php endif; ?>
+                <?php endif; ?>
+                <?php if (isset($currentUser['role']) && $currentUser['role'] === 'admin'): ?>
+                    <a href="/profile" class="<?php echo ($currentPage ?? '') === 'profile' ? 'active' : ''; ?>"><i class="fas fa-user-circle icon-sm"></i> My Profile</a>
                 <?php endif; ?>
             <?php else: ?>
                 <a href="/login" class="<?php echo ($currentPage ?? '') === 'login' ? 'active' : ''; ?>"><i class="fas fa-sign-in-alt icon-sm"></i> Login</a>

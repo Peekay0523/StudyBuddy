@@ -511,9 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Show loading overlay on form submit
 document.getElementById('seoForm')?.addEventListener('submit', function(e) {
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    if (loadingOverlay) {
-        loadingOverlay.classList.add('active');
+    if (typeof showLoader === 'function') {
+        showLoader('Saving SEO page...');
     }
 });
 

@@ -154,4 +154,88 @@ class DashboardController {
         ]);
         exit;
     }
+
+    /**
+     * User Profile - View and update own details
+     */
+    public function profile() {
+        requireLogin();
+        $user = getCurrentUser();
+        $pageTitle = 'My Profile - StudySmart';
+        $currentPage = 'profile';
+        include __DIR__ . '/../templates/pages/profile.php';
+    }
+
+    /**
+     * Update User Profile
+     */
+    public function updateProfile() {
+        requireLogin();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /profile');
+            exit;
+        }
+
+        $userId = getCurrentUser()['id'];
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if (empty($username)) {
+            setFlashMessage('error', 'Username is required');
+            header('Location: /profile');
+            exit;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        
+        // Check if username is taken by another user
+        $stmt = $db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+        $stmt->execute([$username, $userId]);
+        if ($stmt->fetch()) {
+            setFlashMessage('error', 'Username is already taken');
+            header('Location: /profile');
+            exit;
+        }
+
+        try {
+            $data = [
+                'username' => $username,
+                'email' => $email
+            ];
+
+            if (!empty($password)) {
+                if ($password !== $confirmPassword) {
+                    setFlashMessage('error', 'Passwords do not match');
+                    header('Location: /profile');
+                    exit;
+                }
+                if (strlen($password) < 8) {
+                    setFlashMessage('error', 'Password must be at least 8 characters');
+                    header('Location: /profile');
+                    exit;
+                }
+                $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+            }
+
+            $fields = [];
+            $values = [];
+            foreach ($data as $key => $value) {
+                $fields[] = "$key = ?";
+                $values[] = $value;
+            }
+            $values[] = $userId;
+
+            $sql = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?";
+            $db->prepare($sql)->execute($values);
+
+            setFlashMessage('success', 'Profile updated successfully');
+        } catch (Exception $e) {
+            setFlashMessage('error', 'Failed to update profile: ' . $e->getMessage());
+        }
+
+        header('Location: /profile');
+    }
 }
