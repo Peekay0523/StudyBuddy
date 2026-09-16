@@ -199,6 +199,24 @@ $extraScripts = '
     <script src="/js/calculators-core.js"></script>
     <script src="/js/physics-calculator.js"></script>
     <script src="/js/physics_lab.js"></script>
+    <script>
+    // Auto-select simulation from URL hash (e.g., /physics#doppler)
+    (function() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            // Wait for physics_lab.js to initialize
+            const trySelect = () => {
+                const option = document.querySelector(".option[data-sim=\"" + hash + "\"]");
+                if (option) {
+                    option.click();
+                } else {
+                    setTimeout(trySelect, 200);
+                }
+            };
+            trySelect();
+        }
+    })();
+    </script>
 ';
 
 include __DIR__ . '/../layouts/footer.php';

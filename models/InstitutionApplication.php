@@ -29,15 +29,123 @@ class InstitutionApplication {
     }
 
     public function findByStudentId($studentId) {
+        // Get manually added institution applications
         $stmt = $this->db->prepare("SELECT * FROM institution_applications WHERE student_id = ? ORDER BY applied_date DESC");
         $stmt->execute([$studentId]);
-        return $stmt->fetchAll();
+        $manualApps = $stmt->fetchAll();
+        
+        // Also get institutions from Apply For Me submissions
+        $applyForMeApps = [];
+        try {
+            $stmt2 = $this->db->prepare("
+                SELECT 
+                    afs.id,
+                    afs.student_id,
+                    afs.university_preference_1 as institution_name,
+                    afs.course_preference_1 as course_name,
+                    'university' as institution_type,
+                    afs.institution_1_status as application_status,
+                    afs.created_at as applied_date,
+                    'apply_for_me' as source,
+                    afs.institution_1_notes as notes
+                FROM apply_for_me_submissions afs
+                WHERE afs.student_id = ? 
+                AND afs.university_preference_1 IS NOT NULL 
+                AND afs.university_preference_1 != ''
+                AND afs.institution_1_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                
+                UNION ALL
+                
+                SELECT 
+                    afs.id,
+                    afs.student_id,
+                    afs.university_preference_2 as institution_name,
+                    afs.course_preference_2 as course_name,
+                    'university' as institution_type,
+                    afs.institution_2_status as application_status,
+                    afs.created_at as applied_date,
+                    'apply_for_me' as source,
+                    afs.institution_2_notes as notes
+                FROM apply_for_me_submissions afs
+                WHERE afs.student_id = ? 
+                AND afs.university_preference_2 IS NOT NULL 
+                AND afs.university_preference_2 != ''
+                AND afs.institution_2_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                
+                UNION ALL
+                
+                SELECT 
+                    afs.id,
+                    afs.student_id,
+                    afs.university_preference_3 as institution_name,
+                    afs.course_preference_3 as course_name,
+                    'university' as institution_type,
+                    afs.institution_3_status as application_status,
+                    afs.created_at as applied_date,
+                    'apply_for_me' as source,
+                    afs.institution_3_notes as notes
+                FROM apply_for_me_submissions afs
+                WHERE afs.student_id = ? 
+                AND afs.university_preference_3 IS NOT NULL 
+                AND afs.university_preference_3 != ''
+                AND afs.institution_3_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                
+                ORDER BY applied_date DESC
+            ");
+            $stmt2->execute([$studentId, $studentId, $studentId]);
+            $applyForMeApps = $stmt2->fetchAll();
+        } catch (PDOException $e) {
+            // Table might not have institution status columns yet
+        }
+        
+        // Merge and deduplicate
+        return array_merge($manualApps, $applyForMeApps);
     }
 
     public function countByStudent($studentId) {
+        // Count manually added applications
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM institution_applications WHERE student_id = ?");
         $stmt->execute([$studentId]);
-        return (int) $stmt->fetchColumn();
+        $manualCount = (int) $stmt->fetchColumn();
+        
+        // Count institutions from Apply For Me submissions
+        $applyForMeCount = 0;
+        try {
+            $stmt2 = $this->db->prepare("
+                SELECT COUNT(*) FROM (
+                    SELECT afs.university_preference_1
+                    FROM apply_for_me_submissions afs
+                    WHERE afs.student_id = ? 
+                    AND afs.university_preference_1 IS NOT NULL 
+                    AND afs.university_preference_1 != ''
+                    AND afs.institution_1_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                    
+                    UNION ALL
+                    
+                    SELECT afs.university_preference_2
+                    FROM apply_for_me_submissions afs
+                    WHERE afs.student_id = ? 
+                    AND afs.university_preference_2 IS NOT NULL 
+                    AND afs.university_preference_2 != ''
+                    AND afs.institution_2_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                    
+                    UNION ALL
+                    
+                    SELECT afs.university_preference_3
+                    FROM apply_for_me_submissions afs
+                    WHERE afs.student_id = ? 
+                    AND afs.university_preference_3 IS NOT NULL 
+                    AND afs.university_preference_3 != ''
+                    AND afs.institution_3_status IN ('completed', 'submitted_to_institution', 'in_progress', 'rejected')
+                )
+            ");
+            $stmt2->execute([$studentId, $studentId, $studentId]);
+            $applyForMeCount = (int) $stmt2->fetchColumn();
+        } catch (PDOException $e) {
+            // Table might not have institution status columns yet
+        }
+        
+        return $manualCount + $applyForMeCount;
     }
 
     public function countByStatus($studentId, $status) {

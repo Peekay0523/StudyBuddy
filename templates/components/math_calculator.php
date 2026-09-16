@@ -61,14 +61,14 @@
         <!-- Algebra Tab -->
         <div class="calc-tab-content" id="calc-tab-algebra">
             <button class="sci-btn" data-latex="ax + b = c"><strong>ax+b=c</strong></button>
-            <button class="sci-btn" data-latex="x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"><strong>Quadratic</strong></button>
-            <button class="sci-btn" data-latex="m = \frac{y_2 - y_1}{x_2 - x_1}"><strong>Slope</strong></button>
+            <button class="sci-btn" data-latex="x = \frac{-b \pm \sqrt{b^{2} - 4ac}}{2a}"><strong>Quadratic</strong></button>
+            <button class="sci-btn" data-latex="m = \frac{y_{2} - y_{1}}{x_{2} - x_{1}}"><strong>Slope</strong></button>
             <button class="sci-btn" data-latex="y = mx + c"><strong>Linear</strong></button>
             
             <button class="sci-btn" data-latex="x">x</button>
             <button class="sci-btn" data-latex="y">y</button>
-            <button class="sci-btn" data-latex="x^2">x²</button>
-            <button class="sci-btn" data-latex="x^n" data-value="^">xⁿ</button>
+            <button class="sci-btn" data-latex="x^{2}">x²</button>
+            <button class="sci-btn" data-latex="x^{n}" data-value="^">xⁿ</button>
             
             <button class="sci-btn" data-latex="\sqrt{x}" data-value="sqrt(">√</button>
             <button class="sci-btn" data-latex="\log" data-value="log10(">log</button>
@@ -90,9 +90,9 @@
             <button class="sci-btn" data-latex="\frac{d}{dx}(f(x))"><strong>d/dx</strong></button>
             <button class="sci-btn" data-latex="\int f(x) \, dx"><strong>∫ f(x)</strong></button>
             <button class="sci-btn" data-latex="\lim_{x \to c} f(x)"><strong>lim</strong></button>
-            <button class="sci-btn" data-latex="\frac{d^2y}{dx^2} + p\frac{dy}{dx} + qy = f(x)"><strong>ODE</strong></button>
+            <button class="sci-btn" data-latex="\frac{d^{2}y}{dx^{2}} + p\frac{dy}{dx} + qy = f(x)"><strong>ODE</strong></button>
             
-            <button class="sci-btn" data-latex="\sum_{i=1}^n i">Σ</button>
+            <button class="sci-btn" data-latex="\sum_{i=1}^{n} i">Σ</button>
             <button class="sci-btn" data-latex="\infty">∞</button>
             <button class="sci-btn" data-latex="e">e</button>
             <button class="sci-btn" data-latex="\Delta">Δ</button>
@@ -107,7 +107,7 @@
             <button class="sci-btn" data-latex="P(A \cup B) = P(A) + P(B) - P(A \cap B)"><strong>Union</strong></button>
             <button class="sci-btn" data-latex="P(A|B) = \frac{P(B|A)P(A)}{P(B)}"><strong>Bayes</strong></button>
             <button class="sci-btn" data-latex="z = \frac{x - \mu}{\sigma}"><strong>z-score</strong></button>
-            <button class="sci-btn" data-latex="\sigma = \sqrt{\frac{\sum(x-\mu)^2}{n}}"><strong>Std Dev</strong></button>
+            <button class="sci-btn" data-latex="\sigma = \sqrt{\frac{\sum(x-\mu)^{2}}{n}}"><strong>Std Dev</strong></button>
             
             <button class="sci-btn" data-latex="n!">n!</button>
             <button class="sci-btn" data-latex="nCr">nCr</button>
@@ -124,7 +124,7 @@
             <button class="sci-btn" data-latex="\begin{bmatrix} a & b \\ c & d \end{bmatrix}">2x2</button>
             <button class="sci-btn" data-latex="\det(A)">det</button>
             <button class="sci-btn" data-latex="A^{-1}">A⁻¹</button>
-            <button class="sci-btn" data-latex="A^T">Aᵀ</button>
+            <button class="sci-btn" data-latex="A^{T}">Aᵀ</button>
 
             <button class="sci-btn action-secondary calc-clear-btn">AC</button>
             <button class="sci-btn action-secondary calc-del-btn">DEL</button>

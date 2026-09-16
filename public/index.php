@@ -70,6 +70,11 @@ $router->get('/add-bursary-notification-tracking', function() {
     require __DIR__ . '/../add_bursary_notification_tracking.php';
 });
 
+// Apply For Me - Add admin tracking columns
+$router->get('/add-apply-for-me-columns', function() {
+    require __DIR__ . '/../add_apply_for_me_admin_columns.php';
+});
+
 // Test scan conversion directly
 $router->get('/test-scan-direct', function() {
     require __DIR__ . '/../test-scan-direct.php';
@@ -156,9 +161,28 @@ $router->get('/logout', 'AuthController@logout');
 
 // Dashboard
 $router->get('/dashboard', 'DashboardController@index');
+
+// Profile
+$router->get('/profile', 'DashboardController@profile');
+$router->post('/profile/update', 'DashboardController@updateProfile');
+
 $router->get('/parent-dashboard', 'ParentController@index');
 $router->get('/parent/track-progress', 'ParentController@trackProgress');
 $router->get('/dashboard/login-streak-info', 'DashboardController@getLoginStreakInfo');
+
+// Apply For Me
+$router->get('/apply-for-me', 'ApplyForMeController@showForm');
+$router->post('/apply-for-me', 'ApplyForMeController@submit');
+$router->get('/apply-for-me/checkout', 'ApplyForMeController@checkout');
+$router->post('/apply-for-me/process-checkout', 'ApplyForMeController@processCheckout');
+$router->get('/apply-for-me/cancel', 'ApplyForMeController@cancelCheckout');
+$router->post('/apply-for-me/upload-temp', 'ApplyForMeController@uploadTempFile');
+
+// Student Application Progress
+$router->get('/my-applications', 'ApplyForMeController@myApplications');
+$router->get('/my-applications/{id}', 'ApplyForMeController@viewApplication');
+$router->post('/my-applications/{id}/upload-proof', 'ApplyForMeController@uploadProofOfPayment');
+$router->get('/my-applications/{id}/view-proof', 'ApplyForMeController@viewProofOfPayment');
 
 // Scripts
 $router->get('/upload-script', 'ScriptController@upload');
@@ -364,6 +388,36 @@ $router->get('/study-group/view/{id}', 'StudyGroupController@view');
 $router->post('/study-group/{id}/upload-script', 'StudyGroupController@uploadScript');
 $router->get('/study-group/{groupId}/download-script/{scriptId}', 'StudyGroupController@downloadScript');
 $router->post('/study-group/{groupId}/delete-script/{scriptId}', 'StudyGroupController@deleteScript');
+$router->get('/study-group/{groupId}/view-video/{scriptId}', 'StudyGroupController@viewVideo');
+$router->post('/study-group/become-tutor', 'StudyGroupController@becomeTutor');
+
+// Tutor Dashboard + student management
+$router->get('/tutor-dashboard', 'TutorController@dashboard');
+$router->get('/tutor/view/{tutorId}', 'TutorController@view');
+$router->get('/tutor/profile-image/{tutorId}', 'TutorController@profileImage');
+$router->post('/tutor/upload-image', 'TutorController@uploadImage');
+$router->post('/tutor/update-profile', 'TutorController@updateProfile');
+$router->post('/tutor/request/{tutorId}', 'TutorController@requestTutor');
+$router->post('/tutor/approve-student/{id}', 'TutorController@approveStudent');
+$router->post('/tutor/reject-student/{id}', 'TutorController@rejectStudent');
+$router->post('/tutor/remove-student/{id}', 'TutorController@removeStudent');
+$router->post('/tutor/update-student-settings/{id}', 'TutorController@updateStudentSettings');
+$router->post('/tutor/update-company-team', 'TutorController@updateCompanyTeam');
+$router->post('/tutor/update-subjects', 'TutorController@updateSubjects');
+
+// Tutor: My Students (grade-organised roster + announcements)
+$router->get('/tutor/my-students', 'TutorController@myStudents');
+$router->post('/tutor/announcements/create', 'TutorController@createAnnouncement');
+$router->post('/tutor/announcements/delete/{id}', 'TutorController@deleteAnnouncement');
+
+// Tutor: shared lessons page (opened via "View Tutor" on the My Tutors card)
+$router->get('/tutor/lessons/{tutorId}', 'TutorController@lessons');
+
+// My Resources (personal resources, independent of study groups)
+$router->post('/study-group/upload-my-resource', 'StudyGroupController@uploadMyResource');
+$router->post('/study-group/delete-my-resource/{id}', 'StudyGroupController@deleteMyResource');
+$router->get('/study-group/view-my-video/{id}', 'StudyGroupController@viewMyVideo');
+$router->get('/study-group/download-my-resource/{id}', 'StudyGroupController@downloadMyResource');
 
 // Study Group Invites
 $router->post('/study-group/send-invite', 'StudyGroupController@sendInvite');
@@ -429,7 +483,7 @@ $router->get('/study-group/{groupId}/voice/{messageId}', function($groupId, $mes
     
     // Fallback to filesystem for old recordings (backward compatibility)
     if (!empty($message['file_path'])) {
-        $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . basename($message['file_path']);
+        $filePath = __DIR__ . '/../public/uploads/study_groups/' . $groupId . '/voice/' . basename($message['file_path']);
         if (file_exists($filePath)) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mimeType = finfo_file($finfo, $filePath);
@@ -454,11 +508,11 @@ $router->post('/study-group/{groupId}/delete-message/{messageId}', 'StudyGroupCo
 $router->post('/study-group/{groupId}/remove-member/{userId}', 'StudyGroupController@removeMember');
 
 // Old route for filesystem-based voice recordings (deprecated - for backward compatibility)
-$router->get('/uploads/study_groups/{groupId}/voice/{filename}', function($groupId, $filename) {
+$router->get('/public/uploads/study_groups/{groupId}/voice/{filename}', function($groupId, $filename) {
     requireStudent();
     // Decode filename in case it's URL encoded
     $filename = urldecode($filename);
-    $filePath = __DIR__ . '/../uploads/study_groups/' . $groupId . '/voice/' . basename($filename);
+    $filePath = __DIR__ . '/../public/uploads/study_groups/' . $groupId . '/voice/' . basename($filename);
     if (!file_exists($filePath)) {
         http_response_code(404);
         echo 'File not found: ' . $filePath;
@@ -585,6 +639,22 @@ $router->post('/debug-subscription/clear', function() {
     header('Location: /debug-subscription');
     exit;
 });
+
+// Admin - Apply For Me Management
+$router->get('/admin/apply-for-me', 'AdminController@applyForMe');
+$router->get('/admin/apply-for-me/{id}', 'AdminController@applyForMeDetail');
+$router->post('/admin/apply-for-me/verify-documents', 'AdminController@applyForMeVerifyDocuments');
+$router->post('/admin/apply-for-me/update-status', 'AdminController@applyForMeUpdateStatus');
+$router->post('/admin/apply-for-me/update-payment', 'AdminController@applyForMeUpdatePayment');
+$router->post('/admin/apply-for-me/save-notes', 'AdminController@applyForMeSaveNotes');
+$router->post('/admin/apply-for-me/toggle-step', 'AdminController@applyForMeToggleStep');
+$router->post('/admin/apply-for-me/toggle-institution-step', 'AdminController@applyForMeToggleInstitutionStep');
+$router->post('/admin/apply-for-me/update-institution-status', 'AdminController@applyForMeUpdateInstitutionStatus');
+$router->post('/admin/apply-for-me/approve-payment', 'AdminController@applyForMeApprovePayment');
+$router->post('/admin/apply-for-me/reject-payment', 'AdminController@applyForMeRejectPayment');
+$router->get('/admin/apply-for-me/{id}/view-proof-payment', 'AdminController@applyForMeViewProofPayment');
+$router->get('/admin/apply-for-me/{id}/view-document/{docType}', 'AdminController@applyForMeViewDocument');
+$router->get('/admin/apply-for-me/{id}/download-document/{docType}', 'AdminController@applyForMeDownloadDocument');
 
 // Admin Routes
 $router->get('/admin', 'AdminController@index');
@@ -783,6 +853,30 @@ $router->get('/api/career-institutions', function() {
     require_once __DIR__ . '/../controllers/CareerController.php';
     $controller = new CareerController();
     $controller->institutions();
+});
+
+// Ask App - Smart Search Assistant
+$router->get('/api/search', function() {
+    require_once __DIR__ . '/../controllers/SearchController.php';
+    $controller = new SearchController();
+    $query = isset($_GET['q']) ? $_GET['q'] : '';
+    $controller->search($query);
+});
+$router->get('/api/search/suggestions', function() {
+    require_once __DIR__ . '/../controllers/SearchController.php';
+    $controller = new SearchController();
+    $query = isset($_GET['q']) ? $_GET['q'] : '';
+    $controller->suggestions($query);
+});
+$router->get('/api/search/index', function() {
+    require_once __DIR__ . '/../controllers/SearchController.php';
+    $controller = new SearchController();
+    $controller->getIndex();
+});
+
+// AI-Powered Search API
+$router->post('/api/search/ai', function() {
+    require __DIR__ . '/../api/search_ai.php';
 });
 
 // Study Group Notification Count API

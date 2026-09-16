@@ -65,3 +65,48 @@ class Router {
         return '#^' . $route . '$#';
     }
 }
+
+// Support running the app directly with: php -S localhost:8000 router.php
+// This lets the root router act as a front controller and load the real app routes.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+    $staticPaths = ['/css/', '/js/', '/images/', '/fonts/', '/public/uploads/', '/icon-192.png', '/icon-512.png', '/manifest.json', '/service-worker.js'];
+    foreach ($staticPaths as $path) {
+        if (strpos($uri, $path) === 0) {
+            $file = __DIR__ . '/public' . $uri;
+
+            if (file_exists($file)) {
+                $ext = pathinfo($file, PATHINFO_EXTENSION);
+                $mimeTypes = [
+                    'css' => 'text/css',
+                    'js' => 'application/javascript',
+                    'png' => 'image/png',
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'gif' => 'image/gif',
+                    'svg' => 'image/svg+xml',
+                    'ico' => 'image/x-icon',
+                    'json' => 'application/json',
+                    'woff' => 'font/woff',
+                    'woff2' => 'font/woff2',
+                    'ttf' => 'font/ttf',
+                    'otf' => 'font/otf'
+                ];
+
+                if (isset($mimeTypes[$ext])) {
+                    header('Content-Type: ' . $mimeTypes[$ext]);
+                }
+                return false;
+            }
+
+            http_response_code(404);
+            echo '404 - File not found: ' . $file;
+            return true;
+        }
+    }
+
+    $_SERVER['SCRIPT_NAME'] = '/public/index.php';
+    require __DIR__ . '/public/index.php';
+    return true;
+}

@@ -149,22 +149,19 @@ class BaseCalculator {
             }
         };
 
-        // Use pointerdown for immediate response, falling back to click for accessibility
         // Use a flag to prevent double-firing on some environments
         let lastEventTime = 0;
         const throttledHandler = (e) => {
             const now = Date.now();
-            if (now - lastEventTime < 50) return; // Throttle very fast repeated events
+            if (now - lastEventTime < 250) return; // Throttle very fast repeated events
             lastEventTime = now;
             handleInteraction(e);
         };
 
         // Remove existing listener to prevent double-binding if init is called multiple times
-        this.panel.removeEventListener('click', throttledHandler);
-        this.panel.removeEventListener('pointerdown', throttledHandler);
+        this.panel.removeEventListener('pointerdown', handleInteraction);
 
-        this.panel.addEventListener('click', throttledHandler);
-        this.panel.addEventListener('pointerdown', throttledHandler);
+        this.panel.addEventListener('pointerdown', handleInteraction);
         
         // Touch-action optimization to remove click delay
         this.panel.style.touchAction = 'manipulation';
@@ -272,9 +269,10 @@ class BaseCalculator {
         // Clean LaTeX for variable extraction
         const cleaned = latex.replace(/\\(cdot|frac|times|sqrt|pm|mp|left|right|text|mathbf|s|begin|end|bmatrix)/g, ' ');
         // Broad regex for variables including Greek, subscripts, and probability functions
-        const varsRegex = /(?:\\Delta\s*[a-zA-Z]|\\mu|\\sigma|\\alpha|\\beta|\\gamma|\\theta|\\phi|\\omega|\\epsilon|\\lambda|P\([a-zA-Z\s\\cap\\cup|]+\)|[a-zA-Z])(?:_{?[\d\w]*}?)?/g;
+        // Improved subscript matching to include braces: _{...} or _x
+        const varsRegex = /(?:\\Delta\s*[a-zA-Z]|\\mu|\\sigma|\\alpha|\\beta|\\gamma|\\theta|\\phi|\\omega|\\epsilon|\\lambda|P\([a-zA-Z\s\\cap\\cup|]+\)|[a-zA-Z])(?:(?:_\{[\d\w\s+-]*\})|(?:_[\d\w]))?/g;
         const vars = cleaned.match(varsRegex) || [];
-        
+
         const uniqueVars = [...new Set(vars)].filter(v => {
             if (/^[0-9]+$/.test(v)) return false; // Ignore pure numbers
             if (['e', 'pi', 'i', 'R'].includes(v) && !latex.includes('\\Delta ' + v)) return false; // Ignore common constants
@@ -483,10 +481,16 @@ class BaseCalculator {
                 let reply = data.reply;
                 const mathMatch = reply.match(/```mathlab\s*([\s\S]*?)```/);
                 if (mathMatch) {
-                    reply = mathMatch[1];
+                    reply = mathMatch[1].trim();
                 }
                 
-                this.result.innerHTML = reply;
+                // Ensure the result is wrapped in LaTeX delimiters for proper rendering
+                if (!reply.includes('\\[')) {
+                    this.result.innerHTML = '\\[' + reply + '\\]';
+                } else {
+                    this.result.innerHTML = reply;
+                }
+                
                 this.queueTypeset(this.result);
             } else {
                 this.result.innerHTML = 'Error: AI failed to respond.';

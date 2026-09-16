@@ -9,6 +9,9 @@ require_once __DIR__ . '/../models/StudyGroup.php';
 require_once __DIR__ . '/../models/StudyGroupScript.php';
 require_once __DIR__ . '/../models/StudyGroupMessage.php';
 require_once __DIR__ . '/../models/StudyGroupInvite.php';
+require_once __DIR__ . '/../models/Tutor.php';
+require_once __DIR__ . '/../models/TutorStudent.php';
+require_once __DIR__ . '/../models/MyResource.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';
 
 class StudyGroupController {
@@ -16,6 +19,77 @@ class StudyGroupController {
 
     public function __construct() {
         $this->studyGroupModel = new StudyGroup();
+        $this->ensureSchema();
+    }
+
+    /**
+     * Make sure the study_group_scripts table has the extra resource
+     * columns and the tutors table exists. This is idempotent so it
+     * is safe to run on every request (existing installs + fresh ones).
+     */
+    private function ensureSchema() {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Add resource_type / video_url columns to study_group_scripts if missing
+            $columns = $db->query("PRAGMA table_info(study_group_scripts)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (is_array($columns)) {
+                if (!in_array('resource_type', $columns)) {
+                    $db->exec("ALTER TABLE study_group_scripts ADD COLUMN resource_type TEXT DEFAULT 'script'");
+                }
+                if (!in_array('video_url', $columns)) {
+                    $db->exec("ALTER TABLE study_group_scripts ADD COLUMN video_url TEXT");
+                }
+            }
+
+            // Create tutors table if it does not exist
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS tutors (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER UNIQUE NOT NULL,
+                    full_name TEXT,
+                    subjects TEXT,
+                    bio TEXT,
+                    hourly_rate TEXT,
+                    phone TEXT,
+                    email TEXT,
+                    is_available INTEGER DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ");
+
+            // Add billing_type and company_name columns to tutors if missing
+            $tutorCols = $db->query("PRAGMA table_info(tutors)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (is_array($tutorCols)) {
+                if (!in_array('billing_type', $tutorCols)) {
+                    $db->exec("ALTER TABLE tutors ADD COLUMN billing_type TEXT DEFAULT 'hourly'");
+                }
+                if (!in_array('company_name', $tutorCols)) {
+                    $db->exec("ALTER TABLE tutors ADD COLUMN company_name TEXT");
+                }
+            }
+
+            // Create my_resources table (personal resources) if it does not exist
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS my_resources (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    resource_type TEXT DEFAULT 'script',
+                    file_name TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    file_size INTEGER DEFAULT 0,
+                    description TEXT,
+                    video_url TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            ");
+            $db->exec("CREATE INDEX IF NOT EXISTS idx_my_resources_user_id ON my_resources(user_id)");
+        } catch (Exception $e) {
+            // Silently ignore - queries will simply fail later if columns are missing
+        }
     }
 
     /**
@@ -38,10 +112,19 @@ class StudyGroupController {
         $isFreeUser = ($currentPlan === 'free');
 
         // Free users can view the page but with limited functionality
-        $myGroups = $this->studyGroupModel->findByMember($user['id']);
-        
-        // Show top 5 most active available groups
-        $availableGroups = $this->studyGroupModel->getTopActiveAvailable($user['id'], 5);
+
+        // My Resources: personal video tutorials + scripts the user stores
+        // directly (independent of any study group)
+        $myResourceModel = new MyResource();
+        $myResources = $myResourceModel->findByUser($user['id']);
+
+        // Available Tutors: tutors students can choose to learn from
+        $tutorModel = new Tutor();
+        $availableTutors = $tutorModel->getAllAvailable();
+
+        // My Tutors: tutors who have accepted this student's request
+        $tutorStudentModel = new TutorStudent();
+        $myTutors = $tutorStudentModel->getActiveForStudent($user['id']);
 
         include __DIR__ . '/../templates/pages/study_group.php';
     }
@@ -299,7 +382,7 @@ class StudyGroupController {
     }
 
     /**
-     * Upload a script to study group
+     * Upload a resource (script / video file / video link) to a study group
      */
     public function uploadScript($groupId) {
         requireLogin();
@@ -319,12 +402,38 @@ class StudyGroupController {
         }
 
         if (!$this->studyGroupModel->isMember($groupId, $user['id'])) {
-            setFlashMessage('error', 'You must be a member to upload scripts.');
+            setFlashMessage('error', 'You must be a member to upload resources.');
             header('Location: /study-group');
             exit;
         }
 
-        // Handle file upload
+        $description = trim($_POST['description'] ?? '');
+        $resourceType = trim($_POST['resource_type'] ?? 'script');
+        $scriptModel = new StudyGroupScript();
+
+        // ---- Video link (external URL) ----
+        if ($resourceType === 'video_link') {
+            $videoUrl = trim($_POST['video_url'] ?? '');
+            if (empty($videoUrl) || !filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+                setFlashMessage('error', 'Please provide a valid video URL.');
+                header('Location: /study-group/view/' . $groupId);
+                exit;
+            }
+            $linkName = trim($_POST['video_title'] ?? '');
+            if (empty($linkName)) {
+                $linkName = 'Video Tutorial';
+            }
+            $scriptId = $scriptModel->upload($groupId, $user['id'], $linkName, '', 0, $description, 'video_link', $videoUrl);
+            if ($scriptId) {
+                setFlashMessage('success', 'Video tutorial link added successfully!');
+            } else {
+                setFlashMessage('error', 'Failed to save video link.');
+            }
+            header('Location: /study-group/view/' . $groupId);
+            exit;
+        }
+
+        // ---- File based uploads (script or video file) ----
         if (!isset($_FILES['script']) || $_FILES['script']['error'] !== UPLOAD_ERR_OK) {
             setFlashMessage('error', 'File upload failed. Please try again.');
             header('Location: /study-group/view/' . $groupId);
@@ -332,55 +441,393 @@ class StudyGroupController {
         }
 
         $file = $_FILES['script'];
-        $description = trim($_POST['description'] ?? '');
-
-        // Validate file type
-        $allowedTypes = ['pdf', 'docx', 'txt', 'doc'];
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, $allowedTypes)) {
-            setFlashMessage('error', 'Invalid file type. Allowed: PDF, DOCX, DOC, TXT');
-            header('Location: /study-group/view/' . $groupId);
-            exit;
-        }
 
-        // Validate file size (10MB max)
-        if ($file['size'] > 10 * 1024 * 1024) {
-            setFlashMessage('error', 'File size must be less than 10MB.');
-            header('Location: /study-group/view/' . $groupId);
-            exit;
+        if ($resourceType === 'video_file') {
+            $allowedVideo = ['mp4', 'webm', 'ogg'];
+            if (!in_array($ext, $allowedVideo)) {
+                setFlashMessage('error', 'Invalid video file type. Allowed: MP4, WEBM, OGG');
+                header('Location: /study-group/view/' . $groupId);
+                exit;
+            }
+            if ($file['size'] > 100 * 1024 * 1024) {
+                setFlashMessage('error', 'Video file size must be less than 100MB.');
+                header('Location: /study-group/view/' . $groupId);
+                exit;
+            }
+            $finalResourceType = 'video_file';
+        } else {
+            $allowedTypes = ['pdf', 'docx', 'txt', 'doc'];
+            if (!in_array($ext, $allowedTypes)) {
+                setFlashMessage('error', 'Invalid file type. Allowed: PDF, DOCX, DOC, TXT');
+                header('Location: /study-group/view/' . $groupId);
+                exit;
+            }
+            if ($file['size'] > 10 * 1024 * 1024) {
+                setFlashMessage('error', 'File size must be less than 10MB.');
+                header('Location: /study-group/view/' . $groupId);
+                exit;
+            }
+            $finalResourceType = 'script';
         }
 
         // Create upload directory if not exists
-        $uploadDir = __DIR__ . '/../uploads/study_groups/' . $groupId . '/';
+        $uploadDir = __DIR__ . '/../public/uploads/study_groups/' . $groupId . '/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        // Generate unique filename
         $fileName = time() . '_' . uniqid() . '_' . $file['name'];
         $filePath = $uploadDir . $fileName;
 
-        // Move uploaded file
         if (!move_uploaded_file($file['tmp_name'], $filePath)) {
             setFlashMessage('error', 'Failed to save file.');
             header('Location: /study-group/view/' . $groupId);
             exit;
         }
 
-        // Save to database
-        $scriptModel = new StudyGroupScript();
-        $scriptId = $scriptModel->upload($groupId, $user['id'], $file['name'], $filePath, $file['size'], $description);
+        $scriptId = $scriptModel->upload($groupId, $user['id'], $file['name'], $filePath, $file['size'], $description, $finalResourceType, '');
 
         if ($scriptId) {
-            setFlashMessage('success', 'Script uploaded successfully!');
+            setFlashMessage('success', $finalResourceType === 'video_file' ? 'Video tutorial uploaded successfully!' : 'Script uploaded successfully!');
         } else {
-            setFlashMessage('error', 'Failed to save script to database.');
+            setFlashMessage('error', 'Failed to save resource to database.');
             unlink($filePath);
         }
 
         header('Location: /study-group/view/' . $groupId);
         exit;
     }
+
+    /**
+     * Stream a video file inline (for the HTML5 <video> player)
+     */
+    public function viewVideo($groupId, $scriptId) {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $scriptModel = new StudyGroupScript();
+        $script = $scriptModel->findById($scriptId);
+
+        if (!$script || $script['study_group_id'] != $groupId) {
+            http_response_code(404);
+            echo 'Video not found.';
+            return;
+        }
+
+        if (!$this->studyGroupModel->isMember($groupId, $user['id'])) {
+            http_response_code(403);
+            echo 'You must be a member to view this video.';
+            return;
+        }
+
+        if (!file_exists($script['file_path'])) {
+            http_response_code(404);
+            echo 'File not found on server.';
+            return;
+        }
+
+        $ext = strtolower(pathinfo($script['file_name'], PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'ogg' => 'video/ogg',
+        ];
+        $mime = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: inline; filename="' . basename($script['file_name']) . '"');
+        header('Content-Length: ' . filesize($script['file_path']));
+        header('Accept-Ranges: bytes');
+        readfile($script['file_path']);
+        exit;
+    }
+
+    /**
+     * Register the current user as an available tutor
+     */
+    public function becomeTutor() {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /study-group');
+            exit;
+        }
+
+        $user = getCurrentUser();
+
+        $fullName = trim($_POST['full_name'] ?? '');
+        $subjects = trim($_POST['subjects'] ?? '');
+        $bio = trim($_POST['bio'] ?? '');
+        $hourlyRate = trim($_POST['rate'] ?? '');
+        $billingType = trim($_POST['billing_type'] ?? 'hourly');
+        $companyName = trim($_POST['company_name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+
+        if (empty($fullName) || empty($subjects)) {
+            setFlashMessage('error', 'Please provide at least your name and the subjects you teach.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        $tutorModel = new Tutor();
+        // Preserve the newer profile fields (teaching mode, approach,
+        // packages, company team) when upserting via this form
+        $existingTutor = $tutorModel->findByUserId($user['id']);
+        $result = $tutorModel->register(
+            $user['id'],
+            $fullName,
+            $subjects,
+            $bio,
+            $hourlyRate,
+            $phone,
+            $email,
+            $billingType,
+            $companyName,
+            1,
+            $existingTutor['teaching_mode'] ?? 'contact',
+            $existingTutor['teaching_approach'] ?? '',
+            $existingTutor['packages'] ?? '',
+            $existingTutor['company_team'] ?? ''
+        );
+
+        if ($result) {
+            // Promote user's DB role to 'tutor' so they get the tutor experience
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE users SET role = 'tutor' WHERE id = ?");
+            $stmt->execute([$user['id']]);
+
+            // Update session so the change takes effect immediately
+            $user['role'] = 'tutor';
+            $_SESSION['user'] = $user;
+            $_SESSION['user_role'] = 'tutor';
+
+            setFlashMessage('success', 'You are now listed as an available tutor! Students can find you in the Available Tutors section.');
+        } else {
+            setFlashMessage('error', 'Failed to register as a tutor. Please try again.');
+        }
+
+        header('Location: /study-group');
+        exit;
+    }
+    /**
+     * Upload a personal resource (script / video file / video link)
+     * directly into "My Resources" (not tied to any study group).
+     */
+    public function uploadMyResource() {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /study-group');
+            exit;
+        }
+
+        $user = getCurrentUser();
+        $resourceType = trim($_POST['resource_type'] ?? 'script');
+        $description = trim($_POST['description'] ?? '');
+        $title = trim($_POST['title'] ?? '');
+        $myResourceModel = new MyResource();
+
+        // ---- Video link (external URL) ----
+        if ($resourceType === 'video_link') {
+            $videoUrl = trim($_POST['video_url'] ?? '');
+            if (empty($videoUrl) || !filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+                setFlashMessage('error', 'Please provide a valid video URL.');
+                header('Location: /study-group');
+                exit;
+            }
+            if (empty($title)) {
+                $title = 'Video Tutorial';
+            }
+            $id = $myResourceModel->add($user['id'], $title, 'video_link', $title, '', 0, $description, $videoUrl);
+            if ($id) {
+                setFlashMessage('success', 'Video tutorial link saved to My Resources!');
+            } else {
+                setFlashMessage('error', 'Failed to save video link.');
+            }
+            header('Location: /study-group');
+            exit;
+        }
+
+        // ---- File based uploads (script or video file) ----
+        if (!isset($_FILES['resource_file']) || $_FILES['resource_file']['error'] !== UPLOAD_ERR_OK) {
+            setFlashMessage('error', 'File upload failed. Please try again.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        $file = $_FILES['resource_file'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if ($resourceType === 'video_file') {
+            $allowedVideo = ['mp4', 'webm', 'ogg'];
+            if (!in_array($ext, $allowedVideo)) {
+                setFlashMessage('error', 'Invalid video file type. Allowed: MP4, WEBM, OGG');
+                header('Location: /study-group');
+                exit;
+            }
+            if ($file['size'] > 100 * 1024 * 1024) {
+                setFlashMessage('error', 'Video file size must be less than 100MB.');
+                header('Location: /study-group');
+                exit;
+            }
+            $finalType = 'video_file';
+        } else {
+            $allowedTypes = ['pdf', 'docx', 'txt', 'doc'];
+            if (!in_array($ext, $allowedTypes)) {
+                setFlashMessage('error', 'Invalid file type. Allowed: PDF, DOCX, DOC, TXT');
+                header('Location: /study-group');
+                exit;
+            }
+            if ($file['size'] > 10 * 1024 * 1024) {
+                setFlashMessage('error', 'File size must be less than 10MB.');
+                header('Location: /study-group');
+                exit;
+            }
+            $finalType = 'script';
+        }
+
+        if (empty($title)) {
+            $title = $file['name'];
+        }
+
+        // Create upload directory if not exists
+        $uploadDir = __DIR__ . '/../public/uploads/my_resources/' . $user['id'] . '/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $fileName = time() . '_' . uniqid() . '_' . $file['name'];
+        $filePath = $uploadDir . $fileName;
+
+
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            setFlashMessage('error', 'Failed to save file.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        $id = $myResourceModel->add($user['id'], $title, $finalType, $file['name'], $filePath, $file['size'], $description, '');
+
+        if ($id) {
+            setFlashMessage('success', $finalType === 'video_file' ? 'Video tutorial saved to My Resources!' : 'Script saved to My Resources!');
+        } else {
+            setFlashMessage('error', 'Failed to save resource.');
+            unlink($filePath);
+        }
+
+        header('Location: /study-group');
+        exit;
+    }
+
+
+
+    /**
+     * Delete a personal resource from My Resources
+     */
+    public function deleteMyResource($id) {
+        requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /study-group');
+            exit;
+        }
+
+        $user = getCurrentUser();
+        $myResourceModel = new MyResource();
+        $resource = $myResourceModel->findById($id, $user['id']);
+
+        if (!$resource) {
+            setFlashMessage('error', 'Resource not found.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        // Delete the physical file (for file-based resources)
+        if ($resource['resource_type'] !== 'video_link' && !empty($resource['file_path']) && file_exists($resource['file_path'])) {
+            unlink($resource['file_path']);
+        }
+
+        $myResourceModel->delete($id, $user['id']);
+        setFlashMessage('success', 'Resource deleted from My Resources.');
+        header('Location: /study-group');
+        exit;
+    }
+
+    /**
+     * Stream a personal video file inline (HTML5 <video> player)
+     */
+    public function viewMyVideo($id) {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $myResourceModel = new MyResource();
+        $resource = $myResourceModel->findById($id, $user['id']);
+
+        if (!$resource || $resource['resource_type'] !== 'video_file') {
+            http_response_code(404);
+            echo 'Video not found.';
+            return;
+        }
+
+        if (!file_exists($resource['file_path'])) {
+            http_response_code(404);
+            echo 'File not found on server.';
+            return;
+        }
+
+        $ext = strtolower(pathinfo($resource['file_name'], PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'ogg' => 'video/ogg',
+        ];
+        $mime = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: inline; filename="' . basename($resource['file_name']) . '"');
+        header('Content-Length: ' . filesize($resource['file_path']));
+        header('Accept-Ranges: bytes');
+        readfile($resource['file_path']);
+        exit;
+    }
+
+    /**
+     * Download a personal resource file
+     */
+    public function downloadMyResource($id) {
+        requireLogin();
+
+        $user = getCurrentUser();
+        $myResourceModel = new MyResource();
+        $resource = $myResourceModel->findById($id, $user['id']);
+
+        if (!$resource) {
+            setFlashMessage('error', 'Resource not found.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        if ($resource['resource_type'] === 'video_link') {
+            // Links have no file to download - redirect to the URL
+            header('Location: ' . $resource['video_url']);
+            exit;
+        }
+
+        if (!file_exists($resource['file_path'])) {
+            setFlashMessage('error', 'File not found on server.');
+            header('Location: /study-group');
+            exit;
+        }
+
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . basename($resource['file_name']) . '"');
+        header('Content-Length: ' . filesize($resource['file_path']));
+        readfile($resource['file_path']);
+        exit;
+    }
+
 
     /**
      * Delete a script from study group

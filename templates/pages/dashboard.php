@@ -295,6 +295,7 @@ document.addEventListener('keydown', function(e) {
     <a href="/upload-script" class="action blue"><i class="fas fa-cloud-upload-alt icon-sm"></i> Upload Script</a>
     <a href="/study-plan" class="action orange"><i class="fas fa-calendar-check icon-sm"></i> Study Planner</a>
     <a href="/upload-report-card" class="action green"><i class="fas fa-compass icon-sm"></i> Career Guide</a>
+    <a href="/apply-for-me" class="action teal"><i class="fas fa-paper-plane icon-sm"></i> Apply For Me</a>
     <a href="/ai-chat" class="action purple"><i class="fas fa-robot icon-sm"></i> AI Assistant</a>
     <a href="/simulate" class="action yellow"><i class="fas fa-vial icon-sm"></i> Simulate</a>
 </section>
@@ -467,21 +468,50 @@ document.addEventListener('keydown', function(e) {
             const container = document.getElementById('institutionApplicationsList');
             if (container) {
                 if (data.applications && data.applications.length > 0) {
-                    container.innerHTML = data.applications.map(app => `
-                        <div style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3b82f6;">
+                    const statusColors = {
+                        'pending': '#f59e0b',
+                        'in_progress': '#3b82f6',
+                        'submitted': '#8b5cf6',
+                        'submitted_to_institution': '#8b5cf6',
+                        'accepted': '#10b981',
+                        'completed': '#10b981',
+                        'rejected': '#ef4444'
+                    };
+                    const statusLabels = {
+                        'pending': 'Pending',
+                        'in_progress': 'In Progress',
+                        'submitted': 'Submitted',
+                        'submitted_to_institution': 'Submitted',
+                        'accepted': 'Accepted',
+                        'completed': 'Completed',
+                        'rejected': 'Rejected'
+                    };
+                    container.innerHTML = data.applications.map(app => {
+                        const status = app.application_status || 'pending';
+                        const color = statusColors[status] || '#6b7280';
+                        const label = statusLabels[status] || status;
+                        const isApplyForMe = app.source === 'apply_for_me';
+                        return `
+                        <div style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${color};">
                             <div style="display: flex; justify-content: space-between; align-items: start;">
                                 <div style="flex: 1;">
-                                    <h4 style="margin: 0 0 5px 0; color: #1f2937;">${escapeHtml(app.institution_name)}</h4>
-                                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;"><i class="fas fa-graduation-cap"></i> ${app.course_name || 'Not specified'} • ${app.institution_type}</p>
-                                    <span class="badge ${app.application_status === 'accepted' ? 'green' : (app.application_status === 'submitted' ? 'blue' : 'yellow')}">${app.application_status}</span>
-                                    ${app.deadline ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #6b7280;"><i class="fas fa-calendar"></i> Deadline: ${new Date(app.deadline).toLocaleDateString()}</p>` : ''}
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                        <h4 style="margin: 0; color: #1f2937;">${escapeHtml(app.institution_name)}</h4>
+                                        ${isApplyForMe ? '<span style="font-size: 10px; background: #ede9fe; color: #7c3aed; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Apply For Me</span>' : ''}
+                                    </div>
+                                    <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;"><i class="fas fa-graduation-cap"></i> ${escapeHtml(app.course_name || 'Not specified')} • ${app.institution_type || 'university'}</p>
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: ${color}; background: ${color}15; padding: 3px 10px; border-radius: 12px;">
+                                        <i class="fas ${status === 'completed' || status === 'accepted' ? 'fa-check-circle' : (status === 'rejected' ? 'fa-times-circle' : 'fa-clock')}"></i>
+                                        ${label}
+                                    </span>
+                                    ${app.notes ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: #6b7280; font-style: italic;">${escapeHtml(app.notes.substring(0, 100))}${app.notes.length > 100 ? '...' : ''}</p>` : ''}
                                 </div>
-                                <button onclick="deleteInstitutionApplication(${app.id})" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                                ${!isApplyForMe ? `<button onclick="deleteInstitutionApplication(${app.id})" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
                                     <i class="fas fa-trash"></i>
-                                </button>
+                                </button>` : ''}
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 } else {
                     container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 20px;">No institution applications yet.</p>';
                 }
@@ -543,6 +573,28 @@ document.addEventListener('keydown', function(e) {
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // Handle hash-based navigation from search (e.g., /dashboard#open-bursary)
+    document.addEventListener('DOMContentLoaded', function() {
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'open-bursary') {
+            setTimeout(function() {
+                toggleApplicationsModal('bursary');
+                // Clear the hash so it doesn't auto-open on refresh
+                if (history.replaceState) {
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            }, 500);
+        } else if (hash === 'open-institution') {
+            setTimeout(function() {
+                toggleApplicationsModal('institution');
+                // Clear the hash so it doesn't auto-open on refresh
+                if (history.replaceState) {
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            }, 500);
+        }
+    });
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

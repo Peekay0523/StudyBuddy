@@ -1,8 +1,0 @@
-Get-Content : Cannot find path 'C:\xampp\php\logs\php_error_log' because it does not exist.
-At line:1 char:1
-+ Get-Content 'C:\xampp\php\logs\php_error_log' -Tail 100
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : ObjectNotFound: (C:\xampp\php\logs\php_error_log:String) [Get-Content], ItemNotFoundExce 
-   ption
-    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
- 

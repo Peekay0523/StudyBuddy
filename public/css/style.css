@@ -685,6 +685,7 @@ button:active, .btn:active, .thin-btn:active,
 .action.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .action.orange { background: white; color: #1f2937; }
 .action.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.action.teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
 .action.purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
 .action.yellow { background: linear-gradient(135deg, #eab308, #ca8a04); }
 .action.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
@@ -2396,6 +2397,7 @@ section h2 {
     z-index: 10000;
     backdrop-filter: blur(5px);
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .global-loader-overlay.active {

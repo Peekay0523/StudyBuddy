@@ -14,8 +14,9 @@ config/config.php
 logs/
 
 # Uploads
-uploads/*
-!uploads/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/.htaccess
 
 # IDE
 .vscode/

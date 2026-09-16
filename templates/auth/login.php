@@ -146,16 +146,21 @@ $extraHead = '<style>
         <?php endif; ?>
 
         <form method="post" action="/login">
-            <div class="role-selection" style="display: flex; gap: 15px; margin-bottom: 25px;">
-                <label class="role-card" id="student-card" style="flex: 1; text-align: center; padding: 15px; border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; background: #eff6ff; transition: all 0.3s;">
+            <div class="role-selection" style="display: flex; gap: 12px; margin-bottom: 25px;">
+                <label class="role-card" id="student-card" style="flex: 1; text-align: center; padding: 15px 10px; border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; background: #eff6ff; transition: all 0.3s;">
                     <input type="radio" name="role" value="student" checked style="display: none;" onchange="updateRoleSelection()">
-                    <i class="fas fa-user-graduate" style="font-size: 24px; color: #3b82f6; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600; color: #1f2937;">Student</div>
+                    <i class="fas fa-user-graduate" style="font-size: 22px; color: #3b82f6; margin-bottom: 6px; display: block;"></i>
+                    <div style="font-weight: 600; color: #1f2937; font-size: 14px;">Student</div>
                 </label>
-                <label class="role-card" id="parent-card" style="flex: 1; text-align: center; padding: 15px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; background: white; transition: all 0.3s;">
+                <label class="role-card" id="tutor-card" style="flex: 1; text-align: center; padding: 15px 10px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; background: white; transition: all 0.3s;">
+                    <input type="radio" name="role" value="tutor" style="display: none;" onchange="updateRoleSelection()">
+                    <i class="fas fa-chalkboard-teacher" style="font-size: 22px; color: #6b7280; margin-bottom: 6px; display: block;"></i>
+                    <div style="font-weight: 600; color: #4b5563; font-size: 14px;">Tutor</div>
+                </label>
+                <label class="role-card" id="parent-card" style="flex: 1; text-align: center; padding: 15px 10px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; background: white; transition: all 0.3s;">
                     <input type="radio" name="role" value="parent" style="display: none;" onchange="updateRoleSelection()">
-                    <i class="fas fa-user-friends" style="font-size: 24px; color: #6b7280; margin-bottom: 8px;"></i>
-                    <div style="font-weight: 600; color: #4b5563;">Parent</div>
+                    <i class="fas fa-user-friends" style="font-size: 22px; color: #6b7280; margin-bottom: 6px; display: block;"></i>
+                    <div style="font-weight: 600; color: #4b5563; font-size: 14px;">Parent</div>
                 </label>
             </div>
 
@@ -175,7 +180,11 @@ $extraHead = '<style>
                 <input type="password" id="password" name="password" required>
             </div>
 
-            <div style="text-align: right; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #4b5563;">
+                    <input type="checkbox" name="remember_me" value="1" style="width: 16px; height: 16px; accent-color: #6c5ce7; cursor: pointer;" />
+                    <i class="fas fa-clock" style="color: #6c5ce7; font-size: 12px;"></i> Stay logged in
+                </label>
                 <a href="/forgot-password" style="color: #3b82f6; text-decoration: none; font-size: 14px;">
                     <i class="fas fa-key"></i> Forgot Password?
                 </a>
@@ -199,39 +208,33 @@ $extraHead = '<style>
 
 <script>
 function updateRoleSelection() {
-    const studentCard = document.getElementById('student-card');
-    const parentCard = document.getElementById('parent-card');
+    const cards = document.querySelectorAll('.role-card');
+    const selected = document.querySelector('input[name="role"]:checked').value;
     const parentInfo = document.getElementById('parent-info');
-    const isStudent = document.querySelector('input[name="role"]:checked').value === 'student';
 
-    if (isStudent) {
-        studentCard.style.borderColor = '#3b82f6';
-        studentCard.style.background = '#eff6ff';
-        studentCard.querySelector('i').style.color = '#3b82f6';
-        studentCard.querySelector('div').style.color = '#1f2937';
+    cards.forEach(function(card) {
+        const input = card.querySelector('input[name="role"]');
+        const icon = card.querySelector('i');
+        const label = card.querySelector('div');
+        if (input.value === selected) {
+            card.style.borderColor = '#3b82f6';
+            card.style.background = '#eff6ff';
+            icon.style.color = '#3b82f6';
+            label.style.color = '#1f2937';
+        } else {
+            card.style.borderColor = '#e5e7eb';
+            card.style.background = 'white';
+            icon.style.color = '#6b7280';
+            label.style.color = '#4b5563';
+        }
+    });
 
-        parentCard.style.borderColor = '#e5e7eb';
-        parentCard.style.background = 'white';
-        parentCard.querySelector('i').style.color = '#6b7280';
-        parentCard.querySelector('div').style.color = '#4b5563';
-        
-        parentInfo.style.display = 'none';
-    } else {
-        parentCard.style.borderColor = '#3b82f6';
-        parentCard.style.background = '#eff6ff';
-        parentCard.querySelector('i').style.color = '#3b82f6';
-        parentCard.querySelector('div').style.color = '#1f2937';
-
-        studentCard.style.borderColor = '#e5e7eb';
-        studentCard.style.background = 'white';
-        studentCard.querySelector('i').style.color = '#6b7280';
-        studentCard.querySelector('div').style.color = '#4b5563';
-        
-        parentInfo.style.display = 'block';
+    if (parentInfo) {
+        parentInfo.style.display = (selected === 'parent') ? 'block' : 'none';
     }
 }
 function fillAdminCredentials() {
-    document.getElementById('username').value = 'Peekay';
+    document.getElementById('username').value = 'Pontsho';
     document.getElementById('password').value = 'admin123';
     // Optional: auto-submit
     // document.querySelector('form').submit();

@@ -641,7 +641,7 @@ Curriculum: {curriculum} ({country})";
         }
         
         // Create upload directory if it doesn't exist
-        $uploadDir = __DIR__ . '/../uploads/seo-resources/';
+        $uploadDir = __DIR__ . '/../public/uploads/seo-resources/';
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
@@ -702,7 +702,7 @@ Curriculum: {curriculum} ({country})";
         }
         
         // Delete file from filesystem
-        $filePath = __DIR__ . '/../uploads/' . $resource['file_path'];
+        $filePath = __DIR__ . '/../public/uploads/' . $resource['file_path'];
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -737,7 +737,7 @@ Curriculum: {curriculum} ({country})";
         $seoModel->incrementResourceDownloads($resourceId);
         
         // Serve file
-        $filePath = __DIR__ . '/../uploads/' . $resource['file_path'];
+        $filePath = __DIR__ . '/../public/uploads/' . $resource['file_path'];
         if (!file_exists($filePath)) {
             http_response_code(404);
             exit('File not found');

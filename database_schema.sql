@@ -76,6 +76,59 @@ CREATE TABLE IF NOT EXISTS study_plans (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 );
 
+-- Apply For Me submissions table
+CREATE TABLE IF NOT EXISTS apply_for_me_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id TEXT UNIQUE NOT NULL,
+    student_id INTEGER NOT NULL,
+    full_name TEXT NOT NULL,
+    surname TEXT NOT NULL,
+    id_number TEXT NOT NULL,
+    date_of_birth TEXT,
+    gender TEXT,
+    citizenship TEXT,
+    email TEXT,
+    phone TEXT,
+    home_address TEXT,
+    school_name TEXT,
+    grade_12_results TEXT,
+    aps_score TEXT,
+    subjects TEXT,
+    matric_year TEXT,
+    university_preference_1 TEXT,
+    university_preference_2 TEXT,
+    university_preference_3 TEXT,
+    course_preference_1 TEXT,
+    course_preference_2 TEXT,
+    course_preference_3 TEXT,
+    bursary_name TEXT,
+    bursary_provider TEXT,
+    institution_name TEXT,
+    institution_type TEXT,
+    id_copy_path TEXT,
+    matric_cert_path TEXT,
+    transcript_path TEXT,
+    proof_res_path TEXT,
+    cv_path TEXT,
+    payment_status TEXT DEFAULT 'pending',
+    payment_amount REAL DEFAULT 20.00,
+    payment_reference TEXT,
+    application_status TEXT DEFAULT 'pending',
+    document_verification TEXT DEFAULT 'pending',
+    admin_notes TEXT,
+    policy_accepted INTEGER DEFAULT 0,
+    current_step TEXT DEFAULT 'submitted',
+    verified_by INTEGER DEFAULT NULL,
+    verified_at DATETIME DEFAULT NULL,
+    document_verification_notes TEXT DEFAULT NULL,
+    rejection_reason TEXT DEFAULT NULL,
+    submitted_to_institution_at DATETIME DEFAULT NULL,
+    institution_response TEXT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+);
+
 -- Report Cards table (using user_id directly)
 CREATE TABLE IF NOT EXISTS report_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -173,10 +226,66 @@ CREATE TABLE IF NOT EXISTS study_group_scripts (
     file_path TEXT NOT NULL,
     file_size INTEGER DEFAULT 0,
     description TEXT,
+    resource_type TEXT DEFAULT 'script',
+    video_url TEXT,
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (study_group_id) REFERENCES study_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Tutors table (tutors available for students to learn from)
+CREATE TABLE IF NOT EXISTS tutors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    full_name TEXT,
+    subjects TEXT,
+    bio TEXT,
+    hourly_rate TEXT,
+    phone TEXT,
+    email TEXT,
+    is_available INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tutor Students table (links tutors to the students they teach)
+CREATE TABLE IF NOT EXISTS tutor_students (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tutor_id INTEGER NOT NULL,
+    student_user_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending',
+    teaching_mode TEXT DEFAULT 'online',
+    extra_classes INTEGER DEFAULT 0,
+    payment_method TEXT DEFAULT 'eft',
+    grade TEXT,
+    subjects TEXT,
+    schedule TEXT,
+    estimated_price TEXT,
+    rejection_reason TEXT,
+    requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    approved_at DATETIME,
+    FOREIGN KEY (tutor_id) REFERENCES tutors(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(tutor_id, student_user_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS my_resources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    resource_type TEXT DEFAULT 'script',
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    description TEXT,
+    video_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_my_resources_user_id ON my_resources(user_id);
+
 
 -- Study Group Messages table (chat)
 CREATE TABLE IF NOT EXISTS study_group_messages (
@@ -212,9 +321,29 @@ CREATE TABLE IF NOT EXISTS scans (
     file_size INTEGER DEFAULT 0,
     mime_type TEXT DEFAULT 'application/pdf',
     is_saved INTEGER DEFAULT 0,
+    ocr_text TEXT DEFAULT '',
+    ocr_extracted_at DATETIME DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Tutor Announcements (announcements tutors post for their active students:
+-- online session links and contact lesson dates, scoped per grade)
+CREATE TABLE IF NOT EXISTS tutor_announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tutor_id INTEGER NOT NULL,
+    grade TEXT DEFAULT '',
+    type TEXT DEFAULT 'online',
+    title TEXT NOT NULL,
+    description TEXT,
+    link TEXT,
+    session_date TEXT,
+    session_time TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tutor_id) REFERENCES tutors(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_tutor_announcements_tutor ON tutor_announcements(tutor_id);
 
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);

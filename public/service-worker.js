@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studybuddie-v2';
+const CACHE_NAME = 'studybuddie-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/css/style.css',
@@ -34,7 +34,14 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch event - serve from cache, fallback to network
+// IMPORTANT: Only handle GET requests. Let POST, PUT, DELETE etc. go directly to the network.
+// This prevents service worker from interfering with form submissions (e.g. Apply For Me form).
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests (POST, PUT, DELETE, etc.) - always go to network
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);

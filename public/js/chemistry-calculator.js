@@ -20,7 +20,13 @@ class ChemistryCalculator extends BaseCalculator {
             '[OH^-]': { name: 'OH- Conc', unit: 'M' },
             'Q': { name: 'Heat Energy', unit: 'J' },
             'c': { name: 'Specific Heat', unit: 'J/g°C' },
-            '\\Delta T': { name: 'Temp Change', unit: '°C' }
+            '\\Delta T': { name: 'Temp Change', unit: '°C' },
+            'P_{1}': { name: 'Initial Pressure', unit: 'atm' },
+            'V_{1}': { name: 'Initial Volume', unit: 'L' },
+            'T_{1}': { name: 'Initial Temp', unit: 'K' },
+            'P_{2}': { name: 'Final Pressure', unit: 'atm' },
+            'V_{2}': { name: 'Final Volume', unit: 'L' },
+            'T_{2}': { name: 'Final Temp', unit: 'K' }
         };
     }
 

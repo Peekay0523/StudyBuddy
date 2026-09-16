@@ -286,7 +286,7 @@ $schemaData = !empty($page['schema_markup']) ? json_decode($page['schema_markup'
                             <span class="resource-downloads">⬇️ <?php echo number_format($resource['download_count']); ?></span>
                         </div>
                         <div class="resource-actions">
-                            <a href="/uploads/seo-resources/<?php echo basename($resource['file_path']); ?>" 
+                            <a href="/public/uploads/seo-resources/<?php echo basename($resource['file_path']); ?>"
                                class="btn btn-download-resource" 
                                download="<?php echo htmlspecialchars($resource['file_name']); ?>">
                                 📥 Download

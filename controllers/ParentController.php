@@ -9,18 +9,27 @@ require_once __DIR__ . '/../models/UploadedScript.php';
 require_once __DIR__ . '/../models/StudyPlan.php';
 require_once __DIR__ . '/../models/ReportCard.php';
 require_once __DIR__ . '/../models/UserActivity.php';
+require_once __DIR__ . '/../models/BursaryApplication.php';
+require_once __DIR__ . '/../models/InstitutionApplication.php';
+require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
 
 class ParentController {
     private $scriptModel;
     private $studyPlanModel;
     private $reportCardModel;
     private $userActivityModel;
+    private $bursaryModel;
+    private $institutionModel;
+    private $applyForMeModel;
 
     public function __construct() {
         $this->scriptModel = new UploadedScript();
         $this->studyPlanModel = new StudyPlan();
         $this->reportCardModel = new ReportCard();
         $this->userActivityModel = new UserActivity();
+        $this->bursaryModel = new BursaryApplication();
+        $this->institutionModel = new InstitutionApplication();
+        $this->applyForMeModel = new ApplyForMeSubmission();
     }
     
     public function index() {
@@ -71,6 +80,18 @@ class ParentController {
             }
         }
         $masteredTopicsSummary = $subjectStats;
+
+        // Bursary Applications
+        $bursaryApplications = $this->bursaryModel->findByStudentId($student['id']);
+        $bursaryCount = $this->bursaryModel->countByStudent($student['id']);
+
+        // Institution Applications
+        $institutionApplications = $this->institutionModel->findByStudentId($student['id']);
+        $institutionCount = $this->institutionModel->countByStudent($student['id']);
+
+        // Apply For Me Submissions (applications submitted via the platform)
+        $applyForMeSubmissions = $this->applyForMeModel->findByStudentId($student['id']);
+        $applyForMeCount = count($applyForMeSubmissions);
 
         // Subscription Info
         $db = Database::getInstance()->getConnection();

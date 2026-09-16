@@ -3,9 +3,10 @@
 
 <?php 
 if (isLoggedIn()): 
-    // Do not show bottom nav on simulation pages
+    // Do not show bottom nav on simulation pages or parent pages
     $simulationPages = ['math', 'chemistry', 'physics'];
-    $showBottomNav = !in_array($currentPage ?? '', $simulationPages);
+    $parentPages = ['parent-dashboard', 'track-progress'];
+    $showBottomNav = !in_array($currentPage ?? '', array_merge($simulationPages, $parentPages));
 ?>
 <!-- Modern Mobile Bottom Navigation -->
 <?php if ($showBottomNav): ?>
@@ -366,6 +367,9 @@ body {
 </script>
 
 <?php echo $extraScripts ?? ''; ?>
+
+<!-- Ask App - Smart Search Assistant -->
+<?php include __DIR__ . '/../components/ask_app_search.php'; ?>
 
 </body>
 </html>

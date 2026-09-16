@@ -156,14 +156,13 @@ class AIHelper {
             return $this->getFallbackResponse($userMessage);
         }
 
-        // Remove markdown formatting for cleaner display
+        // Remove basic markdown formatting for cleaner display but PRESERVE LaTeX-essential characters
         $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
         $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
         $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
-        $response = str_replace(['**', '__', '_'], '', $response); // Remove any remaining markdown chars
 
         return $response;
-    }
+        }
     
     /**
      * Extract text from image using OpenAI Vision API (OCR)
@@ -381,12 +380,11 @@ Content to process: " . substr($content, 0, 8000)]
         // Using 4000 tokens and 0.1 temperature for accuracy and completeness
         $response = $this->makeRequest($messages, 4000, 0.1);
 
-        // Clean up any remaining markdown formatting
+        // Clean up any remaining markdown formatting while PRESERVING LaTeX characters
         if ($response) {
             $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
             $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
             $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
-            $response = str_replace(['**', '__', '```'], '', $response); // Remove any remaining markdown chars
         }
 
         return $response ?: "Memorandum for topics: " . implode(', ', array_slice($topics, 0, 5));
@@ -416,14 +414,13 @@ Content to process: " . substr($content, 0, 8000)]
         $response = $this->makeRequest($messages, 500, 0.5);
         error_log("GenerateStudyPlan: API Response: " . substr($response ?: 'NULL', 0, 100));
 
-        // Remove markdown formatting from response
+        // Remove basic markdown formatting from response but PRESERVE LaTeX characters
         if ($response) {
             $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response); // Remove ** bold
             $response = preg_replace('/\*(.*?)\*/', '$1', $response); // Remove * italic
             $response = preg_replace('/^#+\s*/m', '', $response); // Remove # headers
             $response = preg_replace('/^---\s*$/m', '', $response); // Remove horizontal rules
             $response = preg_replace('/\[(.*?)\]\(.*?\)/', '$1', $response); // Remove markdown links
-            $response = str_replace(['\\'], '', $response); // Remove escaped characters
             $response = preg_replace('/\n{3,}/', "\n\n", $response); // Clean up multiple newlines
             $response = trim($response);
         }

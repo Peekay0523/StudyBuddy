@@ -1649,4 +1649,660 @@ class AdminController {
         $pageTitle = 'Payment Details #' . $paymentId;
         include __DIR__ . '/../templates/pages/admin/bobpay_payment_details.php';
     }
+
+    /**
+     * Apply For Me - List all submissions
+     */
+    public function applyForMe() {
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $filters = [];
+        if (!empty($_GET['status'])) $filters['status'] = $_GET['status'];
+        if (!empty($_GET['payment'])) $filters['payment_status'] = $_GET['payment'];
+        if (!empty($_GET['verification'])) $filters['document_verification'] = $_GET['verification'];
+        if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
+
+        $submissions = $model->findAllWithUser($filters);
+        $stats = $model->getStats();
+
+        $pageTitle = 'Manage Applications - Admin - StudySmart';
+        $currentPage = 'admin-apply-for-me';
+
+        include __DIR__ . '/../templates/pages/admin/apply_for_me.php';
+    }
+
+    /**
+     * Apply For Me - View single submission detail
+     */
+    public function applyForMeDetail($id) {
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submission = $model->findByIdWithUser($id);
+        if (!$submission) {
+            setFlashMessage('error', 'Application not found');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $pageTitle = 'Application #' . $id . ' - Admin - StudySmart';
+        $currentPage = 'admin-apply-for-me';
+
+        include __DIR__ . '/../templates/pages/admin/apply_for_me_detail.php';
+    }
+
+    /**
+     * Apply For Me - Update document verification
+     */
+    public function applyForMeVerifyDocuments() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $action = $_POST['action'] ?? null;
+        $notes = trim($_POST['verification_notes'] ?? '');
+        $rejectionReason = trim($_POST['rejection_reason'] ?? '');
+
+        if (!$submissionId || !$action) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $currentUser = getCurrentUser();
+
+        if ($action === 'valid') {
+            $model->updateDocumentVerification($submissionId, 'valid', $notes, $currentUser['id']);
+            setFlashMessage('success', 'Documents verified as valid');
+        } elseif ($action === 'invalid') {
+            if (empty($rejectionReason)) {
+                setFlashMessage('error', 'Please provide a reason for rejection');
+                header("Location: /admin/apply-for-me/{$submissionId}");
+                exit;
+            }
+            $model->rejectDocuments($submissionId, $rejectionReason, $notes, $currentUser['id']);
+            setFlashMessage('success', 'Documents marked as invalid. Student has been notified.');
+        } else {
+            $model->updateDocumentVerification($submissionId, 'pending', $notes, $currentUser['id']);
+            setFlashMessage('success', 'Document verification reset to pending');
+        }
+
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Apply For Me - Update application status
+     */
+    public function applyForMeUpdateStatus() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $newStatus = $_POST['new_status'] ?? null;
+        $adminNotes = trim($_POST['admin_notes'] ?? '');
+        $institutionResponse = trim($_POST['institution_response'] ?? '');
+
+        if (!$submissionId || !$newStatus) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $validStatuses = ['pending', 'in_progress', 'submitted_to_institution', 'completed', 'rejected'];
+        if (!in_array($newStatus, $validStatuses)) {
+            setFlashMessage('error', 'Invalid status');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $updateData = ['application_status' => $newStatus];
+
+        if (!empty($adminNotes)) {
+            $updateData['admin_notes'] = $adminNotes;
+        }
+
+        if (!empty($institutionResponse)) {
+            $updateData['institution_response'] = $institutionResponse;
+        }
+
+        // Auto-set current_step based on status
+        $updateData['current_step'] = $newStatus;
+
+        // If marking as submitted to institution, set the timestamp
+        if ($newStatus === 'submitted_to_institution') {
+            $updateData['submitted_to_institution_at'] = date('Y-m-d H:i:s');
+        }
+
+        $model->updateProgress($submissionId, $updateData);
+
+        $statusLabels = [
+            'pending' => 'Application marked as pending',
+            'in_progress' => 'Application is now in progress',
+            'submitted_to_institution' => 'Application has been submitted to the institution',
+            'completed' => 'Application marked as completed',
+            'rejected' => 'Application has been rejected'
+        ];
+
+        setFlashMessage('success', $statusLabels[$newStatus] ?? 'Status updated');
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Apply For Me - Update payment status
+     */
+    public function applyForMeUpdatePayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $newPaymentStatus = $_POST['payment_status'] ?? null;
+
+        if (!$submissionId || !$newPaymentStatus) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $validPaymentStatuses = ['pending', 'paid', 'refunded'];
+        if (!in_array($newPaymentStatus, $validPaymentStatuses)) {
+            setFlashMessage('error', 'Invalid payment status');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $model->updatePaymentStatus($submissionId, $newPaymentStatus);
+
+        setFlashMessage('success', 'Payment status updated to ' . ucfirst($newPaymentStatus));
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Apply For Me - Save admin notes
+     */
+    public function applyForMeSaveNotes() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $notes = trim($_POST['admin_notes'] ?? '');
+
+        if (!$submissionId) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $model->updateAdminNotes($submissionId, $notes);
+        setFlashMessage('success', 'Admin notes saved');
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Apply For Me - Download student document
+     */
+    public function applyForMeDownloadDocument($id, $documentType) {
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submission = $model->findById($id);
+        if (!$submission) {
+            setFlashMessage('error', 'Application not found');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $documentPaths = [
+            'id_copy' => 'id_copy_path',
+            'matric_cert' => 'matric_cert_path',
+            'proof_of_residence' => 'proof_res_path',
+            'cv' => 'cv_path',
+            'transcript' => 'transcript_path',
+        ];
+
+        if (!isset($documentPaths[$documentType])) {
+            setFlashMessage('error', 'Invalid document type');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        $filePath = $submission[$documentPaths[$documentType]] ?? null;
+        if (empty($filePath)) {
+            setFlashMessage('error', 'Document not found');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        $fullPath = __DIR__ . '/../public/uploads/apply_for_me/' . $filePath;
+
+        if (!file_exists($fullPath)) {
+            setFlashMessage('error', 'Document file not found on disk');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        // Security: Validate the file is within the expected directory
+        $realPath = realpath($fullPath);
+        $allowedDir = realpath(__DIR__ . '/../public/uploads/apply_for_me/');
+        if ($realPath === false || $allowedDir === false || strpos($realPath, $allowedDir) !== 0) {
+            setFlashMessage('error', 'Access denied');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        // Get file info
+        $pathInfo = pathinfo($fullPath);
+        $extension = strtolower($pathInfo['extension'] ?? '');
+
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        // Log document access for audit trail
+        $this->logDocumentAccess($id, $documentType, 'download');
+
+        header('Content-Type: ' . $mimeType);
+        header('Content-Disposition: inline; filename="' . basename($fullPath) . '"');
+        header('Content-Length: ' . filesize($fullPath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        readfile($fullPath);
+        exit;
+    }
+
+    /**
+     * Apply For Me - View student document (in-browser)
+     */
+    public function applyForMeViewDocument($id, $documentType) {
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submission = $model->findById($id);
+        if (!$submission) {
+            setFlashMessage('error', 'Application not found');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $documentPaths = [
+            'id_copy' => 'id_copy_path',
+            'matric_cert' => 'matric_cert_path',
+            'proof_of_residence' => 'proof_res_path',
+            'cv' => 'cv_path',
+            'transcript' => 'transcript_path',
+        ];
+
+        if (!isset($documentPaths[$documentType])) {
+            setFlashMessage('error', 'Invalid document type');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        $filePath = $submission[$documentPaths[$documentType]] ?? null;
+        if (empty($filePath)) {
+            setFlashMessage('error', 'Document not found');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        $fullPath = __DIR__ . '/../public/uploads/apply_for_me/' . $filePath;
+
+        if (!file_exists($fullPath)) {
+            setFlashMessage('error', 'Document file not found on disk');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        // Security: Validate the file is within the expected directory
+        $realPath = realpath($fullPath);
+        $allowedDir = realpath(__DIR__ . '/../public/uploads/apply_for_me/');
+        if ($realPath === false || $allowedDir === false || strpos($realPath, $allowedDir) !== 0) {
+            setFlashMessage('error', 'Access denied');
+            header('Location: /admin/apply-for-me/' . $id);
+            exit;
+        }
+
+        $pathInfo = pathinfo($fullPath);
+        $extension = strtolower($pathInfo['extension'] ?? '');
+
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        // Log document access for audit trail
+        $this->logDocumentAccess($id, $documentType, 'view');
+
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . filesize($fullPath));
+        readfile($fullPath);
+        exit;
+    }
+
+    /**
+     * Toggle a progress step
+     */
+    public function applyForMeToggleStep() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $stepKey = $_POST['step_key'] ?? null;
+
+        if (!$submissionId || !$stepKey) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $allowedSteps = ['submitted', 'payment', 'document_verification', 'in_progress', 'submitted_to_institution', 'completed'];
+        if (!in_array($stepKey, $allowedSteps)) {
+            setFlashMessage('error', 'Invalid step');
+            header("Location: /admin/apply-for-me/{$submissionId}");
+            exit;
+        }
+
+        $model->toggleStep($submissionId, $stepKey);
+        setFlashMessage('success', 'Progress step updated');
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Toggle a progress step for a specific institution
+     */
+    public function applyForMeToggleInstitutionStep() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $institutionNumber = intval($_POST['institution_number'] ?? 0);
+        $stepKey = $_POST['step_key'] ?? null;
+
+        if (!$submissionId || !$stepKey || !in_array($institutionNumber, [1, 2, 3])) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $allowedSteps = ['submitted', 'payment', 'document_verification', 'in_progress', 'submitted_to_institution', 'completed'];
+        if (!in_array($stepKey, $allowedSteps)) {
+            setFlashMessage('error', 'Invalid step');
+            header("Location: /admin/apply-for-me/{$submissionId}");
+            exit;
+        }
+
+        $model->toggleInstitutionStep($submissionId, $institutionNumber, $stepKey);
+        setFlashMessage('success', "Institution {$institutionNumber} progress step updated");
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Update status for a specific institution preference (1, 2, or 3)
+     */
+    public function applyForMeUpdateInstitutionStatus() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $institutionNumber = intval($_POST['institution_number'] ?? 0);
+        $newStatus = $_POST['institution_status'] ?? null;
+        $notes = trim($_POST['institution_notes'] ?? '');
+        $response = trim($_POST['institution_response'] ?? '');
+
+        if (!$submissionId || !$newStatus || !in_array($institutionNumber, [1, 2, 3])) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $validStatuses = ['pending', 'in_progress', 'submitted_to_institution', 'completed', 'rejected'];
+        if (!in_array($newStatus, $validStatuses)) {
+            setFlashMessage('error', 'Invalid status');
+            header("Location: /admin/apply-for-me/{$submissionId}");
+            exit;
+        }
+
+        $result = $model->updateInstitutionStatus(
+            $submissionId,
+            $institutionNumber,
+            $newStatus,
+            !empty($notes) ? $notes : null,
+            !empty($response) ? $response : null
+        );
+
+        if ($result) {
+            // Auto-update overall application status based on institution statuses
+            $submission = $model->findById($submissionId);
+            $inst1Status = $submission['institution_1_status'] ?? 'pending';
+            $inst2Status = $submission['institution_2_status'] ?? null;
+            $inst3Status = $submission['institution_3_status'] ?? null;
+            
+            // Determine overall status based on all institution statuses
+            $allStatuses = array_filter([$inst1Status, $inst2Status, $inst3Status]);
+            
+            if (!empty($allStatuses)) {
+                $overallStatus = 'pending';
+                
+                if (in_array('completed', $allStatuses) && count(array_filter($allStatuses, fn($s) => $s === 'completed')) === count($allStatuses)) {
+                    // All institutions completed
+                    $overallStatus = 'completed';
+                } elseif (in_array('rejected', $allStatuses) && count(array_filter($allStatuses, fn($s) => $s === 'rejected')) === count($allStatuses)) {
+                    // All institutions rejected
+                    $overallStatus = 'rejected';
+                } elseif (in_array('submitted_to_institution', $allStatuses)) {
+                    $overallStatus = 'submitted_to_institution';
+                } elseif (in_array('in_progress', $allStatuses)) {
+                    $overallStatus = 'in_progress';
+                } elseif (in_array('completed', $allStatuses)) {
+                    // Some completed, some not - still in progress
+                    $overallStatus = 'in_progress';
+                }
+                
+                // Only update if the status actually changed
+                $currentOverallStatus = $submission['application_status'] ?? 'pending';
+                if ($overallStatus !== $currentOverallStatus) {
+                    $model->updateApplicationStatus($submissionId, $overallStatus);
+                }
+            }
+
+            $statusLabels = [
+                'pending' => 'Institution status set to Pending',
+                'in_progress' => 'Institution status set to In Progress',
+                'submitted_to_institution' => 'Application submitted to institution',
+                'completed' => 'Institution application marked as Completed',
+                'rejected' => 'Institution application marked as Rejected'
+            ];
+            setFlashMessage('success', $statusLabels[$newStatus] ?? 'Institution status updated');
+        } else {
+            setFlashMessage('error', 'Failed to update institution status');
+        }
+
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Approve payment - advances application to next step
+     */
+    public function applyForMeApprovePayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        if (!$submissionId) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $currentUser = getCurrentUser();
+        $model->approvePayment($submissionId, $currentUser['id']);
+
+        setFlashMessage('success', 'Payment approved! Application has been advanced to In Progress status.');
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * Reject payment
+     */
+    public function applyForMeRejectPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submissionId = $_POST['submission_id'] ?? null;
+        $reason = trim($_POST['rejection_reason'] ?? 'Payment not verified');
+
+        if (!$submissionId) {
+            setFlashMessage('error', 'Invalid request');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $model->rejectPayment($submissionId, $reason);
+
+        setFlashMessage('info', 'Payment rejected. Student will be notified.');
+        header("Location: /admin/apply-for-me/{$submissionId}");
+        exit;
+    }
+
+    /**
+     * View proof of payment (admin)
+     */
+    public function applyForMeViewProofPayment($id) {
+        require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
+        $model = new ApplyForMeSubmission();
+
+        $submission = $model->findById($id);
+        if (!$submission || empty($submission['proof_of_payment_path'])) {
+            setFlashMessage('error', 'Proof of payment not found');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $fullPath = __DIR__ . '/../public/uploads/apply_for_me/' . $submission['proof_of_payment_path'];
+
+        // Security: validate path
+        $realPath = realpath($fullPath);
+        $allowedDir = realpath(__DIR__ . '/../public/uploads/apply_for_me/');
+        if ($realPath === false || $allowedDir === false || strpos($realPath, $allowedDir) !== 0) {
+            setFlashMessage('error', 'Access denied');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        if (!file_exists($fullPath)) {
+            setFlashMessage('error', 'File not found');
+            header('Location: /admin/apply-for-me');
+            exit;
+        }
+
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $mimeTypes = ['pdf' => 'application/pdf', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png'];
+
+        header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
+        header('Content-Length: ' . filesize($fullPath));
+        readfile($fullPath);
+        exit;
+    }
+
+    /**
+     * Log document access for audit trail (data privacy compliance)
+     */
+    private function logDocumentAccess($submissionId, $documentType, $action) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $user = getCurrentUser();
+
+            // Check if audit_log table exists, create if not
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS document_access_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    submission_id INTEGER NOT NULL,
+                    document_type TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    accessed_by INTEGER NOT NULL,
+                    accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ip_address TEXT,
+                    FOREIGN KEY (submission_id) REFERENCES apply_for_me_submissions(id),
+                    FOREIGN KEY (accessed_by) REFERENCES users(id)
+                )
+            ");
+
+            $stmt = $db->prepare("
+                INSERT INTO document_access_log (submission_id, document_type, action, accessed_by, ip_address)
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $submissionId,
+                $documentType,
+                $action,
+                $user['id'] ?? 0,
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+            ]);
+        } catch (Exception $e) {
+            error_log("Failed to log document access: " . $e->getMessage());
+        }
+    }
 }

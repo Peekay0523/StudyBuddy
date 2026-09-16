@@ -128,14 +128,14 @@ include __DIR__ . '/../../layouts/admin_header.php';
             <tbody>
                 <?php foreach (array_slice($userScripts, 0, 10) as $script): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars(basename($script['file_name'])); ?></td>
+                        <td><?php echo htmlspecialchars($script['title'] ?? $script['file_name'] ?? 'Unknown'); ?></td>
                         <td>
                             <?php if (!empty($script['subject'])): ?>
                                 <span class="badge basic"><?php echo htmlspecialchars($script['subject'] ?? ''); ?></span>
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($script['memorandum_generated']): ?>
+                            <?php if (!empty($script['memorandum_generated'])): ?>
                                 <span class="badge active">Generated</span>
                             <?php else: ?>
                                 <span class="badge inactive">Not generated</span>
@@ -173,7 +173,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
             <tbody>
                 <?php foreach (array_slice($userReportCards, 0, 10) as $rc): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars(basename($rc['file_name'])); ?></td>
+                        <td><?php echo htmlspecialchars(basename($rc['file_name'] ?? 'Unknown')); ?></td>
                         <td>
                             <?php if (!empty($rc['grade'])): ?>
                                 <span class="badge basic">Grade <?php echo htmlspecialchars($rc['grade'] ?? ''); ?></span>
@@ -187,7 +187,7 @@ include __DIR__ . '/../../layouts/admin_header.php';
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($rc['career_recommendations_generated']): ?>
+                            <?php if (!empty($rc['career_recommendations_generated'])): ?>
                                 <span class="badge active">Generated</span>
                             <?php else: ?>
                                 <span class="badge inactive">Not generated</span>

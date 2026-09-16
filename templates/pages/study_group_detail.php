@@ -806,7 +806,7 @@ include __DIR__ . '/../layouts/header.php';
                 <i class="fas fa-file-alt" style="color: #667eea;"></i> Shared Resources
             </h2>
             <button onclick="document.getElementById('uploadScriptModal').style.display='block'" class="btn-primary">
-                <i class="fas fa-upload"></i> Upload Script
+                <i class="fas fa-upload"></i> Share Resource
             </button>
         </div>
         
@@ -816,17 +816,32 @@ include __DIR__ . '/../layouts/header.php';
                 <p>No scripts shared yet. Be the first to share!</p>
             </div>
         <?php else: ?>
-            <?php foreach ($scripts as $script): ?>
+            <?php foreach ($scripts as $script):
+                $rType = $script['resource_type'] ?? 'script';
+                $isVideoFile = ($rType === 'video_file');
+                $isVideoLink = ($rType === 'video_link');
+                $isVideo = $isVideoFile || $isVideoLink;
+                $rIcon = $isVideo ? 'fa-play-circle' : 'fa-file-pdf';
+                $rIconColor = $isVideo ? '#7c3aed' : '#ef4444';
+                $rBadgeBg = $isVideo ? '#ede9fe' : '#fef2f2';
+                $rBadgeColor = $isVideo ? '#6d28d9' : '#dc2626';
+                $rBadgeText = $isVideoLink ? 'Video Link' : ($isVideoFile ? 'Video' : 'Script');
+            ?>
                 <div class="script-card">
                     <div class="script-info">
                         <div class="script-name">
-                            <i class="fas fa-file-pdf" style="color: #ef4444;"></i>
+                            <i class="fas <?php echo $rIcon; ?>" style="color: <?php echo $rIconColor; ?>;"></i>
                             <?php echo htmlspecialchars($script['file_name']); ?>
+                            <span style="background: <?php echo $rBadgeBg; ?>; color: <?php echo $rBadgeColor; ?>; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-left: 8px;">
+                                <?php echo $rBadgeText; ?>
+                            </span>
                         </div>
                         <div class="script-meta">
                             <i class="fas fa-user"></i> <?php echo htmlspecialchars($script['uploader_name']); ?>
-                            &nbsp;&nbsp;|&nbsp;&nbsp;
-                            <i class="fas fa-hdd"></i> <?php echo round($script['file_size'] / 1024, 1); ?> KB
+                            <?php if (!$isVideoLink && !empty($script['file_size'])): ?>
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                                <i class="fas fa-hdd"></i> <?php echo round($script['file_size'] / 1024, 1); ?> KB
+                            <?php endif; ?>
                             &nbsp;&nbsp;|&nbsp;&nbsp;
                             <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($script['uploaded_at'])); ?>
                         </div>
@@ -835,14 +850,26 @@ include __DIR__ . '/../layouts/header.php';
                                 <?php echo htmlspecialchars($script['description']); ?>
                             </div>
                         <?php endif; ?>
+                        <?php if ($isVideoFile): ?>
+                            <div style="margin-top: 12px;">
+                                <video controls preload="metadata" style="width: 100%; max-height: 320px; border-radius: 8px; background: #000;"
+                                       src="/study-group/<?php echo $group['id']; ?>/view-video/<?php echo $script['id']; ?>"></video>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="script-actions">
-                        <a href="/study-group/<?php echo $group['id']; ?>/download-script/<?php echo $script['id']; ?>" class="btn-sm btn-primary-sm">
-                            <i class="fas fa-download"></i> Download
-                        </a>
+                        <?php if ($isVideoLink): ?>
+                            <a href="<?php echo htmlspecialchars($script['video_url']); ?>" target="_blank" rel="noopener noreferrer" class="btn-sm btn-primary-sm">
+                                <i class="fas fa-external-link-alt"></i> Watch Video
+                            </a>
+                        <?php else: ?>
+                            <a href="/study-group/<?php echo $group['id']; ?>/download-script/<?php echo $script['id']; ?>" class="btn-sm btn-primary-sm">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        <?php endif; ?>
                         <?php if ($script['user_id'] == $user['id']): ?>
                             <form method="POST" action="/study-group/<?php echo $group['id']; ?>/delete-script/<?php echo $script['id']; ?>" style="display: inline;">
-                                <button type="submit" class="btn-sm btn-danger-sm" onclick="return confirm('Delete this script?')">
+                                <button type="submit" class="btn-sm btn-danger-sm" onclick="return confirm('Delete this resource?')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -910,14 +937,48 @@ include __DIR__ . '/../layouts/header.php';
             <i class="fas fa-upload" style="color: #667eea;"></i> Upload Script
         </h2>
         
-        <form method="POST" action="/study-group/<?php echo $group['id']; ?>/upload-script" enctype="multipart/form-data">
+        <form method="POST" action="/study-group/<?php echo $group['id']; ?>/upload-script" enctype="multipart/form-data" id="uploadResourceForm">
             <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                    Resource Type <span style="color: #ef4444;">*</span>
+                </label>
+                <select name="resource_type" id="resourceTypeSelect" onchange="toggleResourceFields()"
+                        style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                    <option value="script">Script (PDF, DOCX, DOC, TXT)</option>
+                    <option value="video_file">Video Tutorial File (MP4)</option>
+                    <option value="video_link">Video Tutorial Link (URL)</option>
+                </select>
+            </div>
+
+            <!-- Script / Video file upload -->
+            <div id="fileField" style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
                     Select File <span style="color: #ef4444;">*</span>
                 </label>
-                <input type="file" name="script" required accept=".pdf,.docx,.doc,.txt"
+                <input type="file" name="script" id="scriptFileInput" required accept=".pdf,.docx,.doc,.txt"
                        style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-                <small style="color: #64748b; display: block; margin-top: 5px;">Allowed: PDF, DOCX, DOC, TXT (Max 10MB)</small>
+                <small id="fileHint" style="color: #64748b; display: block; margin-top: 5px;">Allowed: PDF, DOCX, DOC, TXT (Max 10MB)</small>
+            </div>
+
+            <!-- Video link fields -->
+            <div id="linkFields" style="display: none; margin-bottom: 20px;">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                        Video Title <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="video_title" maxlength="100"
+                           placeholder="e.g., Trigonometry Basics Tutorial"
+                           style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #1e293b;">
+                        Video URL <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="url" name="video_url"
+                           placeholder="https://youtube.com/watch?v=..."
+                           style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+                    <small style="color: #64748b; display: block; margin-top: 5px;">Paste a link to YouTube, Vimeo, or any video sharing site.</small>
+                </div>
             </div>
             
             <div style="margin-bottom: 20px;">
@@ -925,7 +986,7 @@ include __DIR__ . '/../layouts/header.php';
                     Description (Optional)
                 </label>
                 <textarea name="description" rows="3" 
-                          placeholder="Describe what this script is about..."
+                          placeholder="Describe what this resource is about..."
                           style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; resize: vertical;"></textarea>
             </div>
             
@@ -941,6 +1002,36 @@ include __DIR__ . '/../layouts/header.php';
         </form>
     </div>
 </div>
+
+<script>
+function toggleResourceFields() {
+    var type = document.getElementById('resourceTypeSelect').value;
+    var fileField = document.getElementById('fileField');
+    var linkFields = document.getElementById('linkFields');
+    var fileInput = document.getElementById('scriptFileInput');
+    var fileHint = document.getElementById('fileHint');
+
+    if (type === 'video_link') {
+        fileField.style.display = 'none';
+        linkFields.style.display = 'block';
+        fileInput.removeAttribute('required');
+    } else {
+        fileField.style.display = 'block';
+        linkFields.style.display = 'none';
+        if (type === 'video_file') {
+            fileInput.setAttribute('accept', '.mp4,.webm,.ogg');
+            fileInput.setAttribute('required', 'required');
+            if (fileHint) fileHint.textContent = 'Allowed: MP4, WEBM, OGG (Max 100MB)';
+        } else {
+            fileInput.setAttribute('accept', '.pdf,.docx,.doc,.txt');
+            fileInput.setAttribute('required', 'required');
+            if (fileHint) fileHint.textContent = 'Allowed: PDF, DOCX, DOC, TXT (Max 10MB)';
+        }
+    }
+}
+</script>
+
+<script>
 
 <script>
     let lastMessageId = <?php echo !empty($messages) ? end($messages)['id'] : 0; ?>;

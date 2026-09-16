@@ -11,6 +11,7 @@ require_once __DIR__ . '/../models/ReportCard.php';
 require_once __DIR__ . '/../models/UserActivity.php';
 require_once __DIR__ . '/../models/BursaryApplication.php';
 require_once __DIR__ . '/../models/InstitutionApplication.php';
+require_once __DIR__ . '/../models/ApplyForMeSubmission.php';
 
 class DashboardController {
     private $scriptModel;
@@ -33,6 +34,12 @@ class DashboardController {
         requireStudent();
 
         $student = getCurrentStudent();
+        if (!$student) {
+            setFlashMessage('error', 'Your student profile could not be loaded. Please try logging in again.');
+            header('Location: /login');
+            exit;
+        }
+
         $userId = $student['user_id'];
 
         $scripts = $this->scriptModel->findByStudentId($student['id']);
@@ -126,8 +133,18 @@ class DashboardController {
         $bursaryApplicationsCount = $this->bursaryApplicationModel->countByStudent($student['id']);
 
         // Get institution applications
+        // Note: countByStudent() and findByStudentId() already include Apply For Me submissions
         $institutionApplications = $this->institutionApplicationModel->findByStudentId($student['id']);
         $institutionApplicationsCount = $this->institutionApplicationModel->countByStudent($student['id']);
+
+        // Apply For Me bursary submissions (institution applications are already counted by InstitutionApplication model)
+        $applyForMeModel = new ApplyForMeSubmission();
+        $afmSubmissions = $applyForMeModel->findByStudentUserId($userId);
+        foreach ($afmSubmissions as $sub) {
+            if (!empty($sub['bursary_name'])) {
+                $bursaryApplicationsCount++;
+            }
+        }
 
         include __DIR__ . '/../templates/pages/dashboard.php';
     }

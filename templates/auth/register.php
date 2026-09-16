@@ -240,26 +240,60 @@ $step = $step ?? '1';
             <?php endif; ?>
 
             <form method="post" action="/register" id="registerForm">
+                <!-- Account Type Selector -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #1f2937; font-size: 14px;">I am registering as a:</label>
+                    <div style="display: flex; gap: 12px;">
+                        <label id="reg-student-card" style="flex: 1; text-align: center; padding: 14px 10px; border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; background: #eff6ff; transition: all 0.3s;">
+                            <input type="radio" name="register_role" value="student" checked style="display: none;" onchange="updateRegisterRole()">
+                            <i class="fas fa-user-graduate" style="font-size: 22px; color: #3b82f6; margin-bottom: 6px; display: block;"></i>
+                            <div style="font-weight: 600; color: #1f2937; font-size: 14px;">Student</div>
+                        </label>
+                        <label id="reg-tutor-card" style="flex: 1; text-align: center; padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer; background: white; transition: all 0.3s;">
+                            <input type="radio" name="register_role" value="tutor" style="display: none;" onchange="updateRegisterRole()">
+                            <i class="fas fa-chalkboard-teacher" style="font-size: 22px; color: #6b7280; margin-bottom: 6px; display: block;"></i>
+                            <div style="font-weight: 600; color: #4b5563; font-size: 14px;">Tutor</div>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email <span style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
+                    <label for="email">Email <span id="email-optional-label" style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
                     <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email ?? ''); ?>" >
+                    <div class="help-text" id="email-help-text">Used for account recovery and notifications</div>
                     
                 </div>
 
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($phone ?? ''); ?>" placeholder="+27 12 345 6789" required>
-                    <div class="help-text">We'll send a verification code to this number</div>
+                    <div class="help-text" id="phone-help-text">We'll send a verification code to this number</div>
                     <div id="phone-validation-message" class="validation-message" style="display: none;"></div>
                 </div>
 
-                <!-- OTP method is now SMS by default, no selection shown to user -->
-                <input type="hidden" name="otp_method" value="sms">
+                <!-- OTP Delivery Method Selector -->
+                <div class="form-group">
+                    <label>Receive verification code via: <span style="color: #dc2626;">*</span></label>
+                    <div style="display: flex; gap: 10px; margin-top: 6px;">
+                        <label id="otp-sms-card" style="flex: 1; text-align: center; padding: 12px 8px; border: 2px solid #3b82f6; border-radius: 10px; cursor: pointer; background: #eff6ff; transition: all 0.2s;">
+                            <input type="radio" name="otp_method" value="sms" checked style="display: none;" onchange="updateOtpMethod()">
+                            <i class="fas fa-comment-sms" style="font-size: 20px; color: #3b82f6; margin-bottom: 4px; display: block;"></i>
+                            <div style="font-weight: 600; color: #1f2937; font-size: 13px;">SMS</div>
+                            <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">To your phone</div>
+                        </label>
+                        <label id="otp-email-card" style="flex: 1; text-align: center; padding: 12px 8px; border: 2px solid #e5e7eb; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                            <input type="radio" name="otp_method" value="email" style="display: none;" onchange="updateOtpMethod()">
+                            <i class="fas fa-envelope" style="font-size: 20px; color: #6b7280; margin-bottom: 4px; display: block;"></i>
+                            <div style="font-weight: 600; color: #4b5563; font-size: 13px;">Email</div>
+                            <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">To your inbox</div>
+                        </label>
+                    </div>
+                </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
@@ -270,6 +304,50 @@ $step = $step ?? '1';
                 <div class="form-group">
                     <label for="password_confirm">Confirm Password</label>
                     <input type="password" id="password_confirm" name="password_confirm" >
+                </div>
+
+                <!-- Tutor-specific fields (shown only when Tutor is selected) -->
+                <div id="tutor-fields" style="display: none; margin-top: 10px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                    <h3 style="font-size: 15px; color: #1f2937; margin: 0 0 15px;"><i class="fas fa-chalkboard-teacher" style="color: #f59e0b;"></i> Tutor Profile Details</h3>
+                    <div class="form-group">
+                        <label for="tutor_full_name">Full Name <span style="color: #dc2626;">*</span></label>
+                        <input type="text" id="tutor_full_name" name="tutor_full_name" placeholder="e.g., John Smith">
+                        <div class="help-text">This is how students will see your name.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tutor_subjects">Subjects You Teach <span style="color: #dc2626;">*</span></label>
+                        <input type="text" id="tutor_subjects" name="tutor_subjects" placeholder="e.g., Mathematics, Physical Science, English">
+                        <div class="help-text">Comma-separated list of subjects.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tutor_bio">Bio <span style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
+                        <textarea id="tutor_bio" name="tutor_bio" rows="3" placeholder="Tell students about your qualifications and teaching style..." style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tutor_company_name">Tutoring Company Name <span style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
+                        <input type="text" id="tutor_company_name" name="tutor_company_name" placeholder="e.g., Bright Minds Tutoring">
+                        <div class="help-text">The name of your tutoring company or practice.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>How do you charge? <span style="color: #dc2626;">*</span></label>
+                        <div style="display: flex; gap: 10px; margin-top: 4px;">
+                            <label style="flex: 1; text-align: center; padding: 10px; border: 2px solid #3b82f6; border-radius: 10px; cursor: pointer; background: #eff6ff; transition: all 0.2s;" id="billing-hourly-card-reg">
+                                <input type="radio" name="tutor_billing_type" value="hourly" checked style="display: none;" onchange="updateBillingType('reg')">
+                                <i class="fas fa-clock" style="font-size: 18px; color: #3b82f6; margin-bottom: 4px; display: block;"></i>
+                                <div style="font-weight: 600; color: #1f2937; font-size: 13px;">Hourly</div>
+                            </label>
+                            <label style="flex: 1; text-align: center; padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;" id="billing-monthly-card-reg">
+                                <input type="radio" name="tutor_billing_type" value="monthly" style="display: none;" onchange="updateBillingType('reg')">
+                                <i class="fas fa-calendar-alt" style="font-size: 18px; color: #6b7280; margin-bottom: 4px; display: block;"></i>
+                                <div style="font-weight: 600; color: #4b5563; font-size: 13px;">Monthly</div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tutor_rate"><span id="rate-label-reg">Hourly Rate</span> <span style="color: #6b7280; font-weight: normal; font-size: 13px;">(Optional)</span></label>
+                        <input type="text" id="tutor_rate" name="tutor_rate" placeholder="e.g., R150/hour">
+                        <div class="help-text" id="rate-hint-reg">How much you charge per hour.</div>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #16a34a, #22c55e); width: 100%; padding: 14px; font-size: 16px; margin-top: 10px;">
@@ -287,10 +365,22 @@ $step = $step ?? '1';
             endif;
             ?>
 
-            <h2><i class="fas fa-shield-halved" style="color: #16a34a;"></i> Verify Your Phone</h2>
-            <p class="auth-subtitle">
-                Enter the 6-digit code sent to your phone via SMS
-            </p>
+            <?php
+            $otpMethod = $pendingReg['otp_method'] ?? 'sms';
+            $otpIdentifier = $pendingReg['otp_identifier'] ?? $pendingReg['phone'];
+            $isEmail = ($otpMethod === 'email');
+            $methodLabel = $isEmail ? 'Email' : 'SMS';
+            $methodIcon = $isEmail ? 'fa-envelope' : 'fa-comment-sms';
+            $methodColor = $isEmail ? '#7c3aed' : '#3b82f6';
+            $badgeBg = $isEmail ? '#ede9fe' : '#dbeafe';
+            $badgeColor = $isEmail ? '#5b21b6' : '#1e40af';
+            $verifyTitle = $isEmail ? 'Verify Your Email' : 'Verify Your Phone';
+            $verifySubtitle = $isEmail
+                ? 'Enter the 6-digit code sent to your email'
+                : 'Enter the 6-digit code sent to your phone via SMS';
+            ?>
+            <h2><i class="fas fa-shield-halved" style="color: #16a34a;"></i> <?php echo $verifyTitle; ?></h2>
+            <p class="auth-subtitle"><?php echo $verifySubtitle; ?></p>
 
             <?php if ($error): ?>
                 <div class="alert alert-error">
@@ -300,10 +390,10 @@ $step = $step ?? '1';
             <?php endif; ?>
 
             <div class="phone-display">
-                <i class="fas fa-comment-sms" style="color: #3b82f6;"></i>
-                <span><?php echo htmlspecialchars($pendingReg['phone']); ?></span>
-                <span style="margin-left: 10px; padding: 4px 8px; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                    SMS
+                <i class="fas <?php echo $methodIcon; ?>" style="color: <?php echo $methodColor; ?>;"></i>
+                <span><?php echo htmlspecialchars($otpIdentifier); ?></span>
+                <span style="margin-left: 10px; padding: 4px 8px; background: <?php echo $badgeBg; ?>; color: <?php echo $badgeColor; ?>; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                    <?php echo $methodLabel; ?>
                 </span>
                 <a href="/register" style="margin-left: auto; color: #16a34a; text-decoration: none; font-size: 12px;">
                     <i class="fas fa-edit"></i> Change
@@ -329,17 +419,34 @@ $step = $step ?? '1';
             <div class="resend-container">
                 <p style="color: #6b7280; font-size: 14px; margin: 0;">Didn't receive the code?</p>
                 <button type="button" id="resendBtn" class="resend-btn" onclick="resendOtp()">
-                    <i class="fas fa-redo"></i> Resend via SMS
+                    <i class="fas fa-redo"></i> Resend via <?php echo $methodLabel; ?>
                 </button>
                 <div id="resendTimer" class="resend-timer" style="display: none;">
                     <i class="fas fa-clock"></i> Resend available in <span id="timerCount">60</span>s
                 </div>
             </div>
 
-            <div class="alert alert-info" style="margin-top: 20px;">
-                <i class="fas fa-info-circle"></i>
-                <span><strong>Development Mode:</strong> Check server error log for OTP code, or check your phone.</span>
-            </div>
+            <?php
+            // Development mode: show the OTP code on screen if mail()/SMS is unavailable
+            $devOtp = $_SESSION['dev_otp_codes'][$otpIdentifier] ?? null;
+            $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false;
+            ?>
+            <?php if ($devOtp || $isLocal): ?>
+                <div class="alert alert-info" style="margin-top: 20px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px 20px;">
+                    <i class="fas fa-info-circle" style="color: #2563eb; font-size: 18px;"></i>
+                    <div style="margin-top: 8px;">
+                        <strong style="color: #1e40af;">Development Mode</strong>
+                        <p style="color: #1e40af; margin: 6px 0 0; font-size: 13.5px; line-height: 1.5;">
+                            <?php if ($devOtp): ?>
+                                Your verification code is: <span style="font-size: 22px; font-weight: 800; color: #2563eb; letter-spacing: 4px; background: #dbeafe; padding: 4px 14px; border-radius: 8px; display: inline-block; margin-top: 4px;"><?php echo htmlspecialchars($devOtp); ?></span>
+                                <br><span style="font-size: 12px; color: #6b7280;">(Email/SMS delivery is not configured on this server. The code is shown here for testing.)</span>
+                            <?php else: ?>
+                                Check server error log for OTP code, or check your <?php echo $isEmail ? 'email' : 'phone'; ?>.
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                </div>
+            <?php endif; ?>
 
         <?php endif; ?>
 
@@ -454,7 +561,7 @@ async function resendOtp() {
         const data = await response.json();
 
         if (data.success) {
-            showNotification('OTP resent successfully! Please check your phone.', 'success');
+            showNotification(data.message || 'OTP resent successfully! Please check your phone.', 'success');
             startCooldown();
         } else {
             showNotification(data.message || 'Failed to resend OTP', 'error');
@@ -516,6 +623,122 @@ function showNotification(message, type) {
 }
 </script>
 <?php endif; ?>
+
+<script>
+// Toggle tutor fields visibility based on selected role
+function updateRegisterRole() {
+    const selected = document.querySelector('input[name="register_role"]:checked').value;
+    const studentCard = document.getElementById('reg-student-card');
+    const tutorCard = document.getElementById('reg-tutor-card');
+    const tutorFields = document.getElementById('tutor-fields');
+
+    if (selected === 'tutor') {
+        studentCard.style.borderColor = '#e5e7eb';
+        studentCard.style.background = 'white';
+        studentCard.querySelector('i').style.color = '#6b7280';
+        studentCard.querySelector('div').style.color = '#4b5563';
+
+        tutorCard.style.borderColor = '#f59e0b';
+        tutorCard.style.background = '#fffbeb';
+        tutorCard.querySelector('i').style.color = '#f59e0b';
+        tutorCard.querySelector('div').style.color = '#1f2937';
+
+        tutorFields.style.display = 'block';
+    } else {
+        studentCard.style.borderColor = '#3b82f6';
+        studentCard.style.background = '#eff6ff';
+        studentCard.querySelector('i').style.color = '#3b82f6';
+        studentCard.querySelector('div').style.color = '#1f2937';
+
+        tutorCard.style.borderColor = '#e5e7eb';
+        tutorCard.style.background = 'white';
+        tutorCard.querySelector('i').style.color = '#6b7280';
+        tutorCard.querySelector('div').style.color = '#4b5563';
+
+        tutorFields.style.display = 'none';
+    }
+}
+
+// Toggle OTP delivery method (SMS/Email) visual state + field hints
+function updateOtpMethod() {
+    const selected = document.querySelector('input[name="otp_method"]:checked').value;
+    const smsCard = document.getElementById('otp-sms-card');
+    const emailCard = document.getElementById('otp-email-card');
+    const emailOptionalLabel = document.getElementById('email-optional-label');
+    const emailHelpText = document.getElementById('email-help-text');
+    const phoneHelpText = document.getElementById('phone-help-text');
+    const emailInput = document.getElementById('email');
+
+    if (selected === 'email') {
+        smsCard.style.borderColor = '#e5e7eb';
+        smsCard.style.background = 'white';
+        smsCard.querySelector('i').style.color = '#6b7280';
+        smsCard.querySelector('div').style.color = '#4b5563';
+
+        emailCard.style.borderColor = '#3b82f6';
+        emailCard.style.background = '#eff6ff';
+        emailCard.querySelector('i').style.color = '#3b82f6';
+        emailCard.querySelector('div').style.color = '#1f2937';
+
+        if (emailOptionalLabel) {
+            emailOptionalLabel.innerHTML = '<span style="color: #dc2626;">*</span>';
+            emailOptionalLabel.style.fontWeight = '600';
+        }
+        if (emailHelpText) emailHelpText.innerHTML = 'Your verification code will be sent to this email';
+        if (emailInput) emailInput.required = true;
+        if (phoneHelpText) phoneHelpText.textContent = 'Required for your account profile';
+    } else {
+        emailCard.style.borderColor = '#e5e7eb';
+        emailCard.style.background = 'white';
+        emailCard.querySelector('i').style.color = '#6b7280';
+        emailCard.querySelector('div').style.color = '#4b5563';
+
+        smsCard.style.borderColor = '#3b82f6';
+        smsCard.style.background = '#eff6ff';
+        smsCard.querySelector('i').style.color = '#3b82f6';
+        smsCard.querySelector('div').style.color = '#1f2937';
+
+        if (emailOptionalLabel) {
+            emailOptionalLabel.textContent = '(Optional)';
+            emailOptionalLabel.style.fontWeight = 'normal';
+        }
+        if (emailHelpText) emailHelpText.textContent = 'Used for account recovery and notifications';
+        if (emailInput) emailInput.required = false;
+        if (phoneHelpText) phoneHelpText.textContent = "We'll send a verification code to this number";
+    }
+}
+
+// Toggle billing type (hourly/monthly) visual state + label text
+function updateBillingType(prefix) {
+    var selected = document.querySelector('input[name="tutor_billing_type"]:checked');
+    if (!selected) selected = document.querySelector('input[name="billing_type"]:checked');
+    if (!selected) return;
+    var isHourly = selected.value === 'hourly';
+
+    var hourlyCard = document.getElementById('billing-hourly-card-' + prefix);
+    var monthlyCard = document.getElementById('billing-monthly-card-' + prefix);
+    var rateLabel = document.getElementById('rate-label-' + prefix);
+    var rateHint = document.getElementById('rate-hint-' + prefix);
+    var rateInput = document.getElementById(prefix === 'reg' ? 'tutor_rate' : 'modal_rate');
+
+    if (hourlyCard && monthlyCard) {
+        if (isHourly) {
+            hourlyCard.style.borderColor = '#3b82f6'; hourlyCard.style.background = '#eff6ff';
+            hourlyCard.querySelector('i').style.color = '#3b82f6'; hourlyCard.querySelector('div').style.color = '#1f2937';
+            monthlyCard.style.borderColor = '#e5e7eb'; monthlyCard.style.background = 'white';
+            monthlyCard.querySelector('i').style.color = '#6b7280'; monthlyCard.querySelector('div').style.color = '#4b5563';
+        } else {
+            monthlyCard.style.borderColor = '#3b82f6'; monthlyCard.style.background = '#eff6ff';
+            monthlyCard.querySelector('i').style.color = '#3b82f6'; monthlyCard.querySelector('div').style.color = '#1f2937';
+            hourlyCard.style.borderColor = '#e5e7eb'; hourlyCard.style.background = 'white';
+            hourlyCard.querySelector('i').style.color = '#6b7280'; hourlyCard.querySelector('div').style.color = '#4b5563';
+        }
+    }
+    if (rateLabel) rateLabel.textContent = isHourly ? 'Hourly Rate' : 'Monthly Rate';
+    if (rateHint) rateHint.textContent = isHourly ? 'How much you charge per hour.' : 'How much you charge per month.';
+    if (rateInput) rateInput.placeholder = isHourly ? 'e.g., R150/hour' : 'e.g., R2000/month';
+}
+</script>
 
 <script>
 // Real-time phone number validation

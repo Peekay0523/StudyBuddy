@@ -31,5 +31,8 @@
     });
 </script>
 
+<!-- Ask App - Smart Search Assistant -->
+<?php include __DIR__ . '/../components/ask_app_search.php'; ?>
+
 </body>
 </html>

@@ -1167,6 +1167,9 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                         <i class="fas fa-external-link-alt"></i> Apply Now
                                     </a>
                                 <?php endif; ?>
+                                <a href="/apply-for-me?bursary=<?php echo urlencode($bursary['name']); ?>&provider=<?php echo urlencode($bursary['provider']); ?>" class="btn-apply-for-me">
+                                    <i class="fas fa-paper-plane"></i> Apply For Me
+                                </a>
                                 <a href="https://www.google.com/search?q=<?php echo urlencode($bursary['name'] . ' application'); ?>" target="_blank" class="btn-search">
                                     <i class="fas fa-search"></i> Search
                                 </a>
@@ -1271,6 +1274,10 @@ if (empty($careerRec['recommended_careers']) && empty($careerRec['courses']) && 
                                     </a>
                                 <?php endif; ?>
                                 
+                                <a href="/apply-for-me?institution=<?php echo urlencode($instName); ?>&type=<?php echo urlencode($instType); ?>" class="btn-apply-for-me" title="Apply For Me">
+                                    <i class="fas fa-paper-plane"></i>
+                                </a>
+
                                 <button type="button" class="btn-improve" onclick='showImprovementAdvice(
                                     <?php echo htmlspecialchars(json_encode($instName), ENT_QUOTES); ?>, 
                                     "General Admission", 
@@ -1834,6 +1841,128 @@ h1, h2, h3, h4, h5, h6 {
 .btn-applied.applied:hover {
     transform: none;
     box-shadow: none;
+}
+
+/* Apply For Me Button */
+.btn-apply-for-me {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+}
+
+.btn-apply-for-me:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    opacity: 0.95;
+}
+
+@media (max-width: 480px) {
+    .bursary-actions .btn-apply-for-me {
+        flex: 1 1 calc(50% - 4px) !important;
+        justify-content: center !important;
+        padding: 10px 5px !important;
+        font-size: 0.8rem !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+}
+
+/* Institution Action Buttons - Uniform Icon Style */
+.inst-actions .btn-apply-for-me,
+.inst-actions .btn-visit,
+.inst-actions .btn-improve,
+.inst-actions .btn-applied {
+    flex: 0 0 auto !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    line-height: 1 !important;
+}
+
+.inst-actions .btn-apply-for-me {
+    background: transparent !important;
+    color: #8b5cf6 !important;
+    border: 1.5px solid #e2e8f0 !important;
+}
+
+.inst-actions .btn-apply-for-me:hover {
+    background: #f5f3ff !important;
+    border-color: #8b5cf6 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2) !important;
+}
+
+.inst-actions .btn-visit {
+    background: transparent !important;
+    color: #6366f1 !important;
+    border: 1.5px solid #e2e8f0 !important;
+    margin-top: 0 !important;
+}
+
+.inst-actions .btn-visit:hover {
+    background: #eef2ff !important;
+    border-color: #6366f1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2) !important;
+}
+
+.inst-actions .btn-improve {
+    background: transparent !important;
+    color: #6366f1 !important;
+    border: 1.5px solid #e2e8f0 !important;
+    margin-top: 0 !important;
+}
+
+.inst-actions .btn-improve:hover {
+    background: #eef2ff !important;
+    border-color: #6366f1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2) !important;
+}
+
+.inst-actions .btn-applied {
+    background: transparent !important;
+    color: #10b981 !important;
+    border: 1.5px solid #e2e8f0 !important;
+    width: 36px !important;
+    flex: 0 0 auto !important;
+}
+
+.inst-actions .btn-applied:hover {
+    background: #ecfdf5 !important;
+    border-color: #10b981 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2) !important;
+}
+
+@media (max-width: 768px) {
+    .inst-actions .btn-apply-for-me,
+    .inst-actions .btn-visit,
+    .inst-actions .btn-improve,
+    .inst-actions .btn-applied {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-width: 32px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+    }
 }
 </style>
 

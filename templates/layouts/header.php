@@ -104,6 +104,10 @@
                         <a href="/parent-dashboard" class="<?php echo ($currentPage ?? '') === 'parent-dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Parent Dashboard</a>
                         <a href="/parent/track-progress" class="<?php echo ($currentPage ?? '') === 'track-progress' ? 'active' : ''; ?>"><i class="fas fa-chart-bar icon-sm"></i> Track Progress</a>
                         <a href="/subscription" class="<?php echo ($currentPage ?? '') === 'subscription' ? 'active' : ''; ?>"><i class="fas fa-crown icon-sm"></i> Subscription</a>
+                    <?php elseif (isTutor()): ?>
+                        <!-- Tutor users see tutor-focused navigation -->
+                        <a href="/tutor-dashboard" class="<?php echo ($currentPage ?? '') === 'tutor-dashboard' ? 'active' : ''; ?>"><i class="fas fa-chalkboard-teacher icon-sm"></i> Tutor Dashboard</a>
+                        <a href="/profile" class="<?php echo ($currentPage ?? '') === 'profile' ? 'active' : ''; ?>"><i class="fas fa-user-circle icon-sm"></i> Tutor Profile</a>
                     <?php else: ?>
                         <!-- Regular users see full navigation -->
                         <a href="/dashboard" class="<?php echo ($currentPage ?? '') === 'dashboard' ? 'active' : ''; ?>"><i class="fas fa-chart-line icon-sm"></i> Dashboard</a>
@@ -118,7 +122,7 @@
                             <?php endif; ?>
                         </a>
                         <a href="/study-group" class="<?php echo ($currentPage ?? '') === 'study-group' ? 'active' : ''; ?>" id="study-group-link">
-                            <i class="fas fa-users icon-sm"></i> Study Group
+                            <i class="fas fa-chalkboard-teacher icon-sm"></i> Tutors
                             <?php
                             $groupActivity = getStudyGroupActivityCount();
                             if ($groupActivity > 0):
@@ -182,7 +186,7 @@
             </div>
             <div class="top-nav-right">
                 <?php if (isLoggedIn()): ?>
-                    <span class="user-greeting"><?php echo htmlspecialchars(getCurrentUser()['username']); ?></span>
+                    <span class="user-greeting"><?php echo htmlspecialchars(getCurrentUser()['username']); ?><?php if (isTutor()): ?> <span style="color:#f59e0b;font-size:12px;font-weight:600;">(Tutor)</span><?php endif; ?></span>
                     <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
                 <?php else: ?>
                     <span class="user-greeting">Welcome</span>

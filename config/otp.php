@@ -124,6 +124,41 @@ function sendOtpSms($phone, $otpCode, $purpose = 'registration') {
 }
 
 /**
+ * Send OTP via Email
+ * Uses PHP's built-in mail() function
+ */
+function sendOtpEmail($email, $otpCode, $purpose = 'registration') {
+    $subject = "StudySmart - Your Verification Code";
+    $message = "Your verification code is: {$otpCode}\n\n";
+    $message .= "This code is valid for " . OTP_EXPIRY_MINUTES . " minutes.\n";
+    $message .= "If you did not request this code, please ignore this email.\n\n";
+    $message .= "— StudySmart Team";
+
+    $headers = "From: noreply@studysmart.local\r\n";
+    $headers .= "Reply-To: noreply@studysmart.local\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    // Log OTP for development/testing fallback
+    error_log("Email OTP to {$email}: {$otpCode}");
+    if (!isset($_SESSION['dev_otp_codes'])) {
+        $_SESSION['dev_otp_codes'] = [];
+    }
+    $_SESSION['dev_otp_codes'][$email] = $otpCode;
+
+    // Attempt to send via PHP mail()
+    $sent = @mail($email, $subject, $message, $headers);
+
+    // In development (mail() may be disabled), still return true
+    // so the user can proceed. The OTP is logged and stored in session.
+    if (!$sent) {
+        error_log("mail() failed for {$email}. OTP (dev fallback): {$otpCode}");
+    }
+
+    return true;
+}
+
+/**
  * Send SMS/WhatsApp via Twilio
  * Supports both SMS and WhatsApp
  */

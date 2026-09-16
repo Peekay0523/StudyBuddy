@@ -148,6 +148,26 @@ document.addEventListener("DOMContentLoaded", function() {
     messageInput = document.getElementById("message-input");
     messagesContainer = document.getElementById("messages-container");
     fileInput = document.getElementById("file-input");
+
+    // Check URL hash for pre-filled message (from search commands like "create quiz")
+    if (window.location.hash && window.location.hash.length > 1) {
+        try {
+            const hashMessage = decodeURIComponent(window.location.hash.substring(1));
+            if (hashMessage && messageInput) {
+                messageInput.value = hashMessage;
+                // Clear the hash without scrolling
+                history.replaceState(null, null, window.location.pathname);
+                // Auto-send the message after a short delay
+                setTimeout(() => {
+                    if (hashMessage.trim()) {
+                        sendMessage();
+                    }
+                }, 500);
+            }
+        } catch (e) {
+            console.log('Could not decode hash:', e);
+        }
+    }
     voiceModeToggle = document.getElementById("voice-mode-toggle");
     micButton = document.getElementById("mic-btn");
     micIcon = document.getElementById("mic-icon");

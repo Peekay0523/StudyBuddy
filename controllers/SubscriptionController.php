@@ -193,7 +193,7 @@ class SubscriptionController {
 
                 // Move uploaded file
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
-                    $proofPath = 'uploads/eft_proofs/' . $newFilename;
+                    $proofPath = 'public/uploads/eft_proofs/' . $newFilename;
                 } else {
                     setFlashMessage('error', 'Failed to save uploaded file. Please try again.');
                     header('Location: /subscription/checkout?plan=' . $plan);

@@ -42,7 +42,7 @@ include __DIR__ . '/../layouts/header.php';
         </div>
 
         <!-- 1. Euclidean Geometry Section -->
-        <section class="mb-5">
+        <section id="geometry" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box">
@@ -106,7 +106,7 @@ include __DIR__ . '/../layouts/header.php';
         </section>
 
         <!-- 2. Trigonometry Section -->
-        <section class="mb-5">
+        <section id="trigonometry" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box" style="background: linear-gradient(135deg, #17a2b8, #117a8b);">
@@ -191,7 +191,7 @@ include __DIR__ . '/../layouts/header.php';
         </section>
 
         <!-- 3. Algebra & Graphs Section -->
-        <section class="mb-5">
+        <section id="algebra" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box" style="background: linear-gradient(135deg, #28a745, #1e7e34);">
@@ -297,6 +297,23 @@ $extraScripts = '
     <script src="/js/geometry.js"></script>
     <script src="/js/trig_lab.js"></script>
     <script src="/js/algebra_lab.js"></script>
+    <script>
+    // Auto-scroll to section from URL hash (e.g., /math#trigonometry)
+    (function() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const tryScroll = () => {
+                const section = document.getElementById(hash);
+                if (section) {
+                    section.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                    setTimeout(tryScroll, 200);
+                }
+            };
+            tryScroll();
+        }
+    })();
+    </script>
 ';
 
 include __DIR__ . '/../layouts/footer.php';

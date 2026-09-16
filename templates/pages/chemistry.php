@@ -93,7 +93,7 @@ include __DIR__ . '/../layouts/header.php';
         </div>
 
         <!-- 1. Element Viewer -->
-        <section class="mb-5">
+        <section id="elements" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box">
@@ -168,7 +168,7 @@ include __DIR__ . '/../layouts/header.php';
         </section>
 
         <!-- 2. Organic Chemistry Lab -->
-        <section class="mb-5">
+        <section id="organic" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
@@ -229,7 +229,7 @@ include __DIR__ . '/../layouts/header.php';
         </section>
 
         <!-- 3. Common Reactions Section -->
-        <section class="mb-5">
+        <section id="reactions" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box" style="background: linear-gradient(135deg, #f1c40f, #f39c12);">
@@ -256,7 +256,7 @@ include __DIR__ . '/../layouts/header.php';
         </section>
 
         <!-- 4. Molecular Reaction Simulator -->
-        <section class="mb-5">
+        <section id="molecular" class="mb-5">
             <div class="top-card">
                 <div class="lab-info">
                     <div class="icon-box" style="background: linear-gradient(135deg, #6366f1, #9333ea);">
@@ -414,6 +414,23 @@ $extraScripts = '
     <script src="/js/reactions.js"></script>
     <script src="/js/simple_reaction_sim.js"></script>
     <script src="/js/reaction_simulator.js"></script>
+    <script>
+    // Auto-scroll to section from URL hash (e.g., /chemistry#organic)
+    (function() {
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const tryScroll = () => {
+                const section = document.getElementById(hash);
+                if (section) {
+                    section.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                    setTimeout(tryScroll, 200);
+                }
+            };
+            tryScroll();
+        }
+    })();
+    </script>
 ';
 
 include __DIR__ . '/../layouts/footer.php';

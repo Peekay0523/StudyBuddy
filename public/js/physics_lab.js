@@ -1610,4 +1610,16 @@ function bindEvents() {
         };
     });
 
+    // === URL PARAMETER AUTO-SELECT ===
+    // e.g., /physics?sim=doppler will auto-select the Doppler Effect simulation
+    const urlParams = new URLSearchParams(window.location.search);
+    const simParam = urlParams.get('sim');
+    if (simParam) {
+        const targetOption = document.querySelector(`.option[data-sim="${simParam}"]`);
+        if (targetOption) {
+            // Simulate a click on the matching dropdown option
+            targetOption.click();
+        }
+    }
+
 physicsP5 = new p5(physicsLab, 'physics-canvas-container');

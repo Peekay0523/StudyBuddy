@@ -514,6 +514,9 @@
             <a href="/" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                 <i class="fas fa-arrow-left"></i> Back to Site
             </a>
+            <a href="/logout" style="color: #f87171;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
         </nav>
     </aside>
 

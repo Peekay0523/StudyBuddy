@@ -13,16 +13,20 @@ require_once __DIR__ . '/../models/BursaryApplication.php';
 require_once __DIR__ . '/../models/InstitutionApplication.php';
 require_once __DIR__ . '/../helpers/FileHelper.php';
 require_once __DIR__ . '/../helpers/AIRouter.php';
+require_once __DIR__ . '/../helpers/TesseractHelper.php';
+require_once __DIR__ . '/../helpers/AIHelper.php';
 
 class ReportCardController {
     private $reportCardModel;
     private $careerRecModel;
     private $aiRouter;
+    private $tesseract;
 
     public function __construct() {
         $this->reportCardModel = new ReportCard();
         $this->careerRecModel = new CareerRecommendation();
         $this->aiRouter = new AIRouter();
+        $this->tesseract = new TesseractHelper();
     }
     
     public function upload() {
@@ -449,10 +453,10 @@ class ReportCardController {
                 mkdir($tempDir, 0755, true);
             }
 
-            $magickPath = 'C:\Program Files\ImageMagick-7.1.2-Q16\magick.exe';
+            $magickPath = $this->tesseract->getConvertPath();
 
-            if (!file_exists($magickPath)) {
-                error_log("ERROR: ImageMagick not found at: $magickPath");
+            if (!$this->tesseract->isConvertAvailable()) {
+                error_log("ERROR: ImageMagick not found or available");
                 return null;
             }
 
@@ -652,10 +656,10 @@ Return ONLY the JSON, no other text.'
                 mkdir($tempDir, 0755, true);
             }
 
-            $magickPath = 'C:\Program Files\ImageMagick-7.1.2-Q16\magick.exe';
+            $magickPath = $this->tesseract->getConvertPath();
 
-            if (!file_exists($magickPath)) {
-                error_log("ImageMagick not found at: $magickPath");
+            if (!$this->tesseract->isConvertAvailable()) {
+                error_log("ImageMagick not found or available");
                 return null;
             }
 

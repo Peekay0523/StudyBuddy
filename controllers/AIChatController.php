@@ -81,8 +81,10 @@ GENERAL FORMATTING:
             Your task is to provide the FINAL ANSWER ONLY. 
             - ABSOLUTELY NO WORDS, NO STEPS, NO EXPLANATIONS.
             - If it's an equation for x, output 'x = [value]'.
+            - If it's a chemistry reaction, BALANCE it perfectly and output the balanced equation in LaTeX.
             - Use the 'mathlab' block for the output: ```mathlab [result] ```
             - ALWAYS use a COMMA as a decimal separator (e.g., 9,8).
+            - Ensure chemistry subscripts use _{} format (e.g., H_{2}O).
             - Do not include any introductory or concluding text.";
         }
 

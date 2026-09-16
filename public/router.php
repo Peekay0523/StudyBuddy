@@ -10,7 +10,7 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 // error_log("Router received URI: " . $uri);
 
 // Static files - serve directly from public/
-$staticPaths = ['/css/', '/js/', '/images/', '/fonts/', '/uploads/', '/icon-192.png', '/icon-512.png', '/manifest.json', '/service-worker.js'];
+$staticPaths = ['/css/', '/js/', '/images/', '/fonts/', '/public/uploads/', '/icon-192.png', '/icon-512.png', '/manifest.json', '/service-worker.js'];
 foreach ($staticPaths as $path) {
     if (strpos($uri, $path) === 0) {
         $file = __DIR__ . $uri;

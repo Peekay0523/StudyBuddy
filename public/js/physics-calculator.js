@@ -48,7 +48,9 @@ class PhysicsCalculator extends BaseCalculator {
         
         // Clean LaTeX for variable extraction
         const cleaned = latex.replace(/\\(cdot|frac|times|sqrt|pm|mp|left|right|text|mathbf|s)/g, ' ');
-        const varsRegex = /(?:\\Delta\s*[a-zA-Z]|\\lambda|\\theta|\\phi|\\sigma|\\omega|\\epsilon|F_e|E_k|E_p|W_0|f_0|q_1|q_2|[a-zA-Z])(?:_{?[\d\w]*}?)?/g;
+        // Broad regex for variables including Greek, subscripts, and probability functions
+        // Improved subscript matching to include braces: _{...} or _x
+        const varsRegex = /(?:\\Delta\s*[a-zA-Z]|\\lambda|\\theta|\\phi|\\sigma|\\omega|\\epsilon|F_e|E_k|E_p|W_0|f_0|q_1|q_2|[a-zA-Z])(?:(?:_\{[\d\w\s+-]*\})|(?:_[\d\w]))?/g;
         const vars = cleaned.match(varsRegex) || [];
         const uniqueVars = [...new Set(vars)].filter(v => !/^[0-9]+$/.test(v));
         
@@ -280,9 +282,12 @@ function initPhysicsCalculator() {
         
         // Check if BaseCalculator is available
         if (typeof BaseCalculator === 'undefined') {
-            console.error('BaseCalculator not found. PhysicsCalculator requires calculators-core.js');
+            console.warn('BaseCalculator not found. PhysicsCalculator requires calculators-core.js');
             return;
         }
+
+        const panel = document.getElementById('phys-calc-panel');
+        if (!panel) return;
 
         window.physicsCalculator = new PhysicsCalculator();
         console.log('Physics Calculator initialized successfully.');
@@ -291,20 +296,9 @@ function initPhysicsCalculator() {
     }
 }
 
-// Support both global onclick and delegated listeners
+// Support both DOMContentLoaded and immediate init
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPhysicsCalculator);
 } else {
     initPhysicsCalculator();
 }
-
-// Immediate global assignment to prevent ReferenceErrors if called very early
-if (typeof PhysicsCalculator !== 'undefined' && !window.physicsCalculator) {
-    try {
-        // Speculative initialization if DOM is already mature
-        if (document.getElementById('phys-calc-panel')) {
-            initPhysicsCalculator();
-        }
-    } catch(e) {}
-}
-

@@ -52,6 +52,10 @@
             <button class="sci-btn" data-latex="Ar">Ar<small>39.948</small></button>
             <button class="sci-btn" data-latex="K">K<small>39.098</small></button>
             <button class="sci-btn" data-latex="Ca">Ca<small>40.078</small></button>
+
+            <button class="sci-btn action-secondary calc-clear-btn">AC</button>
+            <button class="sci-btn action-secondary calc-del-btn">DEL</button>
+            <button class="sci-btn action calc-solve-btn" style="grid-column: span 4;">Balance</button>
         </div>
 
         <!-- Reactions Tab -->
@@ -59,11 +63,11 @@
             <button class="sci-btn operator" data-latex="+">+</button>
             <button class="sci-btn operator" data-latex="\rightarrow">→</button>
             <button class="sci-btn operator" data-latex="\rightleftharpoons">⇌</button>
-            <button class="sci-btn" data-latex="_2">₂</button>
-            <button class="sci-btn" data-latex="_3">₃</button>
-            <button class="sci-btn" data-latex="_4">₄</button>
-            <button class="sci-btn" data-latex="^+">+</button>
-            <button class="sci-btn" data-latex="^-">-</button>
+            <button class="sci-btn" data-latex="_{2}">₂</button>
+            <button class="sci-btn" data-latex="_{3}">₃</button>
+            <button class="sci-btn" data-latex="_{4}">₄</button>
+            <button class="sci-btn" data-latex="^{+}">+</button>
+            <button class="sci-btn" data-latex="^{-}">-</button>
             <button class="sci-btn" data-latex="(s)"> (s)</button>
             <button class="sci-btn" data-latex="(l)"> (l)</button>
             <button class="sci-btn" data-latex="(g)"> (g)</button>
@@ -83,7 +87,7 @@
         <div class="calc-tab-content" id="calc-tab-molarity">
             <button class="sci-btn" data-latex="C = \frac{n}{V}"><strong>C = n/V</strong></button>
             <button class="sci-btn" data-latex="n = \frac{m}{M}"><strong>n = m/M</strong></button>
-            <button class="sci-btn" data-latex="C_1V_1 = C_2V_2"><strong>Dilution</strong></button>
+            <button class="sci-btn" data-latex="C_{1}V_{1} = C_{2}V_{2}"><strong>Dilution</strong></button>
             <button class="sci-btn" data-latex="\rho = \frac{m}{V}"><strong>Density</strong></button>
 
             <button class="sci-btn action-secondary calc-clear-btn" style="grid-column: span 2;">AC</button>
@@ -93,10 +97,10 @@
 
         <!-- pH Tab -->
         <div class="calc-tab-content" id="calc-tab-ph">
-            <button class="sci-btn" data-latex="pH = -\log[H^+]"><strong>pH</strong></button>
-            <button class="sci-btn" data-latex="pOH = -\log[OH^-]"><strong>pOH</strong></button>
+            <button class="sci-btn" data-latex="pH = -\log[H^{+}]"><strong>pH</strong></button>
+            <button class="sci-btn" data-latex="pOH = -\log[OH^{-}]"><strong>pOH</strong></button>
             <button class="sci-btn" data-latex="pH + pOH = 14"><strong>pH+pOH=14</strong></button>
-            <button class="sci-btn" data-latex="K_w = [H^+][OH^-]"><strong>K_w</strong></button>
+            <button class="sci-btn" data-latex="K_{w} = [H^{+}][OH^{-}]"><strong>K_w</strong></button>
 
             <button class="sci-btn action-secondary calc-clear-btn" style="grid-column: span 2;">AC</button>
             <button class="sci-btn action-secondary calc-del-btn" style="grid-column: span 2;">DEL</button>
@@ -106,9 +110,9 @@
         <!-- Gas Laws Tab -->
         <div class="calc-tab-content" id="calc-tab-gas">
             <button class="sci-btn" data-latex="PV = nRT"><strong>PV=nRT</strong></button>
-            <button class="sci-btn" data-latex="P_1V_1 = P_2V_2"><strong>Boyle's</strong></button>
-            <button class="sci-btn" data-latex="\frac{V_1}{T_1} = \frac{V_2}{T_2}"><strong>Charles'</strong></button>
-            <button class="sci-btn" data-latex="\frac{P_1V_1}{T_1} = \frac{P_2V_2}{T_2}"><strong>Combined</strong></button>
+            <button class="sci-btn" data-latex="P_{1}V_{1} = P_{2}V_{2}"><strong>Boyle's</strong></button>
+            <button class="sci-btn" data-latex="\frac{V_{1}}{T_{1}} = \frac{V_{2}}{T_{2}}"><strong>Charles'</strong></button>
+            <button class="sci-btn" data-latex="\frac{P_{1}V_{1}}{T_{1}} = \frac{P_{2}V_{2}}{T_{2}}"><strong>Combined</strong></button>
 
             <button class="sci-btn action-secondary calc-clear-btn" style="grid-column: span 2;">AC</button>
             <button class="sci-btn action-secondary calc-del-btn" style="grid-column: span 2;">DEL</button>

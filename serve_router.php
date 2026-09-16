@@ -8,7 +8,7 @@
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Static files - serve directly from public/
-$staticFiles = ['/css/', '/js/', '/images/', '/fonts/', '/uploads/'];
+$staticFiles = ['/css/', '/js/', '/images/', '/fonts/', '/public/uploads/'];
 
 foreach ($staticFiles as $path) {
     if (strpos($uri, $path) === 0) {

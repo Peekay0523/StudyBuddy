@@ -8,22 +8,31 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/otp.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Student.php';
+require_once __DIR__ . '/../models/Tutor.php';
 require_once __DIR__ . '/../models/UserActivity.php';
 
 class AuthController {
     private $userModel;
     private $studentModel;
+    private $tutorModel;
     private $userActivityModel;
 
     public function __construct() {
         $this->userModel = new User();
         $this->studentModel = new Student();
+        $this->tutorModel = new Tutor();
         $this->userActivityModel = new UserActivity();
     }
     
     public function login() {
         if (isLoggedIn()) {
-            header('Location: /dashboard');
+            if (isParent()) {
+                header('Location: /parent-dashboard');
+            } elseif (isTutor()) {
+                header('Location: /tutor-dashboard');
+            } else {
+                header('Location: /dashboard');
+            }
             exit;
         }
         
@@ -34,6 +43,7 @@ class AuthController {
             $username = $_POST['username'] ?? '';
             $password = $_POST['password'] ?? '';
             $role = $_POST['role'] ?? 'student';
+            $rememberMe = !empty($_POST['remember_me']);
             
             if (empty($username) || empty($password)) {
                 $error = 'Please fill in all fields';
@@ -44,14 +54,31 @@ class AuthController {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['user'] = $user;
-                    $_SESSION['user_role'] = $role; // Selected role (parent or student)
+
+                    // Auto-detect tutor role from DB; otherwise use selected role
+                    if ($user['role'] === 'tutor') {
+                        $_SESSION['user_role'] = 'tutor';
+                    } else {
+                        $_SESSION['user_role'] = $role; // Selected role (parent or student)
+                    }
 
                     // Track login activity and streak
                     $this->userActivityModel->updateActivity($user['id']);
 
-                    // Redirect admin users to admin panel
+                    // Handle "Stay Logged In" (Remember Me)
+                    if ($rememberMe) {
+                        createRememberToken($user['id']);
+                    }
+
+                    // Redirect based on role
                     if ($user['role'] === 'admin') {
                         header('Location: /admin');
+                    } elseif ($user['role'] === 'tutor') {
+                        header('Location: /tutor-dashboard');
+                    } elseif ($role === 'tutor') {
+                        // Selected the Tutor card but account is not registered
+                        // as a tutor yet - send them where they can become one
+                        header('Location: /study-group');
                     } elseif ($role === 'parent') {
                         header('Location: /parent-dashboard');
                     } else {
@@ -88,10 +115,24 @@ class AuthController {
                 $phone = $_POST['phone'] ?? '';
                 $password = $_POST['password'] ?? '';
                 $passwordConfirm = $_POST['password_confirm'] ?? '';
-                $otpMethod = $_POST['otp_method'] ?? 'sms'; // Default to SMS
+                $otpMethod = $_POST['otp_method'] ?? 'sms'; // sms, email, or whatsapp
+                $registerRole = $_POST['register_role'] ?? 'student'; // student or tutor
 
-                if (empty($username) || empty($password) || empty($phone)) {
+                // Tutor-specific fields
+                $tutorFullName = trim($_POST['tutor_full_name'] ?? '');
+                $tutorSubjects = trim($_POST['tutor_subjects'] ?? '');
+                $tutorBio = trim($_POST['tutor_bio'] ?? '');
+                $tutorHourlyRate = trim($_POST['tutor_rate'] ?? '');
+                $tutorBillingType = trim($_POST['tutor_billing_type'] ?? 'hourly');
+                $tutorCompanyName = trim($_POST['tutor_company_name'] ?? '');
+
+                // Validate tutor-required fields
+                if ($registerRole === 'tutor' && (empty($tutorFullName) || empty($tutorSubjects))) {
+                    $error = 'Please provide your full name and at least one subject to register as a tutor.';
+                } elseif (empty($username) || empty($password) || empty($phone)) {
                     $error = 'Please fill in all fields';
+                } elseif ($otpMethod === 'email' && empty($email)) {
+                    $error = 'Please provide an email address to receive the verification code via email.';
                 } elseif (strlen($password) < 8) {
                     $error = 'Password must be at least 8 characters';
                 } elseif ($password !== $passwordConfirm) {
@@ -103,16 +144,19 @@ class AuthController {
                         $error = 'Phone number already registered. Please use a different number or login.';
                     } else {
                         try {
-                            // Validate phone format
+                            // Validate phone format (always required for the account)
                             if (!$this->validatePhone($phone)) {
                                 $error = 'Invalid phone number format. Please enter a valid phone number.';
                             } else {
+                                // Determine the OTP identifier — email for email method, phone otherwise
+                                $otpIdentifier = ($otpMethod === 'email' && !empty($email)) ? $email : $phone;
+
                                 // Generate and send OTP
-                                $otpCode = createOtp($phone, 'registration');
-                                
+                                $otpCode = createOtp($otpIdentifier, 'registration');
+
                                 // Send via user's preferred method
-                                $sendSuccess = $this->sendOtpViaPreferredMethod($phone, $otpCode, 'registration', $otpMethod);
-                                
+                                $sendSuccess = $this->sendOtpViaPreferredMethod($otpIdentifier, $otpCode, 'registration', $otpMethod);
+
                                 if (!$sendSuccess && $otpMethod === 'whatsapp' && defined('FALLBACK_TO_SMS') && FALLBACK_TO_SMS) {
                                     // Fallback to SMS if WhatsApp fails
                                     $sendSuccess = sendViaTwilio($phone, "StudySmart: Your verification code is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes.", false);
@@ -127,7 +171,15 @@ class AuthController {
                                     'email' => $email,
                                     'phone' => $phone,
                                     'password' => $password,
-                                    'otp_method' => $otpMethod
+                                    'otp_method' => $otpMethod,
+                                    'otp_identifier' => $otpIdentifier,
+                                    'register_role' => $registerRole,
+                                    'tutor_full_name' => $tutorFullName,
+                                    'tutor_subjects' => $tutorSubjects,
+                                    'tutor_bio' => $tutorBio,
+                                    'tutor_hourly_rate' => $tutorHourlyRate,
+                                    'tutor_billing_type' => $tutorBillingType,
+                                    'tutor_company_name' => $tutorCompanyName
                                 ];
 
                                 // Redirect to OTP verification step
@@ -150,19 +202,39 @@ class AuthController {
                 } elseif (empty($otpCode)) {
                     $error = 'Please enter the OTP code';
                 } else {
-                    // Verify OTP
-                    $result = verifyOtp($pendingReg['phone'], $otpCode, 'registration');
+                    // Verify OTP — use otp_identifier (email or phone) if available
+                    $otpIdentifier = $pendingReg['otp_identifier'] ?? $pendingReg['phone'];
+                    $result = verifyOtp($otpIdentifier, $otpCode, 'registration');
                     
                     if ($result['success']) {
                         // OTP verified - create user account
                         try {
+                            $registerRole = $pendingReg['register_role'] ?? 'student';
+
                             $userId = $this->userModel->create(
                                 $pendingReg['username'],
                                 $pendingReg['password'],
                                 $pendingReg['email'] ?? null,
-                                $pendingReg['phone']
+                                $pendingReg['phone'],
+                                $registerRole
                             );
-                            $this->studentModel->create($userId);
+
+                            // Create student record for students; tutor profile for tutors
+                            if ($registerRole === 'tutor') {
+                                $this->tutorModel->register(
+                                    $userId,
+                                    $pendingReg['tutor_full_name'] ?? $pendingReg['username'],
+                                    $pendingReg['tutor_subjects'] ?? '',
+                                    $pendingReg['tutor_bio'] ?? '',
+                                    $pendingReg['tutor_hourly_rate'] ?? '',
+                                    $pendingReg['phone'],
+                                    $pendingReg['email'] ?? '',
+                                    $pendingReg['tutor_billing_type'] ?? 'hourly',
+                                    $pendingReg['tutor_company_name'] ?? ''
+                                );
+                            } else {
+                                $this->studentModel->create($userId);
+                            }
                             
                             // Create 7-day free trial subscription
                             $this->createFreeTrialSubscription($userId);
@@ -226,6 +298,10 @@ class AuthController {
     }
     
     public function logout() {
+        // Clear remember-me tokens if user is logged in
+        if (isLoggedIn()) {
+            destroyRememberTokens($_SESSION['user_id']);
+        }
         session_destroy();
         header('Location: /');
         exit;
@@ -282,8 +358,11 @@ class AuthController {
      */
     private function sendOtpViaPreferredMethod($phone, $otpCode, $purpose, $method) {
         $message = "StudySmart: Your verification code for {$purpose} is: {$otpCode}. Valid for " . OTP_EXPIRY_MINUTES . " minutes.";
-        
-        if ($method === 'whatsapp') {
+
+        if ($method === 'email') {
+            // Send via Email — $phone param carries the email address in this case
+            return sendOtpEmail($phone, $otpCode, $purpose);
+        } elseif ($method === 'whatsapp') {
             // Send via WhatsApp
             return sendViaTwilio($phone, $message, true);
         } else {
@@ -309,7 +388,8 @@ class AuthController {
         }
 
         // Check cooldown
-        $canResend = canResendOtp($pendingReg['phone'], 'registration');
+        $otpIdentifier = $pendingReg['otp_identifier'] ?? $pendingReg['phone'];
+        $canResend = canResendOtp($otpIdentifier, 'registration');
 
         if (!$canResend['can_resend']) {
             echo json_encode([
@@ -322,10 +402,11 @@ class AuthController {
 
         // Generate and send new OTP via original method
         $otpMethod = $pendingReg['otp_method'] ?? 'sms';
-        $otpCode = createOtp($pendingReg['phone'], 'registration');
-        $this->sendOtpViaPreferredMethod($pendingReg['phone'], $otpCode, 'registration', $otpMethod);
+        $otpCode = createOtp($otpIdentifier, 'registration');
+        $this->sendOtpViaPreferredMethod($otpIdentifier, $otpCode, 'registration', $otpMethod);
 
-        echo json_encode(['success' => true, 'message' => 'OTP resent successfully. Please check your phone.']);
+        $methodLabel = ($otpMethod === 'email') ? 'email' : 'phone';
+        echo json_encode(['success' => true, 'message' => "OTP resent successfully. Please check your {$methodLabel}."]);
         exit;
     }
 

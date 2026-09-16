@@ -48,11 +48,10 @@ class AIRouter {
             ];
             $response = $this->grokAI->makeRequest($messages);
             if ($response) {
-                // Remove markdown formatting for cleaner display (similar to GrokAI::chat)
+                // Remove only basic markdown formatting for cleaner display, PRESERVING LaTeX characters
                 $response = preg_replace('/\*\*(.*?)\*\*/', '$1', $response);
                 $response = preg_replace('/\*(.*?)\*/', '$1', $response);
                 $response = preg_replace('/^#+\s*/m', '', $response);
-                $response = str_replace(['**', '__', '_'], '', $response);
                 return $response;
             }
         }

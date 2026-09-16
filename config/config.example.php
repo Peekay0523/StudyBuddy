@@ -15,8 +15,8 @@ define('DEBUG_MODE', true);
 define('DB_PATH', __DIR__ . '/../database.sqlite3');
 
 // File uploads
-define('UPLOAD_DIR_SCRIPTS', __DIR__ . '/../uploads/scripts/');
-define('UPLOAD_DIR_REPORT_CARDS', __DIR__ . '/../uploads/report_cards/');
+define('UPLOAD_DIR_SCRIPTS', __DIR__ . '/../public/uploads/scripts/');
+define('UPLOAD_DIR_REPORT_CARDS', __DIR__ . '/../public/uploads/report_cards/');
 define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB
 
 // Allowed file extensions
