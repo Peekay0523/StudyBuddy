@@ -70,6 +70,18 @@ function isStudent() {
     return !isset($_SESSION['user_role']) || $_SESSION['user_role'] === 'student';
 }
 
+function isTutor() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'tutor';
+}
+
+function requireTutor() {
+    requireLogin();
+    if (!isTutor()) {
+        header('Location: /study-group');
+        exit;
+    }
+}
+
 function requireLogin() {
     if (!isLoggedIn()) {
         header('Location: /login');
