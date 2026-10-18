@@ -776,6 +776,81 @@ $extraHead = <<<'HTML'
         font-size: 0.75rem !important;
     }
 }
+
+/* ===== Mobile flip pane: Calendar <-> Generate New Study Plan (one pane, tap to flip) ===== */
+.fc-flipbar { display: none; }
+@media (max-width: 768px) {
+    .sp-flip {
+        position: relative;
+        perspective: 1600px;
+        min-height: 480px;
+        margin-bottom: 20px;
+    }
+    .sp-flip > .calendar-container,
+    .sp-flip > .upload-container {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        height: auto;
+        margin: 0 !important;
+        max-width: none !important;
+        box-sizing: border-box;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        will-change: transform;
+        transition: transform .8s cubic-bezier(.22, 1, .36, 1);
+    }
+    .sp-flip > .calendar-container { transform: rotateY(0deg); }
+    .sp-flip > .upload-container { transform: rotateY(180deg); pointer-events: none; }
+    .sp-flip.flipped > .calendar-container { transform: rotateY(-180deg); pointer-events: none; }
+    .sp-flip.flipped > .upload-container { transform: rotateY(0deg); pointer-events: auto; }
+    .fc-flipbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 15px;
+        padding: 11px 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, .35);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .fc-flipbar:active { transform: scale(.98); }
+    .fc-flipbar:focus-visible { outline: 2px solid rgba(255, 255, 255, .7); outline-offset: 2px; }
+    .fc-flipbar-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+    .fc-flipbar-title i { flex-shrink: 0; }
+    .fc-flipbar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, .18);
+        border: 1px solid rgba(255, 255, 255, .35);
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .fc-flipbar-btn i { transition: transform .8s cubic-bezier(.22, 1, .36, 1); }
+    .sp-flip.flipped .fc-flipbar-btn i { transform: rotate(360deg); }
+    .upload-container > .fc-flipbar { padding: 11px 14px !important; margin: 0 0 15px !important; }
+    @media (prefers-reduced-motion: reduce) {
+        .sp-flip > .calendar-container,
+        .sp-flip > .upload-container { transition: none !important; }
+        .fc-flipbar-btn i { transition: none !important; }
+    }
+}
 </style>
 HTML;
 
@@ -931,6 +1006,10 @@ include __DIR__ . '/../layouts/header.php';
 
 <!-- Calendar Section -->
 <div class="calendar-container">
+    <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to generate study plan" onclick="flipStudyPane()" onkeydown="flipStudyPaneKey(event)">
+        <span class="fc-flipbar-title"><i class="fas fa-calendar-alt"></i> Calendar</span>
+        <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Generate Plan</span>
+    </div>
     <div class="calendar-header">
         <button id="prev-month" class="btn-secondary">
             <i class="fas fa-chevron-left"></i> Previous
@@ -1054,6 +1133,10 @@ details[open] summary i.fa-chevron-down {
 
 <!-- Upload & Generate Section -->
 <div class="upload-container" style="max-width: 800px; margin: 0 auto 40px auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+    <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to calendar" onclick="flipStudyPane()" onkeydown="flipStudyPaneKey(event)">
+        <span class="fc-flipbar-title"><i class="fas fa-magic"></i> Generate New Study Plan</span>
+        <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Calendar</span>
+    </div>
     <div style="padding: 20px 30px; border-bottom: 1px solid #f1f5f9;">
         <h2 style="margin: 0; color: #1e293b; font-size: 20px; display: flex; align-items: center; gap: 12px;">
             <i class="fas fa-magic" style="color: #667eea;"></i> Generate New Study Plan
@@ -2040,6 +2123,80 @@ window.addEventListener('load', () => {
     setTimeout(() => {
         hideLoading();
     }, 500);
+});
+
+// ---- Mobile flip pane: Calendar <-> Generate New Study Plan ----
+var spGenMarker = null;
+
+function flipStudyPane() {
+    var pane = document.getElementById('spFlipPane');
+    if (pane) pane.classList.toggle('flipped');
+}
+
+function flipStudyPaneKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        flipStudyPane();
+    }
+}
+
+function sizeStudyPane() {
+    var pane = document.getElementById('spFlipPane');
+    if (!pane) return;
+    var cal = pane.querySelector('.calendar-container');
+    var gen = pane.querySelector('.upload-container');
+    if (!cal || !gen) return;
+    var h = Math.max(cal.offsetHeight, gen.offsetHeight);
+    if (h > 0 && pane.style.height !== h + 'px') pane.style.height = h + 'px';
+}
+
+function setupStudyPlanFlip() {
+    var cal = document.querySelector('.calendar-container');
+    var gen = document.querySelector('.upload-container');
+    if (!cal || !gen || cal.parentNode === null) return;
+    var pane = document.getElementById('spFlipPane');
+    var mobile = window.innerWidth <= 768;
+
+    if (mobile && !pane) {
+        pane = document.createElement('div');
+        pane.id = 'spFlipPane';
+        pane.className = 'sp-flip';
+        cal.parentNode.insertBefore(pane, cal);
+        spGenMarker = document.createComment('sp-gen-home');
+        gen.parentNode.insertBefore(spGenMarker, gen);
+        pane.appendChild(cal);
+        pane.appendChild(gen);
+
+        sizeStudyPane();
+        window.addEventListener('load', sizeStudyPane);
+        setTimeout(sizeStudyPane, 300);
+        if ('MutationObserver' in window) {
+            new MutationObserver(sizeStudyPane).observe(pane, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+    } else if (!mobile && pane) {
+        if (spGenMarker && spGenMarker.parentNode) {
+            spGenMarker.parentNode.insertBefore(gen, spGenMarker);
+            spGenMarker.parentNode.removeChild(spGenMarker);
+            spGenMarker = null;
+        }
+        pane.parentNode.insertBefore(cal, pane);
+        pane.style.height = '';
+        pane.parentNode.removeChild(pane);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    setupStudyPlanFlip();
+    window.addEventListener('resize', function () {
+        setupStudyPlanFlip();
+        sizeStudyPane();
+    });
 });
 </script>
 

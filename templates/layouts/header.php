@@ -8,7 +8,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <title><?php echo $pageTitle ?? 'StudySmart - AI Learning Assistant'; ?></title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=<?php echo @filemtime(__DIR__ . '/../../public/css/style.css') ?: time(); ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <?php echo $extraHead ?? ''; ?>
 </head>

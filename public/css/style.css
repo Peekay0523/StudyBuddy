@@ -694,6 +694,189 @@ button:active, .btn:active, .thin-btn:active,
     font-size: 24px;
 }
 
+/* Dashboard action dock: icon tiles that expand into full cards on hover */
+.actions-dock {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.actions-dock .action {
+    position: relative;
+    flex: 0 1 108px;
+    min-width: 84px;
+    min-height: 96px;
+    padding: 25px 16px;
+    justify-content: center;
+    gap: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: flex-basis .5s cubic-bezier(.22, 1, .36, 1),
+                transform .35s cubic-bezier(.22, 1, .36, 1),
+                box-shadow .35s ease;
+    will-change: flex-basis, transform;
+}
+
+/* While a FLIP animation runs, the tile must not run its own CSS transitions */
+.actions-dock.dock-flipping .action { transition: none !important; }
+
+.actions-dock .action .icon-sm {
+    font-size: 28px;
+    flex-shrink: 0;
+    transition: transform .5s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.actions-dock .action .action-label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transform: translateX(-10px);
+    transition: max-width .5s cubic-bezier(.22, 1, .36, 1),
+                opacity .3s ease .08s,
+                transform .5s cubic-bezier(.22, 1, .36, 1);
+}
+
+/* Expanded appearance (mouse hover, keyboard focus, or tap-opened via JS .open) */
+.actions-dock .action:hover,
+.actions-dock .action:focus-visible,
+.actions-dock .action.open {
+    flex-basis: 250px;
+    transform: translateY(-6px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .22);
+}
+
+.actions-dock .action:hover .action-label,
+.actions-dock .action:focus-visible .action-label,
+.actions-dock .action.open .action-label {
+    max-width: 200px;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.actions-dock .action:hover .icon-sm,
+.actions-dock .action:focus-visible .icon-sm,
+.actions-dock .action.open .icon-sm {
+    transform: scale(1.18) rotate(-8deg);
+}
+
+.actions-dock .action::after {
+    content: "";
+    position: absolute;
+    top: -10%;
+    left: -70%;
+    width: 45%;
+    height: 120%;
+    background: linear-gradient(115deg, transparent, rgba(255, 255, 255, .45), transparent);
+    transform: skewX(-18deg);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.actions-dock .action:hover::after,
+.actions-dock .action.open::after {
+    animation: actionSheen .9s ease forwards;
+}
+
+@keyframes actionSheen {
+    0%   { left: -70%; opacity: 0; }
+    20%  { opacity: .9; }
+    100% { left: 140%; opacity: 0; }
+}
+
+/* Touch screens: a tap leaves a sticky :hover behind, so ignore hover/focus and let JS .open control it */
+@media (hover: none) {
+    .actions-dock .action:hover,
+    .actions-dock .action:focus-visible {
+        flex-basis: 108px;
+        transform: none;
+        box-shadow: none;
+    }
+    .actions-dock .action:hover .action-label,
+    .actions-dock .action:focus-visible .action-label {
+        max-width: 0;
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    .actions-dock .action:hover .icon-sm,
+    .actions-dock .action:focus-visible .icon-sm {
+        transform: none;
+    }
+    .actions-dock .action:hover::after {
+        animation: none;
+    }
+}
+
+/* Phones: 3-up icon tiles; only the tapped (.open) tile expands to a full-width card */
+@media (max-width: 768px) {
+    .actions-dock {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+    .actions-dock .action {
+        flex: 0 1 calc((100% - 24px) / 3);
+        min-width: 0;
+        min-height: 92px;
+        padding: 16px 10px;
+        border-radius: 14px;
+        justify-content: center;
+    }
+    .actions-dock .action .icon-sm { font-size: 26px; }
+    .actions-dock .action:hover,
+    .actions-dock .action:focus-visible {
+        flex-basis: calc((100% - 24px) / 3);
+        justify-content: center;
+        transform: none;
+        box-shadow: none;
+    }
+    .actions-dock .action:hover .action-label,
+    .actions-dock .action:focus-visible .action-label {
+        max-width: 0;
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    .actions-dock .action:hover .icon-sm,
+    .actions-dock .action:focus-visible .icon-sm {
+        transform: none;
+    }
+    .actions-dock .action:hover::after { animation: none; }
+    .actions-dock .action.open {
+        flex-basis: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* Expanded (tap-opened) tile — declared last so .open beats the touch hover neutralisers */
+.actions-dock .action.open {
+    transform: none;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .22);
+}
+.actions-dock .action.open .action-label {
+    max-width: 200px;
+    opacity: 1;
+    transform: translateX(0);
+}
+.actions-dock .action.open .icon-sm {
+    transform: scale(1.18) rotate(-8deg);
+}
+.actions-dock .action.open::after {
+    animation: actionSheen .9s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .actions-dock .action,
+    .actions-dock .action .icon-sm,
+    .actions-dock .action .action-label { transition: none !important; }
+    .actions-dock .action:hover .icon-sm,
+    .actions-dock .action.open .icon-sm { transform: none !important; }
+    .actions-dock .action:hover::after,
+    .actions-dock .action.open::after { animation: none !important; }
+}
+
 /* Forms */
 .form-group {
     margin-bottom: 20px;

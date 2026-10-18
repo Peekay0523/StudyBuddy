@@ -714,6 +714,149 @@ $extraHead = <<<'SCRIPT'
         width: 100%;
     }
 }
+
+/* ===== Mobile flip pane: Upload form <-> Career search (one pane, tap to flip) ===== */
+.fc-flipbar { display: none; }
+@media (max-width: 768px) {
+    .upload-container {
+        display: block !important;
+        position: relative;
+        perspective: 1600px;
+        min-height: 460px;
+    }
+    .upload-container > .auth-box,
+    .upload-container > .career-search-card {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        height: auto;
+        max-width: none !important;
+        margin: 0;
+        box-sizing: border-box;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        will-change: transform;
+        transition: transform .8s cubic-bezier(.22, 1, .36, 1);
+    }
+    .upload-container > .auth-box {
+        transform: rotateY(0deg);
+    }
+    .upload-container > .career-search-card {
+        transform: rotateY(180deg);
+        pointer-events: none;
+    }
+    .upload-container.flipped > .auth-box {
+        transform: rotateY(-180deg);
+        pointer-events: none;
+    }
+    .upload-container.flipped > .career-search-card {
+        transform: rotateY(0deg);
+        pointer-events: auto;
+    }
+    .fc-flipbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 15px;
+        padding: 11px 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, .35);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .fc-flipbar:active { transform: scale(.98); }
+    .fc-flipbar:focus-visible { outline: 2px solid rgba(255, 255, 255, .7); outline-offset: 2px; }
+    .fc-flipbar-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+    .fc-flipbar-title i { flex-shrink: 0; }
+    .fc-flipbar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, .18);
+        border: 1px solid rgba(255, 255, 255, .35);
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .fc-flipbar-btn i { transition: transform .8s cubic-bezier(.22, 1, .36, 1); }
+    .upload-container.flipped .fc-flipbar-btn i { transform: rotate(360deg); }
+    @media (prefers-reduced-motion: reduce) {
+        .upload-container > .auth-box,
+        .upload-container > .career-search-card { transition: none !important; }
+        .fc-flipbar-btn i { transition: none !important; }
+    }
+}
+
+/* ===== Collapsible section dropdowns (Report Cards / Bursaries) ===== */
+@property --tl-ring-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes tlRingSpin { to { --tl-ring-a: 360deg; } }
+@keyframes tlSecIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.report-cards-section { margin-top: 40px; }
+.report-cards-section .tl-sec-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    margin: 0; padding: 16px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border: 1.5px solid #e8edf5; border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(30, 41, 59, .07);
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, border-radius .2s ease;
+}
+.report-cards-section .tl-sec:not(.collapsed) .tl-sec-header { border-radius: 20px 20px 0 0; }
+.report-cards-section .tl-sec-header:hover { transform: translateY(-3px); border-color: transparent; box-shadow: 0 16px 38px rgba(102, 126, 234, .18); }
+.report-cards-section .tl-sec-header:focus-visible { outline: 2px solid rgba(102, 126, 234, .45); outline-offset: 2px; }
+.report-cards-section .tl-section-head { display: flex; gap: 14px; align-items: center; margin: 0; }
+.report-cards-section .tl-section-icon { width: 45px; height: 45px; border-radius: 12px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 10px rgba(102, 126, 234, .2); }
+.report-cards-section .tl-section-icon.alt-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 10px rgba(16, 185, 129, .25); }
+.report-cards-section .tl-section-text h2 { font-size: 20px; margin: 0; color: #667eea; letter-spacing: -.01em; font-weight: 700; border-left: none; padding-left: 0; }
+.report-cards-section .tl-sec-header::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
+    background: conic-gradient(from var(--tl-ring-a), #667eea, #764ba2, #ec4899, #f59e0b, #10b981, #667eea);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+    opacity: 0; transition: opacity .35s ease; pointer-events: none; z-index: 2;
+}
+.report-cards-section .tl-sec-header:hover::after, .report-cards-section .tl-sec-header:focus-visible::after { opacity: 1; animation: tlRingSpin 3.5s linear infinite; }
+.report-cards-section .tl-sec-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; position: relative; z-index: 3; }
+.report-cards-section .tl-sec-chev { width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; color: #4f46e5; background: rgba(99, 102, 241, .12); transition: background .2s ease, box-shadow .2s ease; }
+.report-cards-section .tl-sec-header:hover .tl-sec-chev { background: rgba(99, 102, 241, .20); box-shadow: 0 6px 14px rgba(102, 126, 234, .20); }
+.report-cards-section .tl-sec-chev i { display: inline-block; transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+.report-cards-section .tl-sec:not(.collapsed) .tl-sec-chev i { transform: rotate(180deg); }
+.report-cards-section .tl-sec-body {
+    display: block;
+    background: linear-gradient(180deg, #e1e8f5 0%, #d8e1ef 100%);
+    border: 1.5px solid #d4dded; border-top: none;
+    border-radius: 0 0 20px 20px;
+    padding: 20px; margin-top: -1.5px;
+    box-shadow: inset 0 10px 18px -12px rgba(30, 41, 59, .24), 0 8px 24px rgba(30, 41, 59, .07);
+}
+.report-cards-section .tl-sec.collapsed .tl-sec-body { display: none; }
+.report-cards-section .tl-sec-body.tl-sec-anim { animation: tlSecIn .3s ease both; }
+.report-cards-section .tl-sec-body .report-cards-list,
+.report-cards-section .tl-sec-body .bursaries-list-container { margin-bottom: 0; }
+@media (max-width: 768px) {
+    .report-cards-section .tl-sec-header { flex-wrap: nowrap; padding: 14px; gap: 10px; }
+    .report-cards-section .tl-sec-actions { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .report-cards-section .tl-sec-header::after { animation: none !important; }
+    .report-cards-section .tl-sec-header:hover { transform: none !important; }
+    .report-cards-section .tl-sec-chev i, .report-cards-section .tl-sec-body.tl-sec-anim { transition: none !important; animation: none !important; }
+}
 </style>
 SCRIPT;
 
@@ -1276,6 +1419,10 @@ include __DIR__ . '/../layouts/header.php';
 <div class="upload-container" style="display: grid; grid-template-columns: 1fr 400px; gap: 30px; align-items: start;">
     <!-- Left Column: Upload Form -->
     <div class="auth-box" style="max-width: 600px;">
+        <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to career search" onclick="flipReportPane()" onkeydown="flipReportPaneKey(event)">
+            <span class="fc-flipbar-title"><i class="fas fa-cloud-upload-alt"></i> Report Card File</span>
+            <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Search Careers</span>
+        </div>
         <form method="post" action="/upload-report-card" enctype="multipart/form-data">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
@@ -1355,6 +1502,10 @@ include __DIR__ . '/../layouts/header.php';
 
     <!-- Right Column: Career Search Card -->
     <div class="career-search-card">
+        <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to report card upload" onclick="flipReportPane()" onkeydown="flipReportPaneKey(event)">
+            <span class="fc-flipbar-title"><i class="fas fa-compass"></i> Search Careers & Check APS</span>
+            <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Upload File</span>
+        </div>
         <div class="course-top">
             <div class="course-icon" style="background: #eff6ff; color: #3b82f6;">
                 <i class="fas fa-compass"></i>
@@ -1386,17 +1537,41 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 <!-- Your Uploaded Report Cards Section (Full Width Below) -->
 <div class="report-cards-section">
-    <h2 class="section-title"><i class="fas fa-file-alt"></i> Your Uploaded Report Cards</h2>
-    <div id="report-cards-list" class="report-cards-list">
-        <p class="loading">Loading report cards...</p>
-    </div>
+    <section class="tl-sec collapsed" id="tlSecReportCards">
+        <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecReportCardsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+            <div class="tl-section-head">
+                <span class="tl-section-icon"><i class="fas fa-file-alt"></i></span>
+                <div class="tl-section-text">
+                    <h2>Your Uploaded Report Cards</h2>
+                </div>
+            </div>
+            <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+        </div><!-- /.tl-sec-header -->
+        <div class="tl-sec-body" id="tlSecReportCardsBody">
+            <div id="report-cards-list" class="report-cards-list">
+                <p class="loading">Loading report cards...</p>
+            </div>
+        </div><!-- /.tl-sec-body -->
+    </section>
 </div>
 
 <div class="report-cards-section">
-    <h2 class="section-title"><i class="fas fa-scholarship"></i> New Bursaries Available for You</h2>
-    <div id="bursaries-list" class="bursaries-list-container">
-        <p class="loading"><i class="fas fa-spinner fa-spin"></i> Loading bursaries...</p>
-    </div>
+    <section class="tl-sec collapsed" id="tlSecBursaries">
+        <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecBursariesBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+            <div class="tl-section-head">
+                <span class="tl-section-icon alt-green"><i class="fas fa-scholarship"></i></span>
+                <div class="tl-section-text">
+                    <h2>New Bursaries Available for You</h2>
+                </div>
+            </div>
+            <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+        </div><!-- /.tl-sec-header -->
+        <div class="tl-sec-body" id="tlSecBursariesBody">
+            <div id="bursaries-list" class="bursaries-list-container">
+                <p class="loading"><i class="fas fa-spinner fa-spin"></i> Loading bursaries...</p>
+            </div>
+        </div><!-- /.tl-sec-body -->
+    </section>
 </div>
 
 <script>
@@ -1559,6 +1734,71 @@ async function markBursariesAsViewed() {
         console.error('Error marking bursaries as viewed:', error);
     }
 }
+
+// ---- Section dropdowns (Uploaded Report Cards / New Bursaries) ----
+function tlToggleSection(header) {
+    var sec = header.closest('.tl-sec');
+    if (!sec) return;
+    var collapsed = sec.classList.toggle('collapsed');
+    header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    var body = sec.querySelector('.tl-sec-body');
+    if (body && !collapsed) {
+        body.classList.remove('tl-sec-anim');
+        void body.offsetWidth;
+        body.classList.add('tl-sec-anim');
+    }
+}
+
+function tlSectionKey(e, header) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        tlToggleSection(header);
+    }
+}
+
+// ---- Mobile flip pane: upload form <-> career search ----
+function flipReportPane() {
+    var wrap = document.querySelector('.upload-container');
+    if (wrap) wrap.classList.toggle('flipped');
+}
+
+function flipReportPaneKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        flipReportPane();
+    }
+}
+
+function sizeReportPane() {
+    var wrap = document.querySelector('.upload-container');
+    if (!wrap) return;
+    if (window.innerWidth > 768) {
+        if (wrap.style.height) wrap.style.height = '';
+        return;
+    }
+    var front = wrap.querySelector('.auth-box');
+    var back = wrap.querySelector('.career-search-card');
+    if (!front || !back) return;
+    var h = Math.max(front.offsetHeight, back.offsetHeight);
+    if (h > 0 && wrap.style.height !== h + 'px') wrap.style.height = h + 'px';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    sizeReportPane();
+    window.addEventListener('resize', sizeReportPane);
+    window.addEventListener('load', sizeReportPane);
+    setTimeout(sizeReportPane, 300);
+    var wrap = document.querySelector('.upload-container');
+    if (wrap && 'MutationObserver' in window) {
+        new MutationObserver(sizeReportPane).observe(wrap, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    }
+});
 </script>
 
 <!-- Career Details Modal -->

@@ -42,7 +42,7 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
 .sg-page .tl-section-icon.alt-blue{background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 8px 18px rgba(59,130,246,.28);}
 .sg-page .tl-section-icon.alt-green{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 8px 18px rgba(16,185,129,.28);}
 .sg-page .tl-section-icon.alt-purple{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 8px 18px rgba(139,92,246,.28);}
-.sg-page .tl-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;}
+.sg-page .tl-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;border-left:none;padding-left:0;}
 .sg-page .tl-section-text p{color:var(--sg-muted);font-size:13.5px;margin:0;}
 .sg-page .tl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
 .sg-page .tl-card{background:#fff;border:1px solid var(--sg-line);border-radius:var(--sg-radius);box-shadow:var(--sg-shadow);padding:18px;display:flex;flex-direction:column;gap:10px;transition:transform .22s ease,box-shadow .22s ease;}

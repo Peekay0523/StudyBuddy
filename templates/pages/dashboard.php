@@ -291,13 +291,13 @@ document.addEventListener('keydown', function(e) {
 <!-- ACTIONS -->
 <h2 class="section-title">What would you like to do?</h2>
 
-<section class="actions">
-    <a href="/upload-script" class="action blue"><i class="fas fa-cloud-upload-alt icon-sm"></i> Upload Script</a>
-    <a href="/study-plan" class="action orange"><i class="fas fa-calendar-check icon-sm"></i> Study Planner</a>
-    <a href="/upload-report-card" class="action green"><i class="fas fa-compass icon-sm"></i> Career Guide</a>
-    <a href="/apply-for-me" class="action teal"><i class="fas fa-paper-plane icon-sm"></i> Apply For Me</a>
-    <a href="/ai-chat" class="action purple"><i class="fas fa-robot icon-sm"></i> AI Assistant</a>
-    <a href="/simulate" class="action yellow"><i class="fas fa-vial icon-sm"></i> Simulate</a>
+<section class="actions actions-dock">
+    <a href="/upload-script" class="action blue"><i class="fas fa-cloud-upload-alt icon-sm"></i><span class="action-label">Upload Script</span></a>
+    <a href="/study-plan" class="action orange"><i class="fas fa-calendar-check icon-sm"></i><span class="action-label">Study Planner</span></a>
+    <a href="/upload-report-card" class="action green"><i class="fas fa-compass icon-sm"></i><span class="action-label">Career Guide</span></a>
+    <a href="/apply-for-me" class="action teal"><i class="fas fa-paper-plane icon-sm"></i><span class="action-label">Apply For Me</span></a>
+    <a href="/ai-chat" class="action purple"><i class="fas fa-robot icon-sm"></i><span class="action-label">AI Assistant</span></a>
+    <a href="/simulate" class="action yellow"><i class="fas fa-vial icon-sm"></i><span class="action-label">Simulate</span></a>
 </section>
 
 <!-- Invite Friends Modal -->
@@ -595,6 +595,99 @@ document.addEventListener('keydown', function(e) {
             }, 500);
         }
     });
+
+    // Dashboard action dock: on touch / narrow screens, tapping a tile smoothly flies it to the top slot and
+    // expands it (FLIP animation); tapping it again opens the page
+    (function () {
+        var dock = document.querySelector('.actions-dock');
+        if (!dock) return;
+
+        var tiles = Array.prototype.slice.call(dock.querySelectorAll('.action'));
+        tiles.forEach(function (t, i) { t.dataset.dockOrder = i; });
+
+        function narrow() { return window.innerWidth <= 768; }
+        function touchOnly() {
+            return typeof window.matchMedia === 'function' && window.matchMedia('(hover: none)').matches;
+        }
+        function reducedMotion() {
+            return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        function restoreOrder() {
+            tiles.slice().sort(function (a, b) {
+                return a.dataset.dockOrder - b.dataset.dockOrder;
+            }).forEach(function (t) { dock.appendChild(t); });
+        }
+        function cancelAnimations() {
+            tiles.forEach(function (t) {
+                if (t.getAnimations) {
+                    t.getAnimations().forEach(function (a) { a.cancel(); });
+                }
+            });
+        }
+        function flip(mutate) {
+            if (reducedMotion() || typeof tiles[0].animate !== 'function') {
+                mutate();
+                return;
+            }
+            cancelAnimations();
+            dock.classList.add('dock-flipping');
+            var first = tiles.map(function (t) { return t.getBoundingClientRect(); });
+            mutate();
+            void dock.offsetWidth; // force layout so the measurements below are final
+            tiles.forEach(function (t, i) {
+                var b = first[i];
+                var a = t.getBoundingClientRect();
+                var dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+                var dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+                var sx = a.width ? b.width / a.width : 1;
+                var sy = a.height ? b.height / a.height : 1;
+                if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) return;
+                t.animate([
+                    { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')' },
+                    { transform: 'none' }
+                ], { duration: 480, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+            });
+            clearTimeout(dock._flipTimer);
+            dock._flipTimer = setTimeout(function () {
+                dock.classList.remove('dock-flipping');
+                cancelAnimations();
+            }, 520);
+        }
+        function openTile(tile) {
+            flip(function () {
+                var open = dock.querySelector('.action.open');
+                if (open) open.classList.remove('open');
+                restoreOrder();
+                tile.classList.add('open');
+                dock.insertBefore(tile, dock.firstChild);
+            });
+        }
+        function closeAll() {
+            var open = dock.querySelector('.action.open');
+            if (!open) return;
+            flip(function () {
+                open.classList.remove('open');
+                restoreOrder();
+            });
+        }
+
+        dock.addEventListener('click', function (e) {
+            var tile = e.target.closest ? e.target.closest('.action') : null;
+            if (!tile || !dock.contains(tile)) return;
+            if (!narrow() && !touchOnly()) return;
+            if (tile.classList.contains('open')) return;
+            e.preventDefault();
+            openTile(tile);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest || !e.target.closest('.actions-dock')) closeAll();
+        });
+
+        window.addEventListener('resize', function () {
+            if (!narrow()) closeAll();
+        });
+    })();
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

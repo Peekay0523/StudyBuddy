@@ -83,7 +83,7 @@ include __DIR__ . '/../layouts/header.php';
 .sg-page .sg-section-icon.alt-amber{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 8px 18px rgba(245,158,11,.30);}
 .sg-page .sg-section-icon.alt-rose{background:linear-gradient(135deg,#f43f5e,#ec4899);box-shadow:0 8px 18px rgba(244,63,94,.30);}
 .sg-page .sg-section-icon.alt-green{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 8px 18px rgba(16,185,129,.28);}
-.sg-page .sg-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;}
+.sg-page .sg-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;border-left:none;padding-left:0;}
 .sg-page .sg-section-text p{color:var(--sg-muted);font-size:13.5px;margin:0;}
 
 .sg-page .feature-card{background:#fff;border:1px solid var(--sg-line);border-radius:var(--sg-radius);padding:22px;box-shadow:var(--sg-shadow);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
