@@ -112,6 +112,143 @@ function getCurrentUser() {
     return $_SESSION['user'] ?? null;
 }
 
+// Subscription helpers
+function getUserSubscription($userId) {
+    try {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT * FROM subscriptions
+            WHERE user_id = ?
+            AND (
+                status IN ('active', 'trial')
+                OR (status = 'pending_eft' AND current_period_end > NOW())
+            )
+            AND current_period_end > NOW()
+            ORDER BY current_period_end DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$userId]);
+        $subscription = $stmt->fetch();
+
+        // Active trial users get basic-plan access
+        if ($subscription && $subscription['status'] === 'trial') {
+            $subscription['plan'] = 'basic';
+            $subscription['is_trial'] = true;
+        }
+
+        return $subscription ?: null;
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+function isFreeTierUser($userId) {
+    $subscription = getUserSubscription($userId);
+    return ($subscription['plan'] ?? 'free') === 'free';
+}
+
+// Scan limit helpers
+if (!defined('FREE_TIER_SCAN_LIMIT')) {
+    define('FREE_TIER_SCAN_LIMIT', 5);
+}
+
+function getScanLimitInfo($userId) {
+    if (!isFreeTierUser($userId)) {
+        return [
+            'is_free_tier' => false,
+            'limit' => PHP_INT_MAX,
+            'used' => 0,
+            'remaining' => PHP_INT_MAX,
+            'period_end' => null,
+        ];
+    }
+
+    $bonusFreeScans = 0;
+    $used = 0;
+    $periodEnd = null;
+
+    try {
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("SELECT free_scans FROM user_points WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $points = $stmt->fetch();
+        $bonusFreeScans = (int)($points['free_scans'] ?? 0);
+
+        $stmt = $db->prepare("
+            SELECT scan_count, period_end FROM scan_usage
+            WHERE user_id = ? AND (period_end IS NULL OR period_end > NOW())
+            ORDER BY period_start DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$userId]);
+        $period = $stmt->fetch();
+        if ($period) {
+            $used = (int)$period['scan_count'];
+            $periodEnd = $period['period_end'];
+        }
+    } catch (Exception $e) {
+        error_log('getScanLimitInfo failed for user ' . $userId . ': ' . $e->getMessage());
+    }
+
+    $limit = FREE_TIER_SCAN_LIMIT + $bonusFreeScans;
+
+    return [
+        'is_free_tier' => true,
+        'limit' => $limit,
+        'used' => $used,
+        'remaining' => max(0, $limit - $used),
+        'period_end' => $periodEnd,
+    ];
+}
+
+function canUserScan($userId) {
+    if (!isFreeTierUser($userId)) {
+        return true;
+    }
+    $scanInfo = getScanLimitInfo($userId);
+    return $scanInfo['remaining'] > 0;
+}
+
+function recordScan($userId) {
+    try {
+        $db = Database::getInstance()->getConnection();
+
+        if (isFreeTierUser($userId)) {
+            // Purchased free scans are consumed first
+            $stmt = $db->prepare("
+                UPDATE user_points
+                SET free_scans = free_scans - 1, updated_at = NOW()
+                WHERE user_id = ? AND free_scans > 0
+            ");
+            $stmt->execute([$userId]);
+            if ($stmt->rowCount() > 0) {
+                return true;
+            }
+        }
+
+        $stmt = $db->prepare("
+            UPDATE scan_usage
+            SET scan_count = scan_count + 1
+            WHERE user_id = ? AND (period_end IS NULL OR period_end > NOW())
+        ");
+        $stmt->execute([$userId]);
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        $stmt = $db->prepare("
+            INSERT INTO scan_usage (user_id, scan_count, period_start, period_end)
+            VALUES (?, 1, NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH))
+        ");
+        $stmt->execute([$userId]);
+        return true;
+    } catch (Exception $e) {
+        error_log('recordScan failed for user ' . $userId . ': ' . $e->getMessage());
+        return false;
+    }
+}
+
 function getCurrentStudent() {
     if (!isLoggedIn()) {
         return null;
