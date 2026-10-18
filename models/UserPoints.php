@@ -32,7 +32,7 @@ class UserPoints {
      */
     public function initializePoints($userId) {
         $stmt = $this->db->prepare("
-            INSERT OR IGNORE INTO user_points (user_id, points, free_scans)
+            INSERT IGNORE INTO user_points (user_id, points, free_scans)
             VALUES (?, 0, 0)
         ");
         $stmt->execute([$userId]);
@@ -47,7 +47,7 @@ class UserPoints {
             // Update user points
             $stmt = $this->db->prepare("
                 UPDATE user_points
-                SET points = points + ?, updated_at = datetime('now')
+                SET points = points + ?, updated_at = NOW()
                 WHERE user_id = ?
             ");
             $stmt->execute([$points, $userId]);
@@ -76,7 +76,7 @@ class UserPoints {
             // Deduct points
             $stmt = $this->db->prepare("
                 UPDATE user_points
-                SET points = points - ?, updated_at = datetime('now')
+                SET points = points - ?, updated_at = NOW()
                 WHERE user_id = ? AND points >= ?
             ");
             $stmt->execute([$points, $userId, $points]);

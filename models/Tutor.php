@@ -27,7 +27,7 @@ class Tutor {
         try {
             $this->db->exec("
                 CREATE TABLE IF NOT EXISTS tutors (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     user_id INTEGER UNIQUE NOT NULL,
                     full_name TEXT,
                     subjects TEXT,
@@ -41,12 +41,12 @@ class Tutor {
                 )
             ");
 
-            $cols = $this->db->query("PRAGMA table_info(tutors)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $cols = db_table_columns($this->db, 'tutors');
             if (is_array($cols)) {
                 $columnDdl = [
-                    'billing_type'      => "ALTER TABLE tutors ADD COLUMN billing_type TEXT DEFAULT 'hourly'",
+                    'billing_type'      => "ALTER TABLE tutors ADD COLUMN billing_type TEXT DEFAULT ('hourly')",
                     'company_name'      => "ALTER TABLE tutors ADD COLUMN company_name TEXT",
-                    'teaching_mode'     => "ALTER TABLE tutors ADD COLUMN teaching_mode TEXT DEFAULT 'contact'",
+                    'teaching_mode'     => "ALTER TABLE tutors ADD COLUMN teaching_mode TEXT DEFAULT ('contact')",
                     'teaching_approach' => "ALTER TABLE tutors ADD COLUMN teaching_approach TEXT",
                     'packages'          => "ALTER TABLE tutors ADD COLUMN packages TEXT",
                     'company_team'      => "ALTER TABLE tutors ADD COLUMN company_team TEXT",

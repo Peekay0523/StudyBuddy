@@ -64,7 +64,7 @@ class StudyGroupInvite {
             SELECT i.*, sg.title as group_title
             FROM study_group_invites i
             LEFT JOIN study_groups sg ON i.study_group_id = sg.id
-            WHERE i.user_id = ? AND i.status = 'pending' AND i.expires_at > datetime('now')
+            WHERE i.user_id = ? AND i.status = 'pending' AND i.expires_at > NOW()
             ORDER BY i.created_at DESC
         ");
         $stmt->execute([$userId]);
@@ -77,8 +77,8 @@ class StudyGroupInvite {
     public function accept($token, $userId) {
         $stmt = $this->db->prepare("
             UPDATE study_group_invites
-            SET status = 'accepted', claimed_at = datetime('now'), claimed_user_id = ?
-            WHERE invite_token = ? AND status = 'pending' AND expires_at > datetime('now')
+            SET status = 'accepted', claimed_at = NOW(), claimed_user_id = ?
+            WHERE invite_token = ? AND status = 'pending' AND expires_at > NOW()
         ");
         $stmt->execute([$userId, $token]);
         
@@ -122,7 +122,7 @@ class StudyGroupInvite {
     public function hasPendingInvite($email) {
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM study_group_invites
-            WHERE friend_email = ? AND status = 'pending' AND expires_at > datetime('now')
+            WHERE friend_email = ? AND status = 'pending' AND expires_at > NOW()
         ");
         $stmt->execute([$email]);
         return $stmt->fetchColumn() > 0;
@@ -144,9 +144,9 @@ class StudyGroupInvite {
         $stmt = $this->db->prepare("
             SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN status = 'pending' AND expires_at > datetime('now') THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'pending' AND expires_at > NOW() THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,
-                SUM(CASE WHEN status = 'rejected' OR expires_at <= datetime('now') THEN 1 ELSE 0 END) as expired_or_rejected
+                SUM(CASE WHEN status = 'rejected' OR expires_at <= NOW() THEN 1 ELSE 0 END) as expired_or_rejected
             FROM study_group_invites
             WHERE user_id = ?
         ");

@@ -454,7 +454,7 @@ class SubscriptionController {
             // If already expired, give 7 days grace while admin verifies.
             // If not expired, keep current end date.
             $isExpired = strtotime($existing['current_period_end'] ?? 'now') < time();
-            $newEnd = $isExpired ? "datetime('now', '+7 days')" : "current_period_end";
+            $newEnd = $isExpired ? "DATE_ADD(NOW(), INTERVAL 7 DAY)" : "current_period_end";
 
             // Update existing record to pending_eft
             $stmt = $db->prepare("
@@ -466,7 +466,7 @@ class SubscriptionController {
                     payment_date = ?, 
                     proof_path = ?,
                     current_period_end = $newEnd,
-                    updated_at = datetime('now')
+                    updated_at = NOW()
                 WHERE id = ?
             ");
             $stmt->execute([$plan, $amount, $reference, $paymentDate, $proofPath, $existing['id']]);
@@ -475,14 +475,14 @@ class SubscriptionController {
             try {
                 $stmt = $db->prepare("
                     INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_reference, payment_date, proof_path)
-                    VALUES (?, ?, ?, 'pending_eft', datetime('now'), datetime('now', '+7 days'), datetime('now'), ?, ?, ?)
+                    VALUES (?, ?, ?, 'pending_eft', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), NOW(), ?, ?, ?)
                 ");
                 $stmt->execute([$userId, $plan, $amount, $reference, $paymentDate, $proofPath]);
             } catch (Exception $e) {
                 // Table might not have all columns
                 $stmt = $db->prepare("
                     INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_reference, payment_date)
-                    VALUES (?, ?, ?, 'pending_eft', datetime('now'), datetime('now', '+7 days'), datetime('now'), ?, ?)
+                    VALUES (?, ?, ?, 'pending_eft', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), NOW(), ?, ?)
                 ");
                 $stmt->execute([$userId, $plan, $amount, $reference, $paymentDate]);
             }
@@ -544,9 +544,9 @@ class SubscriptionController {
                 WHERE user_id = ?
                 AND (
                     status IN ('active', 'trial') 
-                    OR (status = 'pending_eft' AND datetime(current_period_end) > datetime('now'))
+                    OR (status = 'pending_eft' AND current_period_end > NOW())
                 )
-                AND datetime(current_period_end) > datetime('now')
+                AND current_period_end > NOW()
                 ORDER BY current_period_end DESC
                 LIMIT 1
             ");
@@ -591,7 +591,7 @@ class SubscriptionController {
                 SELECT COUNT(*) FROM subscriptions
                 WHERE user_id = ?
                 AND status = 'pending_eft'
-                AND (datetime(current_period_end) <= datetime('now') OR current_period_start = current_period_end)
+                AND (current_period_end <= NOW() OR current_period_start = current_period_end)
             ");
             // If they are renewing, they will have status='pending_eft' but current_period_end > now.
             // But we want to allow them to submit payment details ONCE.
@@ -619,7 +619,7 @@ class SubscriptionController {
                 SELECT COUNT(*) FROM subscriptions
                 WHERE user_id = ?
                 AND status IN ('active', 'trial')
-                AND datetime(current_period_end) > datetime('now')
+                AND current_period_end > NOW()
             ");
             $stmt->execute([$userId]);
             $count = $stmt->fetchColumn();
@@ -638,9 +638,9 @@ class SubscriptionController {
             // Smart renewal logic: 
             // If current_period_end is in the future, extend it by 1 month.
             // Otherwise, set it to now + 1 month.
-            $newEnd = "datetime('now', '+1 month')";
+            $newEnd = "DATE_ADD(NOW(), INTERVAL 1 MONTH)";
             if (!empty($existing['current_period_end']) && strtotime($existing['current_period_end']) > time()) {
-                $newEnd = "datetime(current_period_end, '+1 month')";
+                $newEnd = "DATE_ADD(current_period_end, INTERVAL 1 MONTH)";
             }
 
             // Update existing record
@@ -653,7 +653,7 @@ class SubscriptionController {
                     transaction_id = ?,
                     current_period_end = $newEnd,
                     cancelled_at = NULL,
-                    updated_at = datetime('now')
+                    updated_at = NOW()
                 WHERE id = ?
             ");
             $stmt->execute([$plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId, $existing['id']]);
@@ -661,7 +661,7 @@ class SubscriptionController {
             try {
                 $stmt = $db->prepare("
                     INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
-                    VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
+                    VALUES (?, ?, ?, 'active', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), NOW(), ?, ?)
                 ");
                 $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
             } catch (Exception $e) {
@@ -670,7 +670,7 @@ class SubscriptionController {
 
                 $stmt = $db->prepare("
                     INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at, payment_method, transaction_id)
-                    VALUES (?, ?, ?, 'active', datetime('now'), datetime('now', '+1 month'), datetime('now'), ?, ?)
+                    VALUES (?, ?, ?, 'active', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH), NOW(), ?, ?)
                 ");
                 $stmt->execute([$userId, $plan, $this->plans[$plan]['price'], $paymentMethod, $transactionId]);
             }
@@ -696,8 +696,8 @@ class SubscriptionController {
             $stmt = $db->prepare("
                 UPDATE subscriptions 
                 SET status = 'cancelled', 
-                    current_period_end = datetime('now'),
-                    updated_at = datetime('now')
+                    current_period_end = NOW(),
+                    updated_at = NOW()
                 WHERE user_id = ? 
                 AND status IN ('active', 'trial')
             ");
@@ -712,18 +712,18 @@ class SubscriptionController {
 
         $db->exec("
             CREATE TABLE IF NOT EXISTS subscriptions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 plan TEXT NOT NULL,
                 price REAL NOT NULL,
-                status TEXT DEFAULT 'active',
+                status TEXT DEFAULT ('active'),
                 current_period_start DATETIME,
                 current_period_end DATETIME,
                 cancelled_at DATETIME,
                 payment_reference TEXT,
                 payment_date DATETIME,
                 proof_path TEXT,
-                payment_method TEXT DEFAULT 'eft',
+                payment_method TEXT DEFAULT ('eft'),
                 transaction_id TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

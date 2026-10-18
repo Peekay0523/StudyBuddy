@@ -278,7 +278,7 @@ class ApplyForMeSubmission {
         $stmt = $this->db->prepare("
             UPDATE apply_for_me_submissions 
             SET payment_status = 'pending',
-                admin_notes = COALESCE(CASE WHEN admin_notes IS NULL OR admin_notes = '' THEN '' ELSE admin_notes || CHAR(10) END || ?, ''),
+                admin_notes = CONCAT(COALESCE(CASE WHEN admin_notes IS NULL OR admin_notes = '' THEN '' ELSE CONCAT(admin_notes, CHAR(10)) END, ''), ?),
                 updated_at = CURRENT_TIMESTAMP 
             WHERE id = ?
         ");

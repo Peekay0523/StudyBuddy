@@ -28,7 +28,7 @@ function getPendingStudyPlansCount() {
         }
         
         // Check if is_completed column exists
-        $columns = $db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        $columns = db_table_columns($db, 'study_plans');
         $hasIsCompleted = in_array('is_completed', $columns);
         
         if ($hasIsCompleted) {
@@ -87,7 +87,7 @@ function getUnreadStudyGroupMessagesCount() {
         }
         
         // Check if is_viewed column exists
-        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        $columns = db_table_columns($db, 'study_group_messages');
         $hasIsViewed = in_array('is_viewed', $columns);
         
         if ($hasIsViewed) {
@@ -112,7 +112,7 @@ function getUnreadStudyGroupMessagesCount() {
                 FROM study_group_messages 
                 WHERE study_group_id IN ($placeholders)
                 AND user_id != ?
-                AND datetime(created_at) > datetime('now', '-7 days')
+                AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
             ");
             $params = array_merge($groupIds, [$user['id']]);
             $stmt->execute($params);
@@ -161,7 +161,7 @@ function getNewStudyGroupScriptsCount() {
                 FROM study_group_scripts
                 WHERE study_group_id = ?
                 AND user_id != ?
-                AND datetime(uploaded_at) > datetime(?)
+                AND uploaded_at > ?
             ");
             $stmt->execute([$groupId, $user['id'], $lastVisited]);
             $result = $stmt->fetch();
@@ -199,7 +199,7 @@ function getStudyGroupNotificationCount($groupId) {
         $user = getCurrentUser();
 
         // Check if is_viewed column exists
-        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        $columns = db_table_columns($db, 'study_group_messages');
         $hasIsViewed = in_array('is_viewed', $columns);
 
         if ($hasIsViewed) {
@@ -221,7 +221,7 @@ function getStudyGroupNotificationCount($groupId) {
                 FROM study_group_messages
                 WHERE study_group_id = ?
                 AND user_id != ?
-                AND datetime(created_at) > datetime('now', '-7 days')
+                AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
             ");
             $stmt->execute([$groupId, $user['id']]);
             $result = $stmt->fetch();
@@ -271,7 +271,7 @@ function getStudyGroupChatNotificationCount($groupId) {
         $user = getCurrentUser();
 
         // Check if is_viewed column exists
-        $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        $columns = db_table_columns($db, 'study_group_messages');
         $hasIsViewed = in_array('is_viewed', $columns);
 
         if ($hasIsViewed) {
@@ -293,7 +293,7 @@ function getStudyGroupChatNotificationCount($groupId) {
                 FROM study_group_messages
                 WHERE study_group_id = ?
                 AND user_id != ?
-                AND datetime(created_at) > datetime('now', '-7 days')
+                AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
             ");
             $stmt->execute([$groupId, $user['id']]);
             $result = $stmt->fetch();
@@ -372,8 +372,8 @@ function getBursaryNotificationCount() {
             SELECT COUNT(*) as count
             FROM bursaries
             WHERE is_active = 1
-            AND deadline >= date('now')
-            AND datetime(created_at) > datetime(?)
+            AND deadline >= CURDATE()
+            AND created_at > ?
         ");
         $stmt->execute([$lastViewed]);
         $result = $stmt->fetch();

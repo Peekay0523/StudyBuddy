@@ -289,7 +289,7 @@ class ApplyForMeController {
         ];
         try {
             $db = Database::getInstance()->getConnection();
-            $result = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")->fetch();
+            $result = $db->query("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'settings'")->fetch();
             if ($result) {
                 $storedSettings = $db->query("SELECT * FROM settings WHERE setting_key LIKE 'banking_%'")->fetchAll();
                 foreach ($storedSettings as $setting) {

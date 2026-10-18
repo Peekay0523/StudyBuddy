@@ -43,10 +43,10 @@ function createOtpTableIfNotExists() {
     
     $db->exec("
         CREATE TABLE IF NOT EXISTS otp_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             phone TEXT NOT NULL,
             otp_code TEXT NOT NULL,
-            purpose TEXT NOT NULL DEFAULT 'registration',
+            purpose TEXT NOT NULL DEFAULT ('registration'),
             attempts INTEGER DEFAULT 0,
             is_used INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -54,9 +54,9 @@ function createOtpTableIfNotExists() {
         )
     ");
     
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_otp_code ON otp_codes(otp_code)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_codes(expires_at)");
+    db_create_index($db, 'idx_otp_phone', 'otp_codes', 'phone');
+    db_create_index($db, 'idx_otp_code', 'otp_codes', 'otp_code');
+    db_create_index($db, 'idx_otp_expires', 'otp_codes', 'expires_at');
 }
 
 /**
@@ -461,7 +461,7 @@ function canResendOtp($phone, $purpose = 'registration') {
 function cleanupExpiredOtps() {
     $db = Database::getInstance()->getConnection();
     
-    $db->exec("DELETE FROM otp_codes WHERE expires_at < datetime('now') OR created_at < datetime('now', '-1 day')");
+    $db->exec("DELETE FROM otp_codes WHERE expires_at < NOW() OR created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)");
 }
 
 // Initialize OTP table on load

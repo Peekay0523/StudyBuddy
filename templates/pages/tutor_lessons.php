@@ -51,6 +51,67 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
 .sg-page .tl-empty-icon{width:60px;height:60px;border-radius:16px;margin:0 auto 14px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;color:var(--sg-brand);background:rgba(102,126,234,.10);}
 .sg-page .tl-empty h3{font-size:16px;margin:0 0 6px;color:var(--sg-ink);}
 .sg-page .tl-empty p{color:var(--sg-muted);font-size:13.5px;margin:0;}
+.sg-page .ms-form-label{display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:#334155;}
+.sg-page .ms-form-input{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13.5px;font-family:inherit;color:#334155;background:#fff;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease;}
+.sg-page textarea.ms-form-input{resize:vertical;line-height:1.55;min-height:96px;}
+.sg-page .ms-form-input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.15);}
+.sg-page .ms-form-input::placeholder{color:var(--sg-faint);}
+.sg-page .ms-ann-toggle{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--sg-brand),var(--sg-brand-2));color:#fff;border:none;cursor:pointer;padding:9px 16px;border-radius:11px;font-size:13px;font-weight:600;font-family:inherit;box-shadow:0 8px 18px rgba(102,126,234,.30);transition:transform .2s ease,filter .2s ease;}
+.sg-page .ms-ann-toggle:hover{transform:translateY(-2px);filter:brightness(1.05);}
+
+/* ===== Collapsible section dropdowns (card headers w/ animated border) ===== */
+@property --tl-ring-a{syntax:'<angle>';initial-value:0deg;inherits:false;}
+@keyframes tlRingSpin{to{--tl-ring-a:360deg;}}
+@keyframes tlSecIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+.sg-page .tl-sec-header{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    margin:0;padding:16px 20px;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfcff 100%);
+    border:1.5px solid #e8edf5;border-radius:var(--sg-radius);
+    box-shadow:0 6px 20px rgba(30,41,59,.07);
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,border-radius .2s ease;
+}
+.sg-page .tl-sec:not(.collapsed) .tl-sec-header{border-radius:var(--sg-radius) var(--sg-radius) 0 0;}
+.sg-page .tl-sec-header:hover{transform:translateY(-3px);border-color:transparent;box-shadow:0 16px 38px rgba(102,126,234,.18);}
+.sg-page .tl-sec-header:focus-visible{outline:2px solid rgba(102,126,234,.45);outline-offset:2px;}
+.sg-page .tl-sec-header .tl-section-head{margin:0;}
+.sg-page .tl-sec-header::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;
+    background:conic-gradient(from var(--tl-ring-a),#667eea,#764ba2,#ec4899,#f59e0b,#10b981,#667eea);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+    opacity:0;transition:opacity .35s ease;pointer-events:none;z-index:2;
+}
+.sg-page .tl-sec-header:hover::after,.sg-page .tl-sec-header:focus-visible::after{opacity:1;animation:tlRingSpin 3.5s linear infinite;}
+.sg-page .tl-sec-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto;position:relative;z-index:3;}
+.sg-page .tl-sec-chev{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#4f46e5;background:rgba(99,102,241,.12);transition:background .2s ease,box-shadow .2s ease;}
+.sg-page .tl-sec-header:hover .tl-sec-chev{background:rgba(99,102,241,.20);box-shadow:0 6px 14px rgba(102,126,234,.20);}
+.sg-page .tl-sec-chev i{display:inline-block;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.sg-page .tl-sec:not(.collapsed) .tl-sec-chev i{transform:rotate(180deg);}
+.sg-page .tl-sec-body{
+    display:block;
+    background:linear-gradient(180deg,#e1e8f5 0%,#d8e1ef 100%);
+    border:1.5px solid #d4dded;border-top:none;
+    border-radius:0 0 var(--sg-radius) var(--sg-radius);
+    padding:20px;margin-top:-1.5px;
+    box-shadow:inset 0 10px 18px -12px rgba(30,41,59,.24),0 8px 24px rgba(30,41,59,.07);
+}
+.sg-page .tl-sec.collapsed .tl-sec-body{display:none;}
+.sg-page .tl-sec-body.tl-sec-anim{animation:tlSecIn .3s ease both;}
+@media (max-width:768px){
+    .sg-page .tl-sec-header{flex-wrap:nowrap;padding:14px;gap:10px;}
+    .sg-page .tl-sec-header .tl-section-text p{display:none;}
+    .sg-page .tl-sec-actions{margin-left:auto;}
+}
+@media (prefers-reduced-motion:reduce){
+    .sg-page .tl-sec-header::after{animation:none!important;}
+    .sg-page .tl-sec-header:hover{transform:none!important;}
+    .sg-page .tl-sec-chev i,.sg-page .tl-sec-body.tl-sec-anim{transition:none!important;animation:none!important;}
+}
+
 @media (max-width:768px){.sg-page .tl-header{flex-direction:column;align-items:flex-start;}}
 </style>
 
@@ -61,21 +122,30 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
     <div>
         <h1 class="tl-title"><?php echo htmlspecialchars($tutor['full_name'] ?: ($tutor['username'] ?? 'Tutor')); ?></h1>
         <p class="tl-subtitle">Announcements, lessons, recorded sessions and documents your tutor shares with you.</p>
-        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;background:<?php echo $modeMeta['bg']; ?>;color:<?php echo $modeMeta['color']; ?>;border:1px solid <?php echo $modeMeta['border']; ?>;margin-top:10px;">
-            <i class="fas fa-<?php echo $modeMeta['icon']; ?>"></i> <?php echo $modeMeta['label']; ?>
-        </span>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center;">
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;background:<?php echo $modeMeta['bg']; ?>;color:<?php echo $modeMeta['color']; ?>;border:1px solid <?php echo $modeMeta['border']; ?>;">
+                <i class="fas fa-<?php echo $modeMeta['icon']; ?>"></i> <?php echo $modeMeta['label']; ?>
+            </span>
+            <a href="/tutor/view/<?php echo (int)$tutor['id']; ?>" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:#fff;border:1.5px solid #c7d2fe;color:#4f46e5;text-decoration:none;">
+                <i class="fas fa-user"></i> View Profile
+            </a>
+        </div>
     </div>
 </div>
 
 <!-- ===== Announcements ===== -->
-<section class="tl-section">
-    <div class="tl-section-head">
-        <span class="tl-section-icon"><i class="fas fa-bullhorn"></i></span>
-        <div class="tl-section-text">
-            <h2>Announcements</h2>
-            <p>Announcements your tutor has posted for you.</p>
+<section class="tl-section tl-sec collapsed" id="tlSecAnnouncements">
+    <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecAnnouncementsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+        <div class="tl-section-head">
+            <span class="tl-section-icon"><i class="fas fa-bullhorn"></i></span>
+            <div class="tl-section-text">
+                <h2>Announcements</h2>
+                <p>Announcements your tutor has posted for you.</p>
+            </div>
         </div>
-    </div>
+        <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tl-sec-header -->
+    <div class="tl-sec-body" id="tlSecAnnouncementsBody">
     <div class="tl-grid">
         <?php if (count($tutorAnnouncements) === 0): ?>
             <div class="tl-empty" style="grid-column:1 / -1;">
@@ -105,17 +175,22 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    </div><!-- /.tl-sec-body -->
 </section>
 
 <!-- ===== Lessons ===== -->
-<section class="tl-section">
-    <div class="tl-section-head">
-        <span class="tl-section-icon alt-blue"><i class="fas fa-calendar"></i></span>
-        <div class="tl-section-text">
-            <h2>Lessons</h2>
-            <p>Scheduled lessons from your tutor, with links and times.</p>
+<section class="tl-section tl-sec collapsed" id="tlSecLessons">
+    <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecLessonsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+        <div class="tl-section-head">
+            <span class="tl-section-icon alt-blue"><i class="fas fa-calendar"></i></span>
+            <div class="tl-section-text">
+                <h2>Lessons</h2>
+                <p>Scheduled lessons from your tutor, with links and times.</p>
+            </div>
         </div>
-    </div>
+        <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tl-sec-header -->
+    <div class="tl-sec-body" id="tlSecLessonsBody">
     <div class="tl-grid">
         <?php if (count($lessonsByKind['lessons']) === 0): ?>
             <div class="tl-empty" style="grid-column:1 / -1;">
@@ -139,17 +214,22 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    </div><!-- /.tl-sec-body -->
 </section>
 
 <!-- ===== Recorded Sessions ===== -->
-<section class="tl-section">
-    <div class="tl-section-head">
-        <span class="tl-section-icon alt-purple"><i class="fas fa-video"></i></span>
-        <div class="tl-section-text">
-            <h2>Recorded Sessions</h2>
-            <p>Recorded sessions from your tutor, with links.</p>
+<section class="tl-section tl-sec collapsed" id="tlSecRecorded">
+    <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecRecordedBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+        <div class="tl-section-head">
+            <span class="tl-section-icon alt-purple"><i class="fas fa-video"></i></span>
+            <div class="tl-section-text">
+                <h2>Recorded Sessions</h2>
+                <p>Recorded sessions from your tutor, with links.</p>
+            </div>
         </div>
-    </div>
+        <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tl-sec-header -->
+    <div class="tl-sec-body" id="tlSecRecordedBody">
     <div class="tl-grid">
         <?php if (count($lessonsByKind['recorded']) === 0): ?>
             <div class="tl-empty" style="grid-column:1 / -1;">
@@ -173,17 +253,22 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    </div><!-- /.tl-sec-body -->
 </section>
 
 <!-- ===== Documents ===== -->
-<section class="tl-section">
-    <div class="tl-section-head">
-        <span class="tl-section-icon alt-green"><i class="fas fa-file"></i></span>
-        <div class="tl-section-text">
-            <h2>Documents</h2>
-            <p>Documents your tutor shares with you.</p>
+<section class="tl-section tl-sec collapsed" id="tlSecDocuments">
+    <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecDocumentsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+        <div class="tl-section-head">
+            <span class="tl-section-icon alt-green"><i class="fas fa-file"></i></span>
+            <div class="tl-section-text">
+                <h2>Documents</h2>
+                <p>Documents your tutor shares with you.</p>
+            </div>
         </div>
-    </div>
+        <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tl-sec-header -->
+    <div class="tl-sec-body" id="tlSecDocumentsBody">
     <div class="tl-grid">
         <?php if (count($lessonsByKind['documents']) === 0): ?>
             <div class="tl-empty" style="grid-column:1 / -1;">
@@ -207,8 +292,73 @@ $modeMeta = $teachingModeMeta[$teachingMode] ?? $teachingModeMeta['contact'];
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+    </div><!-- /.tl-sec-body -->
+</section>
+
+<section class="tl-section tl-sec collapsed" id="tlSecProblems">
+    <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecProblemsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+        <div class="tl-section-head">
+            <span class="tl-section-icon"><i class="fas fa-question-circle"></i></span>
+            <div class="tl-section-text">
+                <h2>My Problems/Questions</h2>
+                <p>State where you are facing problems. Your tutor will see them.</p>
+            </div>
+        </div>
+        <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tl-sec-header -->
+    <div class="tl-sec-body" id="tlSecProblemsBody">
+    <div class="tl-card">
+        <form method="POST" action="/tutor/problems/create">
+            <input type="hidden" name="tutor_id" value="<?php echo (int)$tutor["id"]; ?>">
+            <div style="margin-bottom:12px;">
+                <label class="ms-form-label">Subject (Optional)</label>
+                <input type="text" name="subject" class="ms-form-input" placeholder="e.g., Mathematics">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label class="ms-form-label">Describe your problem <span style="color:#ef4444;">*</span></label>
+                <textarea name="problem_text" class="ms-form-input" rows="4" required placeholder="Explain where you're stuck..."></textarea>
+            </div>
+            <button type="submit" class="ms-ann-toggle"><i class="fas fa-paper-plane"></i> Submit Problem</button>
+        </form>
+        <?php if (!empty($studentProblems)): ?>
+        <div style="margin-top:16px;">
+            <h4 style="font-size:14px;margin:0 0 10px;">Your submitted problems</h4>
+            <?php foreach ($studentProblems as $sp): ?>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-bottom:8px;">
+                <p style="margin:0 0 6px;font-size:13px;"><?php echo htmlspecialchars($sp["problem_text"]); ?></p>
+                <div style="font-size:11px;color:#475569;"><?php echo ($sp["subject"] ? htmlspecialchars($sp["subject"]) : "-") . " � " . htmlspecialchars($sp["status"]) . " � " . htmlspecialchars($sp["created_at"]); ?></div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+    </div><!-- /.tl-sec-body -->
 </section>
 
 </div><!-- /.sg-page -->
 
+<script>
+    // ---- Section dropdowns (Announcements / Lessons / Recorded / Documents / Problems) ----
+    function tlToggleSection(header) {
+        var sec = header.closest('.tl-sec');
+        if (!sec) return;
+        var collapsed = sec.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        var body = sec.querySelector('.tl-sec-body');
+        if (body && !collapsed) {
+            body.classList.remove('tl-sec-anim');
+            void body.offsetWidth;
+            body.classList.add('tl-sec-anim');
+        }
+    }
+
+    function tlSectionKey(e, header) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            tlToggleSection(header);
+        }
+    }
+</script>
+
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
+

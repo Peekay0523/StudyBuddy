@@ -13,7 +13,7 @@ class User {
     public function create($username, $password, $email = null, $phone = null, $role = 'student') {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        $stmt = $this->db->prepare("INSERT INTO users (username, password, email, phone, role, joined_date) VALUES (?, ?, ?, ?, ?, datetime('now'))");
+        $stmt = $this->db->prepare("INSERT INTO users (username, password, email, phone, role, joined_date) VALUES (?, ?, ?, ?, ?, NOW())");
         $stmt->execute([$username, $hashedPassword, $email, $phone, $role]);
 
         return $this->db->lastInsertId();

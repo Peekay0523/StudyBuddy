@@ -9,13 +9,12 @@ require_once __DIR__ . '/config/database.php';
 
 $db = Database::getInstance()->getConnection();
 
-$existingColumns = $db->query("PRAGMA table_info(apply_for_me_submissions)")->fetchAll(PDO::FETCH_ASSOC);
-$existingNames = array_column($existingColumns, 'name');
+$existingNames = db_table_columns($db, 'apply_for_me_submissions');
 
 $columnsToAdd = [
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_steps_completed TEXT DEFAULT '[]'",
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_steps_completed TEXT DEFAULT '[]'",
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_steps_completed TEXT DEFAULT '[]'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_steps_completed TEXT DEFAULT ('[]')",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_steps_completed TEXT DEFAULT ('[]')",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_steps_completed TEXT DEFAULT ('[]')",
 ];
 
 function getColumnName($sql) {

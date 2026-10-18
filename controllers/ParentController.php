@@ -98,7 +98,7 @@ class ParentController {
         $subscription = $db->prepare("
             SELECT * FROM subscriptions
             WHERE user_id = ? AND status IN ('active', 'trial')
-            AND (current_period_end IS NULL OR datetime(current_period_end) > datetime('now'))
+            AND (current_period_end IS NULL OR current_period_end > NOW())
             ORDER BY created_at DESC
             LIMIT 1
         ");

@@ -90,8 +90,8 @@ class StudyReminder {
             $stmt = $this->db->prepare("
                 SELECT * FROM study_reminders 
                 WHERE user_id = ? 
-                AND reminder_date >= date('now') 
-                AND reminder_date <= date('now', '+' || ? || ' days')
+                AND reminder_date >= CURDATE() 
+                AND reminder_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
                 AND is_completed = 0
                 ORDER BY reminder_date ASC, reminder_time ASC
             ");
@@ -109,7 +109,7 @@ class StudyReminder {
         $stmt = $this->db->prepare("
             SELECT * FROM study_reminders 
             WHERE user_id = ? 
-            AND reminder_date < date('now') 
+            AND reminder_date < CURDATE() 
             AND is_completed = 0
             ORDER BY reminder_date ASC
         ");

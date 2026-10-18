@@ -513,7 +513,7 @@ class StudyPlanController {
             $db = Database::getInstance()->getConnection();
 
             // Check if is_completed column exists
-            $columns = $db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN);
+            $columns = db_table_columns($db, 'study_plans');
             $hasIsCompleted = in_array('is_completed', $columns);
 
             if ($hasIsCompleted) {

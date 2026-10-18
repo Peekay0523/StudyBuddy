@@ -91,7 +91,7 @@ try {
         try {
             // First try to ensure ocr_text column exists
             try {
-                $db->exec("ALTER TABLE scans ADD COLUMN ocr_text TEXT DEFAULT ''");
+                $db->exec("ALTER TABLE scans ADD COLUMN ocr_text TEXT DEFAULT ('')");
             } catch (PDOException $e) {
                 // Column already exists, that's fine
             }

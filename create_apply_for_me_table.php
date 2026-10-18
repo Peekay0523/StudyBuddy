@@ -9,7 +9,7 @@ try {
     $db = Database::getInstance()->getConnection();
 
     $sql = "CREATE TABLE IF NOT EXISTS apply_for_me_submissions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INTEGER NOT NULL,
         full_name TEXT NOT NULL,
         surname TEXT NOT NULL,
@@ -36,8 +36,8 @@ try {
         transcript_path TEXT,
         proof_res_path TEXT,
         cv_path TEXT,
-        payment_status TEXT DEFAULT 'pending',
-        application_status TEXT DEFAULT 'pending',
+        payment_status TEXT DEFAULT ('pending'),
+        application_status TEXT DEFAULT ('pending'),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE

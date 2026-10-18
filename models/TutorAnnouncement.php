@@ -21,10 +21,10 @@ class TutorAnnouncement {
         try {
             $this->db->exec("
                 CREATE TABLE IF NOT EXISTS tutor_announcements (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     tutor_id INTEGER NOT NULL,
-                    grade TEXT DEFAULT '',
-                    type TEXT DEFAULT 'online',
+                    grade TEXT DEFAULT (''),
+                    type TEXT DEFAULT ('online'),
                     title TEXT NOT NULL,
                     description TEXT,
                     link TEXT,
@@ -34,7 +34,7 @@ class TutorAnnouncement {
                     FOREIGN KEY (tutor_id) REFERENCES tutors(id) ON DELETE CASCADE
                 )
             ");
-            $this->db->exec("CREATE INDEX IF NOT EXISTS idx_tutor_announcements_tutor ON tutor_announcements(tutor_id)");
+            db_create_index($this->db, 'idx_tutor_announcements_tutor', 'tutor_announcements', 'tutor_id');
         } catch (Exception $e) {
             // Silently ignore - queries will simply fail later if the table is missing
         }

@@ -40,8 +40,8 @@ class AdminController {
             'total_subscriptions' => $db->query("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'")->fetchColumn(),
             'total_scripts' => $db->query("SELECT COUNT(*) FROM uploaded_scripts")->fetchColumn(),
             'total_report_cards' => $db->query("SELECT COUNT(*) FROM report_cards")->fetchColumn(),
-            'monthly_revenue' => $db->query("SELECT COALESCE(SUM(price), 0) FROM subscriptions WHERE status = 'active' AND DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn(),
-            'new_users_this_month' => $db->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE('now', '-30 days')")->fetchColumn(),
+            'monthly_revenue' => $db->query("SELECT COALESCE(SUM(price), 0) FROM subscriptions WHERE status = 'active' AND DATE(created_at) >= DATE_FORMAT(CURDATE(), '%Y-%m-01')")->fetchColumn(),
+            'new_users_this_month' => $db->query("SELECT COUNT(*) FROM users WHERE DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)")->fetchColumn(),
 
             // OpenAI Usage Statistics (requires openai_usage_logs table - run /add_openai_usage_table.php first)
             'total_tokens_used' => 0,
@@ -53,9 +53,9 @@ class AdminController {
         // Calculate estimated cost only if table exists
         try {
             $stats['total_tokens_used'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs")->fetchColumn();
-            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE_FORMAT(CURDATE(), '%Y-%m-01')")->fetchColumn();
             $stats['total_api_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs")->fetchColumn();
-            $stats['api_calls_this_month'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['api_calls_this_month'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs WHERE DATE(created_at) >= DATE_FORMAT(CURDATE(), '%Y-%m-01')")->fetchColumn();
             $stats['estimated_cost'] = $stats['total_tokens_used'] * 0.0000006;
             $stats['estimated_cost_month'] = $stats['tokens_this_month'] * 0.0000006;
         } catch (Exception $e) {
@@ -412,7 +412,7 @@ class AdminController {
         }
 
         $db = Database::getInstance()->getConnection();
-        $update = $db->prepare("UPDATE subscriptions SET status = 'cancelled', cancelled_at = datetime('now') WHERE id = ?");
+        $update = $db->prepare("UPDATE subscriptions SET status = 'cancelled', cancelled_at = NOW() WHERE id = ?");
         $update->execute([$subscriptionId]);
 
         setFlashMessage('success', 'Subscription cancelled successfully');
@@ -477,15 +477,15 @@ class AdminController {
 
         // Build update query based on status
         if ($newStatus === 'cancelled') {
-            $update = $db->prepare("UPDATE subscriptions SET status = ?, cancelled_at = datetime('now') WHERE id = ?");
+            $update = $db->prepare("UPDATE subscriptions SET status = ?, cancelled_at = NOW() WHERE id = ?");
             $update->execute([$newStatus, $subscriptionId]);
         } elseif ($newStatus === 'active' || $newStatus === 'trial') {
             // Smart renewal logic: 
             // If current_period_end is in the future, extend it by 1 month.
             // Otherwise, set it to now + 1 month.
-            $newEnd = "datetime('now', '+1 month')";
+            $newEnd = "DATE_ADD(NOW(), INTERVAL 1 MONTH)";
             if (!empty($subscription['current_period_end']) && strtotime($subscription['current_period_end']) > time()) {
-                $newEnd = "datetime(current_period_end, '+1 month')";
+                $newEnd = "DATE_ADD(current_period_end, INTERVAL 1 MONTH)";
             }
             
             // Reactivate - clear cancelled_at and extend period
@@ -494,12 +494,12 @@ class AdminController {
                 SET status = ?,
                     cancelled_at = NULL,
                     current_period_end = $newEnd,
-                    updated_at = datetime('now')
+                    updated_at = NOW()
                 WHERE id = ?
             ");
             $update->execute([$newStatus, $subscriptionId]);
         } else {
-            $update = $db->prepare("UPDATE subscriptions SET status = ?, updated_at = datetime('now') WHERE id = ?");
+            $update = $db->prepare("UPDATE subscriptions SET status = ?, updated_at = NOW() WHERE id = ?");
             $update->execute([$newStatus, $subscriptionId]);
         }
 
@@ -547,9 +547,9 @@ class AdminController {
         // Smart renewal logic: 
         // If current_period_end is in the future, extend it by 1 month.
         // Otherwise, set it to now + 1 month.
-        $newEnd = "datetime('now', '+1 month')";
+        $newEnd = "DATE_ADD(NOW(), INTERVAL 1 MONTH)";
         if (!empty($subscription['current_period_end']) && strtotime($subscription['current_period_end']) > time()) {
-            $newEnd = "datetime(current_period_end, '+1 month')";
+            $newEnd = "DATE_ADD(current_period_end, INTERVAL 1 MONTH)";
         }
 
         // Update subscription to active
@@ -558,7 +558,7 @@ class AdminController {
             SET status = 'active',
                 current_period_end = $newEnd,
                 cancelled_at = NULL,
-                updated_at = datetime('now')
+                updated_at = NOW()
             WHERE id = ?
         ");
         $update->execute([$subscriptionId]);
@@ -591,7 +591,7 @@ class AdminController {
         $update = $db->prepare("
             UPDATE subscriptions 
             SET status = 'rejected',
-                cancelled_at = datetime('now')
+                cancelled_at = NOW()
             WHERE id = ?
         ");
         $update->execute([$subscriptionId]);
@@ -1076,13 +1076,12 @@ class AdminController {
 
         try {
             // Check if model_used column exists
-            $columns = $db->query("PRAGMA table_info(openai_usage_logs)")->fetchAll(PDO::FETCH_ASSOC);
-            $columnNames = array_column($columns, 'name');
+            $columnNames = db_table_columns($db, 'openai_usage_logs');
             $hasModelUsed = in_array('model_used', $columnNames);
             
             // Total stats
             $stats['total_tokens_used'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs")->fetchColumn();
-            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE('now', 'start of month')")->fetchColumn();
+            $stats['tokens_this_month'] = $db->query("SELECT COALESCE(SUM(total_tokens), 0) FROM openai_usage_logs WHERE DATE(created_at) >= DATE_FORMAT(CURDATE(), '%Y-%m-01')")->fetchColumn();
             $stats['total_api_calls'] = $db->query("SELECT COUNT(*) FROM openai_usage_logs")->fetchColumn();
             
             // Model-specific stats (only if column exists)
@@ -1205,7 +1204,7 @@ class AdminController {
 
         try {
             // Check if settings table exists
-            $result = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")->fetch();
+            $result = $db->query("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'settings'")->fetch();
             
             if ($result) {
                 // Get stored settings
@@ -1235,8 +1234,8 @@ class AdminController {
             // Create settings table if it doesn't exist
             $db->exec("
                 CREATE TABLE IF NOT EXISTS settings (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    setting_key TEXT UNIQUE NOT NULL,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    setting_key VARCHAR(191) UNIQUE NOT NULL,
                     setting_value TEXT,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
@@ -1245,8 +1244,8 @@ class AdminController {
             // Save each setting
             foreach ($data as $key => $value) {
                 $db->prepare("
-                    INSERT OR REPLACE INTO settings (setting_key, setting_value, updated_at)
-                    VALUES ('banking_' || ?, ?, datetime('now'))
+                    REPLACE INTO settings (setting_key, setting_value, updated_at)
+                    VALUES (CONCAT('banking_', ?), ?, NOW())
                 ")->execute([$key, $value]);
             }
         } catch (Exception $e) {
@@ -1262,7 +1261,7 @@ class AdminController {
         $db = Database::getInstance()->getConnection();
 
         // Auto-deactivate expired bursaries
-        $db->exec("UPDATE bursaries SET is_active = 0, updated_at = datetime('now') WHERE is_active = 1 AND deadline < date('now')");
+        $db->exec("UPDATE bursaries SET is_active = 0, updated_at = NOW() WHERE is_active = 1 AND deadline < CURDATE()");
 
         // Get filter from query string
         $filter = $_GET['filter'] ?? 'all'; // all, active, inactive, expired
@@ -1272,7 +1271,7 @@ class AdminController {
         } elseif ($filter === 'inactive') {
             $bursaries = $db->query("SELECT * FROM bursaries WHERE is_active = 0 ORDER BY updated_at DESC")->fetchAll();
         } elseif ($filter === 'expired') {
-            $bursaries = $db->query("SELECT * FROM bursaries WHERE deadline < date('now') ORDER BY deadline DESC")->fetchAll();
+            $bursaries = $db->query("SELECT * FROM bursaries WHERE deadline < CURDATE() ORDER BY deadline DESC")->fetchAll();
         } else {
             $bursaries = $db->query("SELECT * FROM bursaries ORDER BY is_active DESC, deadline ASC")->fetchAll();
         }
@@ -1438,7 +1437,7 @@ class AdminController {
             UPDATE bursaries 
             SET name = ?, provider = ?, eligibility = ?, covers = ?, deadline = ?, 
                 contact = ?, apply_url = ?, min_grade_average = ?, max_grade_average = ?, 
-                required_subjects = ?, is_active = ?, updated_at = datetime('now')
+                required_subjects = ?, is_active = ?, updated_at = NOW()
             WHERE id = ?
         ");
 
@@ -1528,7 +1527,7 @@ class AdminController {
 
         // Toggle status
         $newStatus = $bursary['is_active'] ? 0 : 1;
-        $db->prepare("UPDATE bursaries SET is_active = ?, updated_at = datetime('now') WHERE id = ?")
+        $db->prepare("UPDATE bursaries SET is_active = ?, updated_at = NOW() WHERE id = ?")
            ->execute([$newStatus, $bursaryId]);
 
         setFlashMessage('success', 'Bursary status updated');
@@ -1620,7 +1619,7 @@ class AdminController {
             $db = Database::getInstance()->getConnection();
             $stmt = $db->prepare("
                 INSERT INTO payment_refunds (payment_id, refund_amount, reason, bobpay_response, refunded_by, created_at)
-                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                VALUES (?, ?, ?, ?, ?, NOW())
             ");
             $refundAmount = $result['payment_method']['amount'] ?? 0;
             $userId = getCurrentUser()['id'] ?? 0;
@@ -2278,7 +2277,7 @@ class AdminController {
             // Check if audit_log table exists, create if not
             $db->exec("
                 CREATE TABLE IF NOT EXISTS document_access_log (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     submission_id INTEGER NOT NULL,
                     document_type TEXT NOT NULL,
                     action TEXT NOT NULL,

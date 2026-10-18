@@ -722,7 +722,7 @@ Return ONLY the JSON, no other text.'
             $bursaries = $db->query("
                 SELECT * FROM bursaries
                 WHERE is_active = 1
-                AND deadline >= date('now')
+                AND deadline >= CURDATE()
                 ORDER BY deadline ASC
             ")->fetchAll();
 

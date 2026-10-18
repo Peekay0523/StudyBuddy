@@ -1,5 +1,6 @@
 <!-- ===== Editable Subjects You Teach Card ===== -->
-<section class="td-section" id="subjectsYouTeachSection">
+<section class="td-section td-cx" id="subjectsYouTeachSection" tabindex="0" aria-expanded="false">
+    <div class="td-cx-top">
     <div class="td-section-head">
         <span class="td-section-icon alt-green"><i class="fas fa-book-open"></i></span>
         <div class="td-section-text">
@@ -15,6 +16,9 @@
             <i class="fas fa-pen"></i> Edit Subjects
         </button>
     </div>
+        <span class="td-cx-chev"><i class="fas fa-chevron-down"></i></span>
+    </div><!-- /.td-cx-top -->
+    <div class="td-cx-body"><div class="td-cx-inner">
 
     <!-- View mode -->
     <div id="subjectsViewMode">
@@ -85,6 +89,8 @@
             <div id="subjectsEditMessage" style="margin-top:12px;font-size:13px;font-weight:600;min-height:20px;"></div>
         </div>
     </div>
+
+    </div></div><!-- /.td-cx-body -->
 </section>
 
 <script>
@@ -107,6 +113,7 @@
     }
 
     window.enterSubjectsEditMode = function() {
+        if (window.expandTdSection) { window.expandTdSection('subjectsYouTeachSection'); }
         document.getElementById('subjectsViewMode').style.display = 'none';
         document.getElementById('subjectsEditMode').style.display = 'block';
         document.getElementById('editSubjectsBtn').style.display = 'none';

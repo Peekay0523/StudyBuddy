@@ -58,7 +58,7 @@ class DashboardController {
         $subscription = $db->prepare("
             SELECT * FROM subscriptions
             WHERE user_id = ? AND status IN ('active', 'trial')
-            AND datetime(current_period_end) > datetime('now')
+            AND current_period_end > NOW()
             ORDER BY created_at DESC
             LIMIT 1
         ");

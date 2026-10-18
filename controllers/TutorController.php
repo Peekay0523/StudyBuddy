@@ -12,6 +12,7 @@ require_once __DIR__ . '/../models/Tutor.php';
 require_once __DIR__ . '/../models/TutorStudent.php';
 require_once __DIR__ . '/../models/TutorAnnouncement.php';
 
+require_once __DIR__ . '/../models/TutorStudentProblem.php';
 class TutorController {
     private $tutorModel;
     private $tutorStudentModel;
@@ -110,7 +111,7 @@ class TutorController {
         $activeStudents = $this->tutorStudentModel->getActiveForTutor($tutorProfile['id']);
         $allAnnouncements = $this->tutorAnnouncementModel->getForTutor($tutorProfile['id']);
 
-        // Group students into grade cards (ordered Grade 8 â†’ 12, then custom labels, then unspecified)
+        // Group students into grade cards (ordered Grade 8 GåÆ 12, then custom labels, then unspecified)
         $gradeOrder = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
         $groups = []; // grade label => ['students' => [], 'announcements' => []]
         foreach ($activeStudents as $stu) {
@@ -144,7 +145,7 @@ class TutorController {
             if (!isset($gradeCards[$label])) $gradeCards[$label] = $grp;
         }
 
-        // Attach announcements to their grade card ('' = all grades â†’ show on every card)
+        // Attach announcements to their grade card ('' = all grades GåÆ show on every card)
         $generalAnnouncements = [];
         foreach ($allAnnouncements as $ann) {
             $grade = trim($ann['grade'] ?? '');
@@ -333,7 +334,7 @@ class TutorController {
      * @return bool true if a new picture was saved, false otherwise
      */
     private function processProfileImageUpload($file, $userId) {
-        // No picture chosen â€” nothing to do (not an error)
+        // No picture chosen GÇö nothing to do (not an error)
         if (!$file || !is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
             return true;
         }
@@ -548,7 +549,7 @@ class TutorController {
             $teachingMode = 'contact';
         }
 
-        // Tutoring packages: one per line â€” "Name | Price | Description"
+        // Tutoring packages: one per line GÇö "Name | Price | Description"
         $packages = [];
         foreach (preg_split('/\r\n|\r|\n/', $tutor['packages'] ?? '') as $line) {
             $line = trim($line);
@@ -570,7 +571,7 @@ class TutorController {
             $packages[] = $pkg;
         }
 
-        // Company tutors (who teaches what): one per line â€” "Name | Qualifications | Subjects | Grades"
+        // Company tutors (who teaches what): one per line GÇö "Name | Qualifications | Subjects | Grades"
         // Backwards compatible with the older "Name | Subjects" and "Name | Qualifications | Subjects" formats.
         $teamMembers = [];
         foreach (preg_split('/\r\n|\r|\n/', $tutor['company_team'] ?? '') as $line) {
@@ -766,7 +767,7 @@ class TutorController {
      * Extract the currency symbol/prefix from a rate string.
      */
     private function extractCurrencySymbol($rateString) {
-        if (preg_match('/^\s*([Rr]\$?|\$|â‚¬|Â£)\s*/', $rateString, $m)) {
+        if (preg_match('/^\s*([Rr]\$?|\$|Gé¼|-ú)\s*/', $rateString, $m)) {
             return $m[1];
         }
         return 'R';
@@ -1026,6 +1027,58 @@ class TutorController {
         setFlashMessage('info', 'A draft tutor profile was created for you. Click "Edit Profile" below to add your subjects, rate, and bio.');
 
         return $this->tutorModel->findByUserId($user['id']);
+    }
+
+    public function createProblem() {
+        requireLogin();
+        $user = getCurrentUser();
+        if (!$user) {
+            header("Location: /auth/login");
+            exit;
+        }
+        $tutorId = (int)($_POST["tutor_id"] ?? 0);
+        $subject = trim($_POST["subject"] ?? "");
+        $problemText = trim($_POST["problem_text"] ?? "");
+        if (!$tutorId || $problemText === "") {
+            setFlashMessage("error", "Please state your problem.");
+            header("Location: /tutor/lessons/" . $tutorId);
+            exit;
+        }
+        $link = $this->tutorStudentModel->findActiveLink($tutorId, $user["id"]);
+        $grade = $link["grade"] ?? null;
+        $studentUserId = (int)($link["student_user_id"] ?? $user["id"]);
+        $problemModel = new TutorStudentProblem();
+        $problemModel->create($tutorId, $studentUserId, $grade, $subject, $problemText);
+        setFlashMessage("success", "Your problem has been submitted.");
+        header("Location: /tutor/lessons/" . $tutorId);
+        exit;
+    }
+
+    public function resolveProblem($id) {
+        requireLogin();
+        $user = getCurrentUser();
+        if (!$user) {
+            header("Location: /auth/login");
+            exit;
+        }
+        $problemId = (int)$id;
+        $problemModel = new TutorStudentProblem();
+        $problem = $problemModel->findById($problemId);
+        if (!$problem) {
+            setFlashMessage("error", "Problem not found.");
+            header("Location: /tutor/my-students");
+            exit;
+        }
+        $tutor = $this->tutorModel->findByUserId($user["id"]);
+        if (!$tutor || (int)$tutor["id"] !== (int)$problem["tutor_id"]) {
+            setFlashMessage("error", "You are not authorized to resolve this problem.");
+            header("Location: /tutor/my-students");
+            exit;
+        }
+        $problemModel->resolve($problemId);
+        setFlashMessage("success", "Problem marked as resolved.");
+        header("Location: /tutor/my-students");
+        exit;
     }
 }
 

@@ -52,6 +52,10 @@ foreach ($staticPaths as $path) {
 }
 
 // Everything else goes through index.php
+// Dev server: never let the browser cache dynamic pages (stale JS bugs)
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 require __DIR__ . '/index.php';
 return true;

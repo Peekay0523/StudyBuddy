@@ -11,26 +11,25 @@ require_once __DIR__ . '/config/database.php';
 $db = Database::getInstance()->getConnection();
 
 // Get existing columns
-$existingColumns = $db->query("PRAGMA table_info(apply_for_me_submissions)")->fetchAll(PDO::FETCH_ASSOC);
-$existingNames = array_column($existingColumns, 'name');
+$existingNames = db_table_columns($db, 'apply_for_me_submissions');
 
 $columnsToAdd = [
     // Institution 1 status tracking
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_status TEXT DEFAULT 'pending'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_status TEXT DEFAULT ('pending')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_notes TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_response TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_submitted_at DATETIME DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_1_completed_at DATETIME DEFAULT NULL",
     
     // Institution 2 status tracking
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_status TEXT DEFAULT 'pending'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_status TEXT DEFAULT ('pending')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_notes TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_response TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_submitted_at DATETIME DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_2_completed_at DATETIME DEFAULT NULL",
     
     // Institution 3 status tracking
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_status TEXT DEFAULT 'pending'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_status TEXT DEFAULT ('pending')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_notes TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_response TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_3_submitted_at DATETIME DEFAULT NULL",

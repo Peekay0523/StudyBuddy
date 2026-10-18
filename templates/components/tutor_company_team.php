@@ -1,5 +1,6 @@
 <!-- ===== Our Tutors (Company Team Management) ===== -->
-<section class="td-section">
+<section class="td-section td-cx" tabindex="0" aria-expanded="false">
+    <div class="td-cx-top">
     <div class="td-section-head">
         <span class="td-section-icon alt-rose"><i class="fas fa-users"></i></span>
         <div class="td-section-text">
@@ -7,6 +8,9 @@
             <p>Add, edit or remove the tutors in your company, their qualifications, subjects and grades. This appears on your public tutor profile.</p>
         </div>
     </div>
+        <span class="td-cx-chev"><i class="fas fa-chevron-down"></i></span>
+    </div><!-- /.td-cx-top -->
+    <div class="td-cx-body"><div class="td-cx-inner">
 
     <div class="td-card" style="padding:22px;">
         <div id="companyTeamList" style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
@@ -45,6 +49,8 @@
         </div>
         <div id="companyTeamMessage" style="margin-top:12px;font-size:13px;font-weight:600;min-height:20px;"></div>
     </div>
+
+    </div></div><!-- /.td-cx-body -->
 </section>
 
 <script>

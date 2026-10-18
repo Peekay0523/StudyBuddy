@@ -268,18 +268,18 @@ class AuthController {
             // Create a 7-day free trial subscription for Basic plan
             $stmt = $db->prepare("
                 INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at)
-                VALUES (?, 'basic', 0, 'trial', datetime('now'), datetime('now', '+7 days'), datetime('now'))
+                VALUES (?, 'basic', 0, 'trial', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), NOW())
             ");
             $stmt->execute([$userId]);
         } catch (Exception $e) {
             // Table might not exist, create it first
             $db->exec("
                 CREATE TABLE IF NOT EXISTS subscriptions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     user_id INTEGER NOT NULL,
                     plan TEXT NOT NULL,
                     price REAL NOT NULL,
-                    status TEXT DEFAULT 'active',
+                    status TEXT DEFAULT ('active'),
                     current_period_start DATETIME,
                     current_period_end DATETIME,
                     cancelled_at DATETIME,
@@ -291,7 +291,7 @@ class AuthController {
 
             $stmt = $db->prepare("
                 INSERT INTO subscriptions (user_id, plan, price, status, current_period_start, current_period_end, created_at)
-                VALUES (?, 'basic', 0, 'trial', datetime('now'), datetime('now', '+7 days'), datetime('now'))
+                VALUES (?, 'basic', 0, 'trial', NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), NOW())
             ");
             $stmt->execute([$userId]);
         }

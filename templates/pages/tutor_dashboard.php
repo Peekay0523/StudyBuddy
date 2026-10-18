@@ -127,6 +127,38 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
 .sg-page .td-subject-name{font-size:15px;font-weight:700;color:var(--sg-ink);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sg-page .td-subject-grade{font-size:12.5px;color:var(--sg-muted);margin:3px 0 0;}
 @media (max-width:768px){.sg-page .td-profile{flex-direction:column;}.sg-page .td-row{flex-direction:column;align-items:flex-start;}.sg-page .td-settings{width:100%;}.sg-page .td-subjects-grid{grid-template-columns:1fr;}}
+
+/* ===== Entrance reveal ===== */
+@keyframes tdRise{from{opacity:0;transform:translateY(26px) scale(.98);}60%{opacity:1;}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes tdChevNudge{0%,100%{transform:translateY(0);}50%{transform:translateY(3px);}}
+.sg-page.td-anim-ready .td-reveal{opacity:0;}
+.sg-page.td-anim-ready .td-reveal.td-revealed{animation:tdRise .65s cubic-bezier(.22,.9,.32,1.05) both;animation-delay:var(--td-delay,0ms);}
+
+/* ===== Expandable sections: title only, click header to expand — one open at a time ===== */
+.sg-page .td-cx{display:flex;flex-direction:column;gap:18px;transition:gap .4s cubic-bezier(.22,.9,.3,1);}
+.sg-page .td-cx:not(.td-expanded){gap:0;}
+.sg-page .td-cx-top{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;cursor:pointer;}
+.sg-page .td-section.td-cx .td-section-head{flex:1;margin-bottom:0;min-width:0;}
+.sg-page .td-cx-chev{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#4f46e5;background:rgba(99,102,241,.12);transition:transform .45s cubic-bezier(.34,1.56,.64,1),background .3s ease,color .3s ease,box-shadow .3s ease;}
+.sg-page .td-cx-chev i{animation:tdChevNudge 1.9s ease-in-out infinite;}
+.sg-page .td-cx.td-expanded .td-cx-chev{transform:rotate(180deg);background:linear-gradient(135deg,var(--sg-brand),var(--sg-brand-2));color:#fff;box-shadow:0 8px 16px rgba(102,126,234,.35);}
+.sg-page .td-cx.td-expanded .td-cx-chev i{animation:none;}
+.sg-page .td-cx-top:hover .td-section-text h2{color:var(--sg-brand);}
+.sg-page .td-cx-body{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1),opacity .3s ease;}
+.sg-page .td-cx.td-expanded .td-cx-body{grid-template-rows:1fr;opacity:1;transition:grid-template-rows .55s cubic-bezier(.22,.9,.3,1),opacity .35s ease;}
+.sg-page .td-cx-inner{display:flex;flex-direction:column;gap:16px;overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .45s;}
+.sg-page .td-cx.td-expanded .td-cx-inner{visibility:visible;transition:visibility 0s 0s;}
+.sg-page .td-cx-inner>*{opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .45s cubic-bezier(.22,.9,.3,1);}
+.sg-page .td-cx.td-expanded .td-cx-inner>*{opacity:1;transform:none;}
+.sg-page .td-cx.td-expanded .td-cx-inner>*:nth-child(1){transition-delay:.14s;}
+.sg-page .td-cx.td-expanded .td-cx-inner>*:nth-child(2){transition-delay:.2s;}
+.sg-page .td-cx.td-expanded .td-cx-inner>*:nth-child(3){transition-delay:.26s;}
+.sg-page .td-cx.td-expanded .td-cx-inner>*:nth-child(4){transition-delay:.32s;}
+.sg-page .td-cx.td-expanded .td-cx-inner>*:nth-child(n+5){transition-delay:.38s;}
+@media (prefers-reduced-motion:reduce){
+    .sg-page.td-anim-ready .td-reveal,.sg-page.td-anim-ready .td-reveal.td-revealed{opacity:1!important;animation:none!important;}
+    .sg-page .td-cx,.sg-page .td-cx-chev,.sg-page .td-cx-chev i,.sg-page .td-cx-body,.sg-page .td-cx-inner,.sg-page .td-cx-inner>*{transition-duration:.01ms!important;animation:none!important;}
+}
 </style>
 
 <!-- Page header -->
@@ -172,7 +204,8 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
 </div>
 
 <!-- Tutor Profile -->
-<section class="td-section">
+<section class="td-section td-cx" tabindex="0" aria-expanded="false">
+    <div class="td-cx-top">
     <div class="td-section-head">
         <span class="td-section-icon alt-amber"><i class="fas fa-id-card"></i></span>
         <div class="td-section-text">
@@ -180,9 +213,12 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
             <p>This is what students see when browsing available tutors.</p>
         </div>
     </div>
+        <span class="td-cx-chev"><i class="fas fa-chevron-down"></i></span>
+    </div><!-- /.td-cx-top -->
+    <div class="td-cx-body"><div class="td-cx-inner">
 
     <?php if (empty($tutorProfile['is_available'])): ?>
-    <div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.35);border-radius:14px;padding:12px 16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.35);border-radius:14px;padding:12px 16px;">
         <i class="fas fa-triangle-exclamation" style="color:#f59e0b;"></i>
         <span style="color:#92400e;font-size:13.5px;font-weight:600;">Your profile is not yet visible to students. Click "Edit Profile" to complete it — it will be listed under Available Tutors once saved.</span>
     </div>
@@ -248,13 +284,16 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
         </div>
         <button type="button" onclick="document.getElementById('tutorEditProfileModal').style.display='block'" class="td-edit-btn" style="border:none;cursor:pointer;font-family:inherit;"><i class="fas fa-pen"></i> Edit Profile</button>
     </div>
+
+    </div></div><!-- /.td-cx-body -->
 </section>
 
 
 <?php include __DIR__ . '/../components/tutor_subjects_card.php'; ?>
 
 <!-- Pending Requests -->
-<section class="td-section">
+<section class="td-section td-cx" tabindex="0" aria-expanded="false">
+    <div class="td-cx-top">
     <div class="td-section-head">
         <span class="td-section-icon alt-amber"><i class="fas fa-user-clock"></i></span>
         <div class="td-section-text">
@@ -262,6 +301,9 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
             <p>Students who have requested you as their tutor. Approve them to add them to your sessions.</p>
         </div>
     </div>
+        <span class="td-cx-chev"><i class="fas fa-chevron-down"></i></span>
+    </div><!-- /.td-cx-top -->
+    <div class="td-cx-body"><div class="td-cx-inner">
 
     <?php if (empty($pendingRequests)): ?>
         <div class="td-empty">
@@ -298,6 +340,8 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+
+    </div></div><!-- /.td-cx-body -->
 </section>
 
 <!-- Reject Reason Modal -->
@@ -345,7 +389,8 @@ document.addEventListener('keydown', function(e) {
 
 
 <!-- Active Students -->
-<section class="td-section">
+<section class="td-section td-cx" tabindex="0" aria-expanded="false">
+    <div class="td-cx-top">
     <div class="td-section-head">
         <span class="td-section-icon alt-green"><i class="fas fa-user-check"></i></span>
         <div class="td-section-text">
@@ -353,6 +398,9 @@ document.addEventListener('keydown', function(e) {
             <p>Students currently in your sessions. Set how you teach them and manage their enrollment.</p>
         </div>
     </div>
+        <span class="td-cx-chev"><i class="fas fa-chevron-down"></i></span>
+    </div><!-- /.td-cx-top -->
+    <div class="td-cx-body"><div class="td-cx-inner">
 
     <a href="/tutor/my-students" class="td-ms-banner">
         <span class="td-ms-banner-icon"><i class="fas fa-users-rectangle"></i></span>
@@ -414,6 +462,8 @@ document.addEventListener('keydown', function(e) {
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+
+    </div></div><!-- /.td-cx-body -->
 </section>
 
 <?php include __DIR__ . '/../components/tutor_company_team.php'; ?>
@@ -421,4 +471,73 @@ document.addEventListener('keydown', function(e) {
 </div><!-- /.sg-page -->
 
 <?php include __DIR__ . '/../components/tutor_edit_modal.php'; ?>
+
+<script>
+// ---- Entrance reveal: staggered rise as sections scroll into view ----
+(function () {
+    var page = document.querySelector('.sg-page');
+    if (!page || !('IntersectionObserver' in window)) return;
+    var items = page.querySelectorAll('.td-cx');
+    if (!items.length) return;
+    page.classList.add('td-anim-ready');
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            var el = entry.target;
+            io.unobserve(el);
+            el.style.setProperty('--td-delay', '0ms');
+            el.classList.add('td-revealed');
+            var cleaned = false;
+            var cleanup = function () {
+                if (cleaned) return;
+                cleaned = true;
+                el.classList.remove('td-reveal', 'td-revealed');
+            };
+            el.addEventListener('animationend', function (e) {
+                if (e.target === el && !e.pseudoElement) cleanup();
+            });
+            setTimeout(cleanup, 1500);
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    for (var i = 0; i < items.length; i++) { items[i].classList.add('td-reveal'); io.observe(items[i]); }
+})();
+
+// ---- Expandable sections: title only, click header to expand — only one open at a time ----
+Array.prototype.forEach.call(document.querySelectorAll('.td-cx'), function (sec) {
+    var top = sec.querySelector('.td-cx-top');
+    var toggle = function () {
+        var open = sec.classList.toggle('td-expanded');
+        sec.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+            Array.prototype.forEach.call(document.querySelectorAll('.td-cx.td-expanded'), function (other) {
+                if (other !== sec) {
+                    other.classList.remove('td-expanded');
+                    other.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    };
+    if (top) {
+        top.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('a, button, form, input, select, textarea, label')) return;
+            toggle();
+        });
+    }
+    sec.addEventListener('keydown', function (e) {
+        if (e.target !== sec || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        toggle();
+    });
+});
+
+// Expand a section programmatically (e.g. when entering subjects edit mode)
+window.expandTdSection = function (id) {
+    var sec = document.getElementById(id);
+    if (sec && sec.classList.contains('td-cx') && !sec.classList.contains('td-expanded')) {
+        sec.classList.add('td-expanded');
+        sec.setAttribute('aria-expanded', 'true');
+    }
+};
+</script>
+
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

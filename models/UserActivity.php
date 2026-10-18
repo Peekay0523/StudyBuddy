@@ -40,7 +40,7 @@ class UserActivity {
                 // Update the streak and last login date
                 $stmt = $this->db->prepare("
                     UPDATE user_activity
-                    SET last_active = datetime('now'), is_online = 1, login_streak = ?, last_login_date = ?
+                    SET last_active = NOW(), is_online = 1, login_streak = ?, last_login_date = ?
                     WHERE user_id = ?
                 ");
                 $stmt->execute([$currentStreak, $today, $userId]);
@@ -61,7 +61,7 @@ class UserActivity {
                 // Already logged in today - just update activity
                 $stmt = $this->db->prepare("
                     UPDATE user_activity
-                    SET last_active = datetime('now'), is_online = 1
+                    SET last_active = NOW(), is_online = 1
                     WHERE user_id = ?
                 ");
                 $stmt->execute([$userId]);
@@ -69,8 +69,8 @@ class UserActivity {
         } else {
             // First time activity - initialize with streak of 1
             $stmt = $this->db->prepare("
-                INSERT OR IGNORE INTO user_activity (user_id, last_active, is_online, login_streak, last_login_date)
-                VALUES (?, datetime('now'), 1, 1, ?)
+                INSERT IGNORE INTO user_activity (user_id, last_active, is_online, login_streak, last_login_date)
+                VALUES (?, NOW(), 1, 1, ?)
             ");
             $stmt->execute([$userId, $today]);
         }
@@ -162,7 +162,7 @@ class UserActivity {
     public function isOnline($userId) {
         $stmt = $this->db->prepare("
             SELECT is_online FROM user_activity
-            WHERE user_id = ? AND datetime(last_active) > datetime('now', '-5 minutes')
+            WHERE user_id = ? AND last_active > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
         ");
         $stmt->execute([$userId]);
         $result = $stmt->fetchColumn();
@@ -183,8 +183,8 @@ class UserActivity {
      */
     public function updateStudyProfile($userId, $subjects, $gradeLevel, $bio) {
         $stmt = $this->db->prepare("
-            INSERT OR IGNORE INTO user_activity (user_id, last_active, is_online)
-            VALUES (?, datetime('now'), 1)
+            INSERT IGNORE INTO user_activity (user_id, last_active, is_online)
+            VALUES (?, NOW(), 1)
         ");
         $stmt->execute([$userId]);
 

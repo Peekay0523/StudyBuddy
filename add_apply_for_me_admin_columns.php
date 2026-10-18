@@ -11,8 +11,7 @@ require_once __DIR__ . '/config/database.php';
 $db = Database::getInstance()->getConnection();
 
 // Get existing columns
-$existingColumns = $db->query("PRAGMA table_info(apply_for_me_submissions)")->fetchAll(PDO::FETCH_COLUMN);
-$existingNames = array_column($existingColumns, 'name');
+$existingNames = db_table_columns($db, 'apply_for_me_submissions');
 
 $columnsToAdd = [
     // Original schema columns that were missing from the actual table
@@ -21,7 +20,7 @@ $columnsToAdd = [
     "ALTER TABLE apply_for_me_submissions ADD COLUMN bursary_provider TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_name TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_type TEXT DEFAULT NULL",
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN document_verification TEXT DEFAULT 'pending'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN document_verification TEXT DEFAULT ('pending')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN payment_amount REAL DEFAULT 20.00",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN payment_reference TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN admin_notes TEXT DEFAULT NULL",
@@ -33,10 +32,10 @@ $columnsToAdd = [
     "ALTER TABLE apply_for_me_submissions ADD COLUMN institution_response TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN document_verification_notes TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN rejection_reason TEXT DEFAULT NULL",
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN current_step TEXT DEFAULT 'submitted'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN current_step TEXT DEFAULT ('submitted')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN proof_of_payment_path TEXT DEFAULT NULL",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN proof_of_payment_uploaded_at DATETIME DEFAULT NULL",
-    "ALTER TABLE apply_for_me_submissions ADD COLUMN steps_completed TEXT DEFAULT '[]'",
+    "ALTER TABLE apply_for_me_submissions ADD COLUMN steps_completed TEXT DEFAULT ('[]')",
     "ALTER TABLE apply_for_me_submissions ADD COLUMN steps_updated_at DATETIME DEFAULT NULL",
 ];
 
@@ -69,7 +68,7 @@ foreach ($columnsToAdd as $sql) {
 
 // Now verify all columns exist
 echo "<br><strong>Final table columns:</strong><br>\n";
-$finalColumns = $db->query("PRAGMA table_info(apply_for_me_submissions)")->fetchAll(PDO::FETCH_COLUMN);
+$finalColumns = db_table_columns($db, 'apply_for_me_submissions');
 foreach ($finalColumns as $col) {
     echo "- $col<br>\n";
 }

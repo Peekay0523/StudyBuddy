@@ -116,7 +116,7 @@ class TutorStudent {
     public function approve($id, $tutorId) {
         $stmt = $this->db->prepare("
             UPDATE tutor_students
-            SET status = 'active', approved_at = datetime('now')
+            SET status = 'active', approved_at = NOW()
             WHERE id = ? AND tutor_id = ?
         ");
         $stmt->execute([$id, $tutorId]);

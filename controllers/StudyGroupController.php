@@ -32,10 +32,10 @@ class StudyGroupController {
             $db = Database::getInstance()->getConnection();
 
             // Add resource_type / video_url columns to study_group_scripts if missing
-            $columns = $db->query("PRAGMA table_info(study_group_scripts)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $columns = db_table_columns($db, 'study_group_scripts');
             if (is_array($columns)) {
                 if (!in_array('resource_type', $columns)) {
-                    $db->exec("ALTER TABLE study_group_scripts ADD COLUMN resource_type TEXT DEFAULT 'script'");
+                    $db->exec("ALTER TABLE study_group_scripts ADD COLUMN resource_type TEXT DEFAULT ('script')");
                 }
                 if (!in_array('video_url', $columns)) {
                     $db->exec("ALTER TABLE study_group_scripts ADD COLUMN video_url TEXT");
@@ -45,7 +45,7 @@ class StudyGroupController {
             // Create tutors table if it does not exist
             $db->exec("
                 CREATE TABLE IF NOT EXISTS tutors (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     user_id INTEGER UNIQUE NOT NULL,
                     full_name TEXT,
                     subjects TEXT,
@@ -60,10 +60,10 @@ class StudyGroupController {
             ");
 
             // Add billing_type and company_name columns to tutors if missing
-            $tutorCols = $db->query("PRAGMA table_info(tutors)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $tutorCols = db_table_columns($db, 'tutors');
             if (is_array($tutorCols)) {
                 if (!in_array('billing_type', $tutorCols)) {
-                    $db->exec("ALTER TABLE tutors ADD COLUMN billing_type TEXT DEFAULT 'hourly'");
+                    $db->exec("ALTER TABLE tutors ADD COLUMN billing_type TEXT DEFAULT ('hourly')");
                 }
                 if (!in_array('company_name', $tutorCols)) {
                     $db->exec("ALTER TABLE tutors ADD COLUMN company_name TEXT");
@@ -73,10 +73,10 @@ class StudyGroupController {
             // Create my_resources table (personal resources) if it does not exist
             $db->exec("
                 CREATE TABLE IF NOT EXISTS my_resources (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     user_id INTEGER NOT NULL,
                     title TEXT NOT NULL,
-                    resource_type TEXT DEFAULT 'script',
+                    resource_type TEXT DEFAULT ('script'),
                     file_name TEXT NOT NULL,
                     file_path TEXT NOT NULL,
                     file_size INTEGER DEFAULT 0,
@@ -86,7 +86,7 @@ class StudyGroupController {
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
             ");
-            $db->exec("CREATE INDEX IF NOT EXISTS idx_my_resources_user_id ON my_resources(user_id)");
+            db_create_index($db, 'idx_my_resources_user_id', 'my_resources', 'user_id');
         } catch (Exception $e) {
             // Silently ignore - queries will simply fail later if columns are missing
         }
@@ -1258,7 +1258,7 @@ class StudyGroupController {
             $db = Database::getInstance()->getConnection();
 
             // Check if is_viewed column exists
-            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $columns = db_table_columns($db, 'study_group_messages');
             $hasIsViewed = in_array('is_viewed', $columns);
 
             if ($hasIsViewed) {
@@ -1308,7 +1308,7 @@ class StudyGroupController {
 
             if (!empty($groupIds)) {
                 // Check if is_viewed column exists
-                $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                $columns = db_table_columns($db, 'study_group_messages');
                 $hasIsViewed = in_array('is_viewed', $columns);
 
                 if ($hasIsViewed) {
@@ -1349,7 +1349,7 @@ class StudyGroupController {
             $db = Database::getInstance()->getConnection();
 
             // Check if is_viewed column exists
-            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $columns = db_table_columns($db, 'study_group_messages');
             $hasIsViewed = in_array('is_viewed', $columns);
 
             if ($hasIsViewed) {
@@ -1405,7 +1405,7 @@ class StudyGroupController {
 
             if (!empty($groupIds)) {
                 // Check if is_viewed column exists
-                $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                $columns = db_table_columns($db, 'study_group_messages');
                 $hasIsViewed = in_array('is_viewed', $columns);
 
                 if ($hasIsViewed) {
@@ -1456,7 +1456,7 @@ class StudyGroupController {
             $db = Database::getInstance()->getConnection();
 
             // Check if is_viewed column exists
-            $columns = $db->query("PRAGMA table_info(study_group_messages)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $columns = db_table_columns($db, 'study_group_messages');
             $hasIsViewed = in_array('is_viewed', $columns);
 
             if ($hasIsViewed) {

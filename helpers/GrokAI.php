@@ -490,7 +490,7 @@ class GrokAI {
             
             $stmt = $db->prepare("
                 INSERT INTO openai_usage_logs (user_id, prompt_tokens, completion_tokens, total_tokens, model_used, created_at)
-                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                VALUES (?, ?, ?, ?, ?, NOW())
             ");
             $stmt->execute([
                 $userId,

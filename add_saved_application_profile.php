@@ -11,14 +11,14 @@ try {
     
     $db->exec("
         CREATE TABLE IF NOT EXISTS saved_application_profiles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             student_id INTEGER NOT NULL,
             full_name TEXT,
             surname TEXT,
             id_number TEXT,
             date_of_birth TEXT,
             gender TEXT,
-            citizenship TEXT DEFAULT 'South African',
+            citizenship TEXT DEFAULT ('South African'),
             email TEXT,
             phone TEXT,
             home_address TEXT,

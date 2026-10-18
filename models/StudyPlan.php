@@ -149,7 +149,7 @@ class StudyPlan {
     public function markComplete($planId) {
         try {
             // Check if is_completed column exists
-            $columns = $this->db->query("PRAGMA table_info(study_plans)")->fetchAll(PDO::FETCH_COLUMN);
+            $columns = db_table_columns($this->db, 'study_plans');
             $hasIsCompleted = in_array('is_completed', $columns);
 
             if ($hasIsCompleted) {

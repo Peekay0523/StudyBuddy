@@ -94,6 +94,97 @@ if (!empty($tutor['created_at'])) {
 .sg-page .tp-price-box{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #bbf7d0;border-radius:14px;padding:16px;text-align:center;}
 .sg-page .tp-price-box .price{font-size:26px;font-weight:800;color:#047857;}
 .sg-page .tp-price-box .note{font-size:12px;color:#065f46;margin-top:4px;}
+
+/* ===== Card entrance animations ===== */
+@keyframes tpRise{from{opacity:0;transform:translateY(26px) scale(.98);}60%{opacity:1;}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes tpSweep{from{transform:translateX(-160%) skewX(-18deg);}to{transform:translateX(360%) skewX(-18deg);}}
+@keyframes tpChevNudge{0%,100%{transform:translateY(0);}50%{transform:translateY(3px);}}
+.sg-page.tp-anim-ready .tp-reveal{opacity:0;}
+.sg-page.tp-anim-ready .tp-reveal.tp-revealed{animation:tpRise .65s cubic-bezier(.22,.9,.32,1.05) both;animation-delay:var(--tp-delay,0ms);}
+
+/* ===== Expandable cards: title/name only, tap to expand — one open at a time ===== */
+.sg-page .tp-cx{cursor:pointer;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,gap .4s cubic-bezier(.22,.9,.3,1);}
+.sg-page .tp-cx:not(.tp-expanded){gap:0;}
+.sg-page .tp-cx-top{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;}
+.sg-page .tp-section.tp-cx .tp-section-head{flex:1;margin-bottom:0;min-width:0;}
+.sg-page .tp-cx-chev{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#4f46e5;background:rgba(99,102,241,.12);transition:transform .45s cubic-bezier(.34,1.56,.64,1),background .3s ease,color .3s ease,box-shadow .3s ease;}
+.sg-page .tp-cx-chev i{animation:tpChevNudge 1.9s ease-in-out infinite;}
+.sg-page .tp-cx.tp-expanded .tp-cx-chev{transform:rotate(180deg);background:linear-gradient(135deg,var(--sg-brand),var(--sg-brand-2));color:#fff;box-shadow:0 8px 16px rgba(102,126,234,.35);}
+.sg-page .tp-cx.tp-expanded .tp-cx-chev i{animation:none;}
+.sg-page .tp-cx:not(.tp-section):hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(30,41,59,.10);border-color:rgba(102,126,234,.30);}
+.sg-page .tp-cx.tp-expanded:not(.tp-section){border-color:rgba(102,126,234,.4);box-shadow:0 18px 42px rgba(102,126,234,.20);}
+.sg-page .tp-cx-body{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1),opacity .3s ease;}
+.sg-page .tp-cx.tp-expanded .tp-cx-body{grid-template-rows:1fr;opacity:1;transition:grid-template-rows .55s cubic-bezier(.22,.9,.3,1),opacity .35s ease;}
+.sg-page .tp-cx-inner{display:flex;flex-direction:column;gap:12px;overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .45s;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner{visibility:visible;transition:visibility 0s 0s;}
+.sg-page .tp-cx-inner>*{opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .45s cubic-bezier(.22,.9,.3,1);}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*{opacity:1;transform:none;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*:nth-child(1){transition-delay:.14s;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*:nth-child(2){transition-delay:.2s;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*:nth-child(3){transition-delay:.26s;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*:nth-child(4){transition-delay:.32s;}
+.sg-page .tp-cx.tp-expanded .tp-cx-inner>*:nth-child(n+5){transition-delay:.38s;}
+
+/* Light sweep glides across expandable cards on hover (not full sections) */
+.sg-page .tp-cx:not(.tp-section)::before{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-160%) skewX(-18deg);opacity:0;transition:opacity .25s ease;}
+.sg-page .tp-cx:not(.tp-section):hover::before{opacity:1;animation:tpSweep .75s ease forwards;}
+
+/* ===== Collapsible section dropdowns (card headers w/ animated border) ===== */
+@property --tp-ring-a{syntax:'<angle>';initial-value:0deg;inherits:false;}
+@keyframes tpRingSpin{to{--tp-ring-a:360deg;}}
+.sg-page .tp-sec-header{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    margin:0;padding:16px 20px;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfcff 100%);
+    border:1.5px solid #e8edf5;border-radius:var(--sg-radius);
+    box-shadow:0 6px 20px rgba(30,41,59,.07);
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,border-radius .2s ease;
+}
+.sg-page .tp-sec:not(.collapsed) .tp-sec-header{border-radius:var(--sg-radius) var(--sg-radius) 0 0;}
+.sg-page .tp-sec-header:hover{transform:translateY(-3px);border-color:transparent;box-shadow:0 16px 38px rgba(102,126,234,.18);}
+.sg-page .tp-sec-header:focus-visible{outline:2px solid rgba(102,126,234,.45);outline-offset:2px;}
+.sg-page .tp-sec-header .tp-section-head{margin:0;}
+.sg-page .tp-sec-header::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;
+    background:conic-gradient(from var(--tp-ring-a),#667eea,#764ba2,#ec4899,#f59e0b,#10b981,#667eea);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+    opacity:0;transition:opacity .35s ease;pointer-events:none;z-index:2;
+}
+.sg-page .tp-sec-header:hover::after,.sg-page .tp-sec-header:focus-visible::after{opacity:1;animation:tpRingSpin 3.5s linear infinite;}
+.sg-page .tp-sec-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto;position:relative;z-index:3;}
+.sg-page .tp-sec-chev{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:#4f46e5;background:rgba(99,102,241,.12);transition:background .2s ease,box-shadow .2s ease;}
+.sg-page .tp-sec-header:hover .tp-sec-chev{background:rgba(99,102,241,.20);box-shadow:0 6px 14px rgba(102,126,234,.20);}
+.sg-page .tp-sec-chev i{display:inline-block;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.sg-page .tp-sec:not(.collapsed) .tp-sec-chev i{transform:rotate(180deg);}
+.sg-page .tp-sec-body{
+    display:block;
+    background:linear-gradient(180deg,#e1e8f5 0%,#d8e1ef 100%);
+    border:1.5px solid #d4dded;border-top:none;
+    border-radius:0 0 var(--sg-radius) var(--sg-radius);
+    padding:20px;margin-top:-1.5px;
+    box-shadow:inset 0 10px 18px -12px rgba(30,41,59,.24),0 8px 24px rgba(30,41,59,.07);
+}
+.sg-page .tp-sec.collapsed .tp-sec-body{display:none;}
+@keyframes tpSecIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+.sg-page .tp-sec-body.tp-sec-anim{animation:tpSecIn .3s ease both;}
+@media (max-width:768px){
+    .sg-page .tp-sec-header{flex-wrap:nowrap;padding:14px;gap:10px;}
+    .sg-page .tp-sec-header .tp-section-text p{display:none;}
+    .sg-page .tp-sec-actions{margin-left:auto;}
+}
+
+@media (prefers-reduced-motion:reduce){
+    .sg-page.tp-anim-ready .tp-reveal,.sg-page.tp-anim-ready .tp-reveal.tp-revealed{opacity:1!important;animation:none!important;}
+    .sg-page .tp-cx::before{opacity:0!important;animation:none!important;}
+    .sg-page .tp-cx,.sg-page .tp-cx-chev,.sg-page .tp-cx-chev i,.sg-page .tp-cx-body,.sg-page .tp-cx-inner,.sg-page .tp-cx-inner>*{transition-duration:.01ms!important;animation:none!important;}
+    .sg-page .tp-sec-header::after{animation:none!important;}
+    .sg-page .tp-sec-header:hover{transform:none!important;}
+    .sg-page .tp-sec-chev i,.sg-page .tp-sec-body.tp-sec-anim{transition:none!important;animation:none!important;}
+}
 </style>
 
 <div style="margin:8px 0 18px;">
@@ -201,7 +292,8 @@ if (!empty($tutor['created_at'])) {
 </section>
 
 <!-- ===== Subjects & Grades ===== -->
-<section class="tp-section">
+<section class="tp-section tp-sec collapsed" id="tpSecSubjects">
+    <div class="tp-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tpSecSubjectsBody" onclick="tpToggleSection(this)" onkeydown="tpSectionKey(event, this)">
     <div class="tp-section-head">
         <span class="tp-section-icon alt-blue"><i class="fas fa-book-open"></i></span>
         <div class="tp-section-text">
@@ -209,6 +301,9 @@ if (!empty($tutor['created_at'])) {
             <p>The subjects this tutor teaches and the grades or levels they cover.</p>
         </div>
     </div>
+        <div class="tp-sec-actions"><span class="tp-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tp-sec-header -->
+    <div class="tp-sec-body" id="tpSecSubjectsBody">
 
     <?php
     // Build structured subject + grade list from the comma-separated subjects string.
@@ -293,30 +388,44 @@ if (!empty($tutor['created_at'])) {
             </div>
         </div>
     <?php endif; ?>
+    </div><!-- /.tp-sec-body -->
 </section>
 
 <!-- ===== About + How they teach ===== -->
-<section class="tp-section">
-    <div class="tp-section-head">
-        <span class="tp-section-icon alt-green"><i class="fas fa-chalkboard-teacher"></i></span>
-        <div class="tp-section-text">
-            <h2>About &amp; How They Teach</h2>
-            <p>Who this tutor is, how lessons are delivered, and what to expect.</p>
+<section class="tp-section tp-sec collapsed" id="tpSecAbout">
+    <div class="tp-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tpSecAboutBody" onclick="tpToggleSection(this)" onkeydown="tpSectionKey(event, this)">
+        <div class="tp-section-head">
+            <span class="tp-section-icon alt-green"><i class="fas fa-chalkboard-teacher"></i></span>
+            <div class="tp-section-text">
+                <h2>About &amp; How They Teach</h2>
+                <p>Who this tutor is, how lessons are delivered, and what to expect.</p>
+            </div>
         </div>
-    </div>
+        <div class="tp-sec-actions"><span class="tp-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tp-sec-header -->
 
+    <div class="tp-sec-body" id="tpSecAboutBody">
     <div class="tp-grid-2" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
-        <div class="tp-card">
-            <h3 style="font-size:15px;margin:0 0 10px;color:var(--sg-ink);"><i class="fas fa-user" style="color:#10b981;"></i> About the Tutor</h3>
+        <div class="tp-card tp-cx" tabindex="0" aria-expanded="false">
+            <div class="tp-cx-top">
+                <h3 style="font-size:15px;margin:0;color:var(--sg-ink);"><i class="fas fa-user" style="color:#10b981;"></i> About the Tutor</h3>
+                <span class="tp-cx-chev"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="tp-cx-body"><div class="tp-cx-inner">
             <?php if (!empty($tutor['bio'])): ?>
                 <p style="color:var(--sg-muted);font-size:13.5px;line-height:1.7;margin:0;white-space:pre-line;"><?php echo htmlspecialchars($tutor['bio']); ?></p>
             <?php else: ?>
                 <p style="color:var(--sg-faint);font-size:13.5px;margin:0;font-style:italic;">This tutor hasn't written a bio yet.</p>
             <?php endif; ?>
+            </div></div>
         </div>
 
-        <div class="tp-card">
-            <h3 style="font-size:15px;margin:0 0 10px;color:var(--sg-ink);"><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Teaching Approach</h3>
+        <div class="tp-card tp-cx" tabindex="0" aria-expanded="false">
+            <div class="tp-cx-top">
+                <h3 style="font-size:15px;margin:0;color:var(--sg-ink);"><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Teaching Approach</h3>
+                <span class="tp-cx-chev"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="tp-cx-body"><div class="tp-cx-inner">
             <?php if (!empty($tutor['teaching_approach'])): ?>
                 <p style="color:var(--sg-muted);font-size:13.5px;line-height:1.7;margin:0 0 14px;white-space:pre-line;"><?php echo htmlspecialchars($tutor['teaching_approach']); ?></p>
             <?php else: ?>
@@ -328,24 +437,31 @@ if (!empty($tutor['created_at'])) {
                 </div>
                 <p style="color:var(--sg-muted);font-size:13px;line-height:1.6;margin:0;"><?php echo $modeMeta['desc']; ?></p>
             </div>
+            </div></div>
         </div>
     </div>
+    </div><!-- /.tp-sec-body -->
 </section>
 <!-- ===== Our Tutors ===== -->
-<section class="tp-section">
-    <div class="tp-section-head">
-        <span class="tp-section-icon alt-rose"><i class="fas fa-users"></i></span>
-        <div class="tp-section-text">
-            <h2><?php echo !empty($tutor['company_name']) ? 'Our Tutors at ' . htmlspecialchars($tutor['company_name']) : 'Our Tutors'; ?></h2>
-            <p>Meet the tutors behind this profile, their qualifications and the subjects they teach.</p>
+<section class="tp-section tp-sec collapsed" id="tpSecTeam">
+    <div class="tp-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tpSecTeamBody" onclick="tpToggleSection(this)" onkeydown="tpSectionKey(event, this)">
+        <div class="tp-section-head">
+            <span class="tp-section-icon alt-rose"><i class="fas fa-users"></i></span>
+            <div class="tp-section-text">
+                <h2><?php echo !empty($tutor['company_name']) ? 'Our Tutors at ' . htmlspecialchars($tutor['company_name']) : 'Our Tutors'; ?></h2>
+                <p>Meet the tutors behind this profile, their qualifications and the subjects they teach.</p>
+            </div>
         </div>
-    </div>
+        <div class="tp-sec-actions"><span class="tp-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tp-sec-header -->
 
+    <div class="tp-sec-body" id="tpSecTeamBody">
     <?php if (!empty($teamMembers)): ?>
         <div class="tp-grid-3">
             <?php foreach ($teamMembers as $member): ?>
-                <div class="tp-card" style="display:flex;flex-direction:column;gap:10px;">
-                    <div style="display:flex;align-items:center;gap:12px;">
+                <div class="tp-card tp-cx" tabindex="0" aria-expanded="false">
+                    <div class="tp-cx-top">
+                    <div style="display:flex;align-items:center;gap:12px;min-width:0;">
                         <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#f43f5e,#ec4899);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">
                             <?php
                             $mInitials = '';
@@ -358,6 +474,9 @@ if (!empty($tutor['created_at'])) {
                         </div>
                         <div style="font-weight:700;font-size:14px;color:var(--sg-ink);"><?php echo htmlspecialchars($member['name']); ?></div>
                     </div>
+                        <span class="tp-cx-chev"><i class="fas fa-chevron-down"></i></span>
+                    </div><!-- /.tp-cx-top -->
+                    <div class="tp-cx-body"><div class="tp-cx-inner">
                     <?php if (!empty($member['qualifications'])): ?>
                         <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.10);color:#1d4ed8;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid rgba(59,130,246,0.25);width:fit-content;">
                             <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($member['qualifications']); ?>
@@ -377,6 +496,7 @@ if (!empty($tutor['created_at'])) {
                     <?php else: ?>
                         <span style="color:var(--sg-faint);font-size:12.5px;font-style:italic;">Subjects not listed</span>
                     <?php endif; ?>
+                    </div></div><!-- /.tp-cx-body -->
                 </div>
             <?php endforeach; ?>
         </div>
@@ -401,18 +521,23 @@ if (!empty($tutor['created_at'])) {
             <?php endif; ?>
         </div>
     <?php endif; ?>
+    </div><!-- /.tp-sec-body -->
 </section>
 
 <!-- ===== Tutoring packages ===== -->
-<section class="tp-section">
-    <div class="tp-section-head">
-        <span class="tp-section-icon alt-blue"><i class="fas fa-box-open"></i></span>
-        <div class="tp-section-text">
-            <h2>Tutoring Packages</h2>
-            <p>Single sessions, group sessions and bundled packages on offer.</p>
+<section class="tp-section tp-sec collapsed" id="tpSecPackages">
+    <div class="tp-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tpSecPackagesBody" onclick="tpToggleSection(this)" onkeydown="tpSectionKey(event, this)">
+        <div class="tp-section-head">
+            <span class="tp-section-icon alt-blue"><i class="fas fa-box-open"></i></span>
+            <div class="tp-section-text">
+                <h2>Tutoring Packages</h2>
+                <p>Single sessions, group sessions and bundled packages on offer.</p>
+            </div>
         </div>
-    </div>
+        <div class="tp-sec-actions"><span class="tp-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+    </div><!-- /.tp-sec-header -->
 
+    <div class="tp-sec-body" id="tpSecPackagesBody">
     <?php if (!empty($packages)): ?>
         <div class="tp-grid-3">
             <?php foreach ($packages as $pkg):
@@ -422,13 +547,17 @@ if (!empty($tutor['created_at'])) {
                     'Package' => ['bg' => 'rgba(59,130,246,0.12)', 'color' => '#1d4ed8', 'border' => 'rgba(59,130,246,0.35)', 'icon' => 'fa-cube'],
                 ][$pkg['type']];
             ?>
-                <div class="tp-card" style="display:flex;flex-direction:column;gap:12px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div class="tp-card tp-cx" tabindex="0" aria-expanded="false">
+                    <div class="tp-cx-top">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1;min-width:0;">
                         <h3 style="font-size:15px;margin:0;color:var(--sg-ink);"><?php echo htmlspecialchars($pkg['name']); ?></h3>
                         <span style="display:inline-flex;align-items:center;gap:6px;background:<?php echo $pkgTypeMeta['bg']; ?>;color:<?php echo $pkgTypeMeta['color']; ?>;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid <?php echo $pkgTypeMeta['border']; ?>;white-space:nowrap;">
                             <i class="fas <?php echo $pkgTypeMeta['icon']; ?>"></i> <?php echo $pkg['type']; ?>
                         </span>
                     </div>
+                        <span class="tp-cx-chev"><i class="fas fa-chevron-down"></i></span>
+                    </div><!-- /.tp-cx-top -->
+                    <div class="tp-cx-body"><div class="tp-cx-inner">
                     <?php if ($pkg['price'] !== ''): ?>
                         <div style="font-size:22px;font-weight:800;color:#10b981;letter-spacing:-.02em;"><?php echo htmlspecialchars($pkg['price']); ?></div>
                     <?php endif; ?>
@@ -438,6 +567,7 @@ if (!empty($tutor['created_at'])) {
                     <div style="border-top:1px solid var(--sg-line);padding-top:12px;margin-top:auto;">
                         <span style="color:var(--sg-muted);font-size:12.5px;"><i class="fas fa-check-circle" style="color:#10b981;"></i> Request this tutor and mention "<?php echo htmlspecialchars($pkg['name']); ?>" when they contact you.</span>
                     </div>
+                    </div></div><!-- /.tp-cx-body -->
                 </div>
             <?php endforeach; ?>
         </div>
@@ -448,6 +578,7 @@ if (!empty($tutor['created_at'])) {
             <p style="color:var(--sg-muted);font-size:13.5px;margin:0;">Use the contact details above to ask about single or group session rates.</p>
         </div>
     <?php endif; ?>
+    </div><!-- /.tp-sec-body -->
 </section>
 
 <?php include __DIR__ . '/../components/tutor_request_modal.php'; ?>
@@ -457,6 +588,91 @@ if (!empty($tutor['created_at'])) {
 <?php if ($isOwnProfile): ?>
     <?php include __DIR__ . '/../components/tutor_edit_modal.php'; ?>
 <?php endif; ?>
+
+<script>
+    // ---- Entrance reveal: staggered rise as cards scroll into view ----
+    (function () {
+        var page = document.querySelector('.sg-page');
+        if (!page || !('IntersectionObserver' in window)) return;
+        var cards = page.querySelectorAll('.tp-card, .tp-subject-card');
+        if (!cards.length) return;
+        page.classList.add('tp-anim-ready');
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                var el = entry.target;
+                io.unobserve(el);
+                var idx = 0, n = 0, sibs = el.parentElement ? el.parentElement.children : [];
+                for (var i = 0; i < sibs.length; i++) {
+                    if (sibs[i].classList && sibs[i].classList.contains('tp-reveal')) {
+                        if (sibs[i] === el) idx = n;
+                        n++;
+                    }
+                }
+                el.style.setProperty('--tp-delay', (Math.min(idx, 7) * 75) + 'ms');
+                el.classList.add('tp-revealed');
+                var cleaned = false;
+                var cleanup = function () {
+                    if (cleaned) return;
+                    cleaned = true;
+                    el.classList.remove('tp-reveal', 'tp-revealed');
+                };
+                el.addEventListener('animationend', function (e) {
+                    if (e.target === el && !e.pseudoElement) cleanup();
+                });
+                setTimeout(cleanup, 1500);
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        for (var i = 0; i < cards.length; i++) cards[i].classList.add('tp-reveal');
+        for (var j = 0; j < cards.length; j++) io.observe(cards[j]);
+    })();
+
+    // ---- Expandable cards: title/name only, click to expand — only one open at a time ----
+    Array.prototype.forEach.call(document.querySelectorAll('.tp-cx'), function (card) {
+        var toggle = function () {
+            var open = card.classList.toggle('tp-expanded');
+            card.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                Array.prototype.forEach.call(document.querySelectorAll('.tp-cx.tp-expanded'), function (other) {
+                    if (other !== card) {
+                        other.classList.remove('tp-expanded');
+                        other.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        };
+        card.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('a, button, form, input, select, textarea, label')) return;
+            toggle();
+        });
+        card.addEventListener('keydown', function (e) {
+            if (e.target !== card || (e.key !== 'Enter' && e.key !== ' ')) return;
+            e.preventDefault();
+            toggle();
+        });
+    });
+
+    // ---- Section dropdowns (Subjects / About / Team / Packages) ----
+    function tpToggleSection(header) {
+        var sec = header.closest('.tp-sec');
+        if (!sec) return;
+        var collapsed = sec.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        var body = sec.querySelector('.tp-sec-body');
+        if (body && !collapsed) {
+            body.classList.remove('tp-sec-anim');
+            void body.offsetWidth;
+            body.classList.add('tp-sec-anim');
+        }
+    }
+
+    function tpSectionKey(e, header) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            tpToggleSection(header);
+        }
+    }
+</script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>
 

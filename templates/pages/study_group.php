@@ -30,6 +30,54 @@ include __DIR__ . '/../layouts/header.php';
 .sg-page .sg-create-btn .fa-plus{background:rgba(255,255,255,.22);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
 
 .sg-page .sg-section{margin-bottom:40px;}
+
+/* ===== Collapsible section dropdowns (card headers w/ animated border) ===== */
+.sg-page .sg-sec-header{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    margin:0;padding:16px 20px;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfcff 100%);
+    border:1.5px solid #e8edf5;border-radius:var(--sg-radius);
+    box-shadow:0 6px 20px rgba(30,41,59,.07);
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,border-radius .2s ease;
+}
+.sg-page .sg-sec:not(.collapsed) .sg-sec-header{border-radius:var(--sg-radius) var(--sg-radius) 0 0;}
+.sg-page .sg-sec-header:hover{transform:translateY(-3px);border-color:transparent;box-shadow:0 16px 38px rgba(102,126,234,.18);}
+.sg-page .sg-sec-header:focus-visible{outline:2px solid rgba(102,126,234,.45);outline-offset:2px;}
+.sg-page .sg-sec-header .sg-section-head{margin:0;}
+.sg-page .sg-sec-header::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;
+    background:conic-gradient(from var(--sg-tutor-a),#667eea,#764ba2,#ec4899,#f59e0b,#10b981,#667eea);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+    opacity:0;transition:opacity .35s ease;pointer-events:none;z-index:2;
+}
+.sg-page .sg-sec-header:hover::after,.sg-page .sg-sec-header:focus-visible::after{opacity:1;animation:sgTutorRing 3.5s linear infinite;}
+.sg-page .sg-sec-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto;position:relative;z-index:3;}
+.sg-page .sg-sec-chev{width:36px;height:36px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--sg-brand);background:rgba(102,126,234,.12);transition:background .2s ease,box-shadow .2s ease;}
+.sg-page .sg-sec-header:hover .sg-sec-chev{background:rgba(102,126,234,.20);box-shadow:0 6px 14px rgba(102,126,234,.20);}
+.sg-page .sg-sec-chev i{display:inline-block;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+.sg-page .sg-sec:not(.collapsed) .sg-sec-chev i{transform:rotate(180deg);}
+.sg-page .sg-sec-body{
+    display:block;
+    background:linear-gradient(180deg,#e1e8f5 0%,#d8e1ef 100%);
+    border:1.5px solid #d4dded;border-top:none;
+    border-radius:0 0 var(--sg-radius) var(--sg-radius);
+    padding:20px;margin-top:-1.5px;
+    box-shadow:inset 0 10px 18px -12px rgba(30,41,59,.24),0 8px 24px rgba(30,41,59,.07);
+}
+.sg-page .sg-sec.collapsed .sg-sec-body{display:none;}
+@keyframes sgSecIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+.sg-page .sg-sec-body.sg-sec-anim{animation:sgSecIn .3s ease both;}
+@media (max-width:768px){
+    .sg-page .sg-sec-header{flex-wrap:nowrap;padding:14px 14px;gap:10px;}
+    .sg-page .sg-sec-header .sg-section-text p{display:none;}
+    .sg-page .sg-sec-actions{margin-left:auto;}
+}
+@media (prefers-reduced-motion:reduce){.sg-page .sg-sec-chev i,.sg-page .sg-sec-body.sg-sec-anim{transition:none!important;animation:none!important;}.sg-page .sg-sec-header::after{animation:none!important;}.sg-page .sg-sec-header:hover{transform:none!important;}}
+
 .sg-page .sg-section-head{display:flex;gap:14px;align-items:flex-start;margin:0 0 18px;}
 .sg-page .sg-section-icon{width:44px;height:44px;border-radius:13px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--sg-brand),var(--sg-brand-2));box-shadow:0 8px 18px rgba(102,126,234,.30);}
 .sg-page .sg-section-icon.alt-amber{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 8px 18px rgba(245,158,11,.30);}
@@ -132,6 +180,105 @@ include __DIR__ . '/../layouts/header.php';
     .sg-page .sg-rrow-actions{width:100%;justify-content:flex-end;padding-top:6px;}
     .sg-page .sg-acc-head{padding:15px 16px;gap:12px;}
     .sg-page .sg-rrow{padding:13px 16px;}
+}
+
+/* ===== Card animations: staggered entrance reveal + hover polish ===== */
+@keyframes sgRise{from{opacity:0;transform:translateY(28px) scale(.98);}60%{opacity:1;}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes sgPopIn{0%{opacity:0;transform:scale(.5) rotate(-10deg);}70%{opacity:1;transform:scale(1.1) rotate(4deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
+@keyframes sgFloat{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-7px) rotate(5deg);}}
+@keyframes sgSweep{from{transform:translateX(-160%) skewX(-18deg);}to{transform:translateX(360%) skewX(-18deg);}}
+@keyframes sgBodyIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes sgRowIn{from{opacity:0;transform:translateX(-16px);}to{opacity:1;transform:translateX(0);}}
+
+.sg-page .feature-card,.sg-page .sg-group-card,.sg-page .sg-rank-card{position:relative;overflow:hidden;}
+.sg-page.sg-anim-ready .sg-reveal{opacity:0;}
+.sg-page.sg-anim-ready .sg-reveal.sg-revealed{animation:sgRise .65s cubic-bezier(.22,.9,.32,1.05) both;animation-delay:var(--sg-delay,0ms);}
+
+/* Light sweep glides across cards on hover */
+.sg-page .feature-card::before,.sg-page .sg-group-card::before,.sg-page .sg-rank-card::before{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-160%) skewX(-18deg);opacity:0;transition:opacity .25s ease;}
+.sg-page .feature-card:hover::before,.sg-page .sg-group-card:hover::before,.sg-page .sg-rank-card:hover::before{opacity:1;animation:sgSweep .75s ease forwards;}
+.sg-page .feature-card:active{transform:translateY(-2px) scale(.995);}
+
+/* Micro-interactions */
+.sg-page .sg-group-card .sg-decor-icon{animation:sgFloat 5s ease-in-out 1.2s infinite;}
+.sg-page .sg-tutor-top>div:first-child>div:first-child{transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s ease;}
+.sg-page .sg-tutor-card:hover .sg-tutor-top>div:first-child>div:first-child{transform:scale(1.09) rotate(-4deg);box-shadow:0 12px 24px rgba(30,41,59,.22);}
+.sg-page .sg-reveal.sg-revealed .sg-empty-icon{animation:sgPopIn .6s calc(var(--sg-delay,0ms) + .25s) both;}
+
+/* ===== Tutor cards: show name only, tap to expand details ===== */
+@keyframes sgChevNudge{0%,100%{transform:translateY(0);}50%{transform:translateY(3px);}}
+.sg-page .sg-tutor-card{cursor:pointer;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,gap .4s cubic-bezier(.22,.9,.3,1);}
+.sg-page .sg-tutor-card:not(.sg-expanded){gap:0;}
+.sg-page .sg-tutor-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;}
+.sg-page .sg-tutor-chev{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--sg-brand);background:rgba(102,126,234,.12);transition:transform .45s cubic-bezier(.34,1.56,.64,1),background .3s ease,color .3s ease,box-shadow .3s ease;}
+.sg-page .sg-tutor-chev i{animation:sgChevNudge 1.9s ease-in-out infinite;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-chev{transform:rotate(180deg);background:linear-gradient(135deg,var(--sg-brand),var(--sg-brand-2));color:#fff;box-shadow:0 8px 16px rgba(102,126,234,.35);}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-chev i{animation:none;}
+.sg-page .sg-tutor-card.sg-expanded{border-color:rgba(102,126,234,.35);box-shadow:0 18px 42px rgba(102,126,234,.20);}
+.sg-page .sg-tutor-body{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1),opacity .3s ease;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body{grid-template-rows:1fr;opacity:1;transition:grid-template-rows .55s cubic-bezier(.22,.9,.3,1),opacity .35s ease;}
+.sg-page .sg-tutor-body-inner{display:flex;flex-direction:column;gap:12px;overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .45s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner{visibility:visible;transition:visibility 0s 0s;}
+.sg-page .sg-tutor-body-inner>*{opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .45s cubic-bezier(.22,.9,.3,1);}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*{opacity:1;transform:none;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(1){transition-delay:.14s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(2){transition-delay:.2s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(3){transition-delay:.26s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(4){transition-delay:.32s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(5){transition-delay:.38s;}
+.sg-page .sg-tutor-card.sg-expanded .sg-tutor-body-inner>*:nth-child(n+6){transition-delay:.44s;}
+
+/* ===== Tutor cards: distinct card look + animated gradient border on hover ===== */
+@property --sg-tutor-a{syntax:'<angle>';initial-value:0deg;inherits:false;}
+@keyframes sgTutorRing{to{--sg-tutor-a:360deg;}}
+@keyframes sgTutorGlow{0%,100%{box-shadow:0 14px 34px rgba(102,126,234,.16),0 0 0 0 rgba(102,126,234,0);}50%{box-shadow:0 18px 44px rgba(118,75,162,.24),0 0 22px 2px rgba(102,126,234,.14);}}
+
+.sg-page .sg-tutor-card{
+    background:linear-gradient(180deg,#ffffff 0%,#fbfcff 100%);
+    border:1.5px solid #e8edf5;
+    border-radius:var(--sg-radius);
+    box-shadow:0 6px 20px rgba(30,41,59,.07);
+}
+.sg-page .sg-tutor-card::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;
+    background:conic-gradient(from var(--sg-tutor-a),#667eea,#764ba2,#ec4899,#f59e0b,#10b981,#667eea);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+            mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+            mask-composite:exclude;
+    opacity:0;transition:opacity .35s ease;pointer-events:none;z-index:6;
+}
+.sg-page .sg-tutor-card:hover::after,
+.sg-page .sg-tutor-card:focus-visible::after,
+.sg-page .sg-tutor-card.sg-expanded::after{opacity:1;animation:sgTutorRing 3.5s linear infinite;}
+.sg-page .sg-tutor-card:hover,
+.sg-page .sg-tutor-card:focus-visible{
+    transform:translateY(-6px) scale(1.01);
+    border-color:transparent;
+    box-shadow:0 20px 46px rgba(102,126,234,.22);
+    animation:sgTutorGlow 2.6s ease-in-out infinite;
+}
+.sg-page .sg-tutor-card.sg-expanded{border-color:transparent;}
+.sg-page .sg-tutor-card:focus-visible{outline:none;}
+
+/* Accordions: body slides in, rows stagger when opened */
+.sg-page .sg-acc.open .sg-acc-body{animation:sgBodyIn .3s ease both;}
+.sg-page .sg-acc.open .sg-rrow{animation:sgRowIn .4s ease both;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(1){animation-delay:.05s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(2){animation-delay:.1s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(3){animation-delay:.15s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(4){animation-delay:.2s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(5){animation-delay:.25s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(6){animation-delay:.3s;}
+.sg-page .sg-acc.open .sg-rrow:nth-child(n+7){animation-delay:.35s;}
+
+@media (prefers-reduced-motion:reduce){
+    .sg-page.sg-anim-ready .sg-reveal,.sg-page.sg-anim-ready .sg-reveal.sg-revealed{opacity:1!important;animation:none!important;}
+    .sg-page .feature-card::before,.sg-page .sg-group-card::before,.sg-page .sg-rank-card::before{opacity:0!important;animation:none!important;}
+    .sg-page .sg-group-card .sg-decor-icon,.sg-page .sg-reveal.sg-revealed .sg-empty-icon,.sg-page .sg-acc.open .sg-acc-body,.sg-page .sg-acc.open .sg-rrow{animation:none!important;}
+    .sg-page .sg-tutor-card,.sg-page .sg-tutor-chev,.sg-page .sg-tutor-chev i,.sg-page .sg-tutor-body,.sg-page .sg-tutor-body-inner,.sg-page .sg-tutor-body-inner>*{transition-duration:.01ms!important;animation:none!important;}
+    .sg-page .sg-tutor-card::after{animation:none!important;}
+    .sg-page .sg-tutor-card:hover,.sg-page .sg-tutor-card:focus-visible,.sg-page .sg-tutor-card.sg-expanded{transform:none!important;animation:none!important;}
 }
 
 @media (max-width:920px){.sg-page .sg-rank-grid{grid-template-columns:repeat(2,1fr);}}
@@ -283,8 +430,8 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
 };
 ?>
 <!-- My Resources Section -->
-<section class="sg-section">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+<section class="sg-section sg-sec collapsed" id="sgSecMyResources">
+    <div class="sg-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="sgSecMyResourcesBody" onclick="sgToggleSection(this)" onkeydown="sgSectionKey(event, this)">
         <div class="sg-section-head" style="margin:0;">
             <span class="sg-section-icon alt-green"><i class="fas fa-bookmark"></i></span>
             <div class="sg-section-text">
@@ -292,11 +439,17 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                 <p>Store your own video tutorials and scripts here for quick access.</p>
             </div>
         </div>
-        <button onclick="document.getElementById('uploadMyResourceModal').style.display='block'" class="sg-create-btn" style="padding:11px 18px;font-size:14px;">
+        <div class="sg-sec-actions">
+            <span class="sg-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+        </div>
+    </div>
+
+    <div class="sg-sec-body" id="sgSecMyResourcesBody">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button type="button" onclick="document.getElementById('uploadMyResourceModal').style.display='block'" class="sg-create-btn" style="padding:11px 18px;font-size:14px;">
             <i class="fas fa-plus"></i> Add Resource
         </button>
     </div>
-
     <?php if (empty($myResources)): ?>
         <div class="sg-empty">
             <div class="sg-empty-icon" style="color:#10b981;background:rgba(16,185,129,0.12);"><i class="fas fa-bookmark"></i></div>
@@ -311,12 +464,13 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
     <?php else: ?>
         <?php $renderResourceAccordion($myResources, false, true); ?>
     <?php endif; ?>
+    </div>
 </section><!-- My Resources -->
 
 <?php if (!isTutor()): ?>
 <!-- My Tutors Section (students only) -->
-<section class="sg-section">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+<section class="sg-section sg-sec collapsed" id="sgSecMyTutors">
+    <div class="sg-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="sgSecMyTutorsBody" onclick="sgToggleSection(this)" onkeydown="sgSectionKey(event, this)">
         <div class="sg-section-head" style="margin:0;">
             <span class="sg-section-icon alt-green"><i class="fas fa-user-graduate"></i></span>
             <div class="sg-section-text">
@@ -324,8 +478,12 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                 <p>Tutors who have accepted your request and are teaching you.</p>
             </div>
         </div>
+        <div class="sg-sec-actions">
+            <span class="sg-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+        </div>
     </div>
 
+    <div class="sg-sec-body" id="sgSecMyTutorsBody">
     <?php if (empty($myTutors)): ?>
         <div class="sg-empty">
             <div class="sg-empty-icon" style="color:#10b981;background:rgba(16,185,129,0.12);"><i class="fas fa-user-graduate"></i></div>
@@ -347,8 +505,9 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                 $contactEmail = $tutor['email'] ?: ($tutor['tutor_account_email'] ?? '');
                 $contactPhone = $tutor['phone'] ?: ($tutor['tutor_account_phone'] ?? '');
             ?>
-                <div class="feature-card sg-tutor-card">
-                    <div style="display:flex;align-items:center;gap:14px;">
+                <div class="feature-card sg-tutor-card" tabindex="0" aria-expanded="false">
+                    <div class="sg-tutor-top">
+                    <div style="display:flex;align-items:center;gap:14px;min-width:0;">
                         <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;overflow:hidden;">
                             <?php if (!empty($tutor['profile_image'])): ?>
                                 <img src="/tutor/profile-image/<?php echo (int)$tutor['tutor_profile_id']; ?>?v=<?php echo urlencode($tutor['profile_image']); ?>" alt="Profile picture" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';">
@@ -361,6 +520,9 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                             <?php if (!empty($tutor['username'])): ?><div style="font-size:12px;color:#94a3b8;">@<?php echo htmlspecialchars($tutor['username']); ?></div><?php endif; ?>
                         </div>
                     </div>
+                        <span class="sg-tutor-chev"><i class="fas fa-chevron-down"></i></span>
+                    </div><!-- /.sg-tutor-top -->
+                    <div class="sg-tutor-body"><div class="sg-tutor-body-inner">
 
                     <?php if (!empty($subjects)): ?>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -376,19 +538,22 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                     <?php if (!empty($tutor['bio'])): ?><p style="color:#64748b;font-size:13px;margin:0;line-height:1.5;"><?php echo htmlspecialchars(mb_strimwidth($tutor['bio'], 0, 120, '…')); ?></p><?php endif; ?>
 
                     <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #e2e8f0;flex-wrap:wrap;">
-                        <a href="/tutor/view/<?php echo (int)$tutor['tutor_profile_id']; ?>" class="btn-primary" style="padding:8px 14px;font-size:13px;min-height:auto;background:linear-gradient(135deg,#667eea,#764ba2);text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-user"></i> View Tutor</a>
+                        <a href="/tutor/lessons/<?php echo (int)$tutor['tutor_profile_id']; ?>" class="btn-primary" style="padding:8px 14px;font-size:13px;min-height:auto;background:linear-gradient(135deg,#667eea,#764ba2);text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-book-open"></i> View Tutor</a>
+                        <a href="/tutor/view/<?php echo (int)$tutor['tutor_profile_id']; ?>" class="btn-sm btn-primary-sm" style="padding:8px 14px;font-size:13px;min-height:auto;text-decoration:none;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-user"></i> Profile</a>
                         <?php if (!empty($contactEmail)): ?><a href="mailto:<?php echo htmlspecialchars($contactEmail); ?>" class="btn-primary" style="padding:8px 14px;font-size:13px;min-height:auto;"><i class="fas fa-envelope"></i> Contact</a><?php endif; ?>
                         <?php if (!empty($contactPhone)): ?><a href="tel:<?php echo htmlspecialchars($contactPhone); ?>" class="btn-sm btn-primary-sm" style="padding:8px 14px;font-size:13px;min-height:auto;"><i class="fas fa-phone"></i> Call</a><?php endif; ?>
                     </div>
+                    </div></div><!-- /.sg-tutor-body -->
                 </div>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+    </div>
 </section><!-- My Tutors -->
 
 <!-- Available Tutors Section (students only) -->
-<section class="sg-section">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+<section class="sg-section sg-sec collapsed" id="sgSecAvailableTutors">
+    <div class="sg-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="sgSecAvailableTutorsBody" onclick="sgToggleSection(this)" onkeydown="sgSectionKey(event, this)">
         <div class="sg-section-head" style="margin:0;">
             <span class="sg-section-icon alt-amber"><i class="fas fa-chalkboard-teacher"></i></span>
             <div class="sg-section-text">
@@ -396,8 +561,12 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                 <p>Choose a tutor to learn from and start mastering your subjects.</p>
             </div>
         </div>
+        <div class="sg-sec-actions">
+            <span class="sg-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span>
+        </div>
     </div>
 
+    <div class="sg-sec-body" id="sgSecAvailableTutorsBody">
     <?php if (empty($availableTutors)): ?>
         <div class="sg-empty">
             <div class="sg-empty-icon" style="color:#f59e0b;background:rgba(245,158,11,0.12);"><i class="fas fa-chalkboard-teacher"></i></div>
@@ -416,8 +585,9 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                 if ($initials === '') $initials = 'T';
                 $subjects = array_filter(array_map('trim', explode(',', $tutor['subjects'] ?? '')));
             ?>
-                <div class="feature-card sg-tutor-card">
-                    <div style="display:flex;align-items:center;gap:14px;">
+                <div class="feature-card sg-tutor-card" tabindex="0" aria-expanded="false">
+                    <div class="sg-tutor-top">
+                    <div style="display:flex;align-items:center;gap:14px;min-width:0;">
                         <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;overflow:hidden;">
                             <?php if (!empty($tutor['profile_image'])): ?>
                                 <img src="/tutor/profile-image/<?php echo (int)$tutor['id']; ?>?v=<?php echo urlencode($tutor['profile_image']); ?>"
@@ -435,6 +605,9 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                             <?php endif; ?>
                         </div>
                     </div>
+                        <span class="sg-tutor-chev"><i class="fas fa-chevron-down"></i></span>
+                    </div><!-- /.sg-tutor-top -->
+                    <div class="sg-tutor-body"><div class="sg-tutor-body-inner">
 
                     <?php if (!empty($subjects)): ?>
                         <div style="display:flex;flex-wrap:wrap;gap:6px;">
@@ -506,10 +679,12 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
                             </a>
                         <?php endif; ?>
                     </div>
+                    </div></div><!-- /.sg-tutor-body -->
                 </div>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
+    </div>
 </section><!-- Available Tutors -->
 
 </div><!-- /.sg-page -->
@@ -571,6 +746,27 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
         acc.classList.toggle('open');
     }
 
+    // ---- Section dropdowns (My Resources / My Tutors / Available Tutors) ----
+    function sgToggleSection(header) {
+        var sec = header.closest('.sg-sec');
+        if (!sec) return;
+        var collapsed = sec.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        var body = sec.querySelector('.sg-sec-body');
+        if (body && !collapsed) {
+            body.classList.remove('sg-sec-anim');
+            void body.offsetWidth;
+            body.classList.add('sg-sec-anim');
+        }
+    }
+
+    function sgSectionKey(e, header) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            sgToggleSection(header);
+        }
+    }
+
     // ---- My Resource modal: toggle file vs link fields ----
     function sgToggleMyType() {
         var type = document.getElementById('myResourceType').value;
@@ -614,6 +810,73 @@ $renderResourceAccordion = function($resources, $showUploader = true, $isPersona
     function inviteToGroupModal(username) {
         alert('To invite ' + username + ' to a study group, you can:\n\n1. Click "Ask for Help" to send them an email\n2. Create a study group and share the invite link\n3. Message them directly if you\'re in the same group');
     }
+
+    // ---- Card entrance animations: staggered reveal as cards scroll into view ----
+    (function () {
+        var page = document.querySelector('.sg-page');
+        if (!page || !('IntersectionObserver' in window)) return;
+        var cards = page.querySelectorAll('.feature-card, .sg-acc, .sg-empty, .sg-group-card, .sg-rank-card');
+        if (!cards.length) return;
+
+        page.classList.add('sg-anim-ready');
+
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                var el = entry.target;
+                io.unobserve(el);
+
+                var idx = 0, n = 0, sibs = el.parentElement ? el.parentElement.children : [];
+                for (var i = 0; i < sibs.length; i++) {
+                    if (sibs[i].classList && sibs[i].classList.contains('sg-reveal')) {
+                        if (sibs[i] === el) idx = n;
+                        n++;
+                    }
+                }
+                el.style.setProperty('--sg-delay', (Math.min(idx, 7) * 75) + 'ms');
+                el.classList.add('sg-revealed');
+
+                var cleaned = false;
+                var cleanup = function () {
+                    if (cleaned) return;
+                    cleaned = true;
+                    el.classList.remove('sg-reveal', 'sg-revealed');
+                };
+                el.addEventListener('animationend', function (e) {
+                    if (e.target === el && !e.pseudoElement) cleanup();
+                });
+                setTimeout(cleanup, 1500);
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        for (var i = 0; i < cards.length; i++) cards[i].classList.add('sg-reveal');
+        for (var j = 0; j < cards.length; j++) io.observe(cards[j]);
+    })();
+
+    // ---- Tutor cards: collapsed to name only, click to expand details ----
+    Array.prototype.forEach.call(document.querySelectorAll('.sg-tutor-card'), function (card) {
+        var toggle = function () {
+            var open = card.classList.toggle('sg-expanded');
+            card.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                Array.prototype.forEach.call(document.querySelectorAll('.sg-tutor-card.sg-expanded'), function (other) {
+                    if (other !== card) {
+                        other.classList.remove('sg-expanded');
+                        other.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        };
+        card.addEventListener('click', function (e) {
+            if (e.target.closest && e.target.closest('a, button, form, input, select, textarea, label')) return;
+            toggle();
+        });
+        card.addEventListener('keydown', function (e) {
+            if (e.target !== card || (e.key !== 'Enter' && e.key !== ' ')) return;
+            e.preventDefault();
+            toggle();
+        });
+    });
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

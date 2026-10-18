@@ -10,9 +10,9 @@ try {
     
     $db->exec("
         CREATE TABLE IF NOT EXISTS remember_tokens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            token TEXT NOT NULL UNIQUE,
+            token VARCHAR(191) NOT NULL UNIQUE,
             expires_at DATETIME NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

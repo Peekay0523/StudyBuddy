@@ -12,7 +12,7 @@ try {
     $db = Database::getInstance()->getConnection();
     
     // Check if column already exists
-    $columns = $db->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_COLUMN, 1);
+    $columns = db_table_columns($db, 'users');
     
     if (in_array('bursaries_last_viewed', $columns)) {
         echo "<p style='color: green;'>✓ Column 'bursaries_last_viewed' already exists.</p>";
@@ -26,7 +26,7 @@ try {
         echo "<p style='color: green;'>✓ Updated existing users with current timestamp.</p>";
         
         // Create index
-        $db->exec("CREATE INDEX IF NOT EXISTS idx_users_bursaries_last_viewed ON users(bursaries_last_viewed)");
+        db_create_index($db, 'idx_users_bursaries_last_viewed', 'users', 'bursaries_last_viewed');
         echo "<p style='color: green;'>✓ Created index on bursaries_last_viewed column.</p>";
     }
     

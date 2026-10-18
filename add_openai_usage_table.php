@@ -12,7 +12,7 @@ try {
     // Create the table
     $db->exec("
         CREATE TABLE IF NOT EXISTS openai_usage_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INTEGER,
             prompt_tokens INTEGER DEFAULT 0,
             completion_tokens INTEGER DEFAULT 0,
@@ -23,8 +23,8 @@ try {
     ");
     
     // Create indexes
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_usage_user_id ON openai_usage_logs(user_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_usage_created_at ON openai_usage_logs(created_at)");
+    db_create_index($db, 'idx_usage_user_id', 'openai_usage_logs', 'user_id');
+    db_create_index($db, 'idx_usage_created_at', 'openai_usage_logs', 'created_at');
     
     echo "✓ OpenAI usage tracking table created successfully!<br>";
     echo "✓ Indexes created for faster queries.<br><br>";

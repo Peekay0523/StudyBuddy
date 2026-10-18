@@ -12,13 +12,16 @@ chdir(dirname(__DIR__));
 // Load configuration
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/notifications.php';
 
 // Initialize database
 $db = Database::getInstance()->getConnection();
 
-// Create tables if they don't exist
+// Create tables if they don't exist (SQLite legacy schema; skip under MySQL,
+// which is provisioned/migrated out-of-band).
+$dbDriver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
 $schemaFile = __DIR__ . '/../database_schema.sql';
-if (file_exists($schemaFile)) {
+if ($dbDriver === 'sqlite' && file_exists($schemaFile)) {
     $schema = file_get_contents($schemaFile);
     $statements = array_filter(array_map('trim', explode(';', $schema)));
     
@@ -412,6 +415,10 @@ $router->post('/tutor/announcements/delete/{id}', 'TutorController@deleteAnnounc
 
 // Tutor: shared lessons page (opened via "View Tutor" on the My Tutors card)
 $router->get('/tutor/lessons/{tutorId}', 'TutorController@lessons');
+$router->post('/tutor/lessons/create', 'TutorController@createLesson');
+$router->post('/tutor/lessons/delete/{id}', 'TutorController@deleteLesson');
+$router->post("/tutor/problems/create", "TutorController@createProblem");
+$router->post("/tutor/problems/resolve/{id}", "TutorController@resolveProblem");
 
 // My Resources (personal resources, independent of study groups)
 $router->post('/study-group/upload-my-resource', 'StudyGroupController@uploadMyResource');
