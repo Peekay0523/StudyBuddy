@@ -66,8 +66,19 @@ class AuthController {
                     $this->userActivityModel->updateActivity($user['id']);
 
                     // Handle "Stay Logged In" (Remember Me)
-                    if ($rememberMe) {
+                    if ($rememberMe && function_exists('createRememberToken')) {
                         createRememberToken($user['id']);
+                    } elseif ($rememberMe) {
+                        try {
+                            $db = Database::getInstance()->getConnection();
+                            $token = bin2hex(random_bytes(32));
+                            $stmt = $db->prepare("INSERT INTO remember_tokens (user_id, token, expires_at, created_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW())");
+                            $stmt->execute([$user['id'], $token]);
+                            // Set cookie (7 days approx, but we stored 30; keep simple)
+                            setcookie('remember_token', $token, time() + 60*60*24*30, '/', '', false, true);
+                        } catch (Exception $e) {
+                            // ignore
+                        }
                     }
 
                     // Redirect based on role
@@ -298,10 +309,19 @@ class AuthController {
     }
     
     public function logout() {
-        // Clear remember-me tokens if user is logged in
-        if (isLoggedIn()) {
-            destroyRememberTokens($_SESSION['user_id']);
-        }
+            // Clear remember-me tokens if user is logged in
+            if (isLoggedIn() && function_exists('destroyRememberTokens')) {
+                destroyRememberTokens($_SESSION['user_id']);
+            } elseif (isLoggedIn()) {
+                // Fallback: attempt best-effort cleanup if table exists
+                try {
+                    $db = Database::getInstance()->getConnection();
+                    $stmt = $db->prepare("DELETE FROM remember_tokens WHERE user_id = ?");
+                    $stmt->execute([$_SESSION['user_id']]);
+                } catch (Exception $e) {
+                    // ignore
+                }
+            }
         session_destroy();
         header('Location: /');
         exit;

@@ -38,6 +38,17 @@ class TutorStudentProblem {
         $stmt->execute([$studentUserId, $tutorId]);
         return $stmt->fetchAll();
     }
+    public function findById($id) {
+        $stmt = $this->db->prepare("SELECT * FROM tutor_student_problems WHERE id = ?");
+        $stmt->execute([(int)$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+    public function resolve($id) {
+        $stmt = $this->db->prepare("UPDATE tutor_student_problems SET status = \"resolved\" WHERE id = ?");
+        $stmt->execute([(int)$id]);
+        return $stmt->rowCount() > 0;
+    }
     public function markResolved($id, $tutorId) {
         $stmt = $this->db->prepare("UPDATE tutor_student_problems SET status = \"resolved\" WHERE id = ? AND tutor_id = ?");
         $stmt->execute([$id, $tutorId]);

@@ -22,14 +22,11 @@ include __DIR__ . '/../layouts/header.php';
 </div>
 
 <!-- Plan Details Modal -->
-<div id="plan-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 500px; width: 90%; position: relative; max-height: 80vh; overflow-y: auto;">
-        <button onclick="closePlanDetailsModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
-            &times;
-        </button>
-
-        <div style="background: linear-gradient(135deg, <?php echo $planBadge === 'premium' ? '#fbbf24 0%, #f59e0b 100%' : ($planBadge === 'trial' ? '#10b981 0%, #059669 100%' : ($planBadge === 'basic' ? '#3b82f6 0%, #2563eb 100%' : '#6b7280 0%, #4b5563 100%')); ?>); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+<div id="plan-details-modal" class="sb-modal-overlay">
+    <div class="sb-modal-box sb-modal-box--sm">
+        <div style="position: relative; background: linear-gradient(135deg, <?php echo $planBadge === 'premium' ? '#fbbf24 0%, #f59e0b 100%' : ($planBadge === 'trial' ? '#10b981 0%, #059669 100%' : ($planBadge === 'basic' ? '#3b82f6 0%, #2563eb 100%' : '#6b7280 0%, #4b5563 100%')); ?>); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <button onclick="closePlanDetailsModal()" class="sb-modal-close sb-modal-close--light" aria-label="Close">&times;</button>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-right: 44px;">
                 <i class="fas fa-crown" style="font-size: 24px;"></i>
                 <h3 style="margin: 0; font-size: 20px;"><?php echo htmlspecialchars($planName); ?> Plan</h3>
                 <?php if ($planBadge === 'trial'): ?>
@@ -69,24 +66,19 @@ include __DIR__ . '/../layouts/header.php';
 
 <script>
 function showPlanDetailsModal() {
-    document.getElementById('plan-details-modal').style.display = 'flex';
+    document.getElementById('plan-details-modal').classList.add('open');
 }
 
 function closePlanDetailsModal() {
-    document.getElementById('plan-details-modal').style.display = 'none';
+    document.getElementById('plan-details-modal').classList.remove('open');
 }
 
-// Close modal when clicking outside
-document.getElementById('plan-details-modal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closePlanDetailsModal();
-    }
-});
-
-// Close modal on Escape key
+// Close any open modal on Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        closePlanDetailsModal();
+        document.querySelectorAll('.sb-modal-overlay.open').forEach(function(m) {
+            m.classList.remove('open');
+        });
     }
 });
 </script>
@@ -115,7 +107,7 @@ document.addEventListener('keydown', function(e) {
                     </h3>
 
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button onclick="document.getElementById('inviteFriendsModal').style.display='flex'" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; padding: 8px 16px; font-size: 13px;">
+                        <button onclick="openModal('inviteFriendsModal')" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; padding: 8px 16px; font-size: 13px;">
                             <i class="fas fa-envelope"></i> Invite Friends
                         </button>
                         <a href="/invites" style="padding: 8px 16px; color: #0369a1; text-decoration: none; font-weight: 500; font-size: 13px; border: 1px solid #0ea5e9; border-radius: 6px; display: inline-block;">
@@ -203,6 +195,166 @@ document.addEventListener('keydown', function(e) {
     position: relative !important;
     z-index: 2 !important;
 }
+
+/* === Animated modals (plan details, invite friends, bursary / institution applications) === */
+.sb-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.5);
+    -webkit-backdrop-filter: blur(0px);
+    backdrop-filter: blur(0px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, backdrop-filter .3s ease, visibility 0s linear .3s;
+}
+.sb-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    transition: opacity .3s ease, backdrop-filter .3s ease, visibility 0s;
+}
+.sb-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 28px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    transform: translateY(20px) scale(0.96);
+    opacity: 0;
+    transition: transform .38s cubic-bezier(.22, 1, .36, 1), opacity .3s ease;
+}
+.sb-modal-overlay.open .sb-modal-box {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.sb-modal-box--sm {
+    max-width: 500px;
+}
+.sb-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    padding-right: 48px;
+    color: #1e293b;
+    font-size: 20px;
+}
+.sb-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 3;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+.sb-modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+.sb-modal-close:active {
+    transform: scale(.92);
+}
+.sb-modal-close--light {
+    background: rgba(255, 255, 255, .22);
+    color: #fff;
+}
+.sb-modal-close--light:hover {
+    background: rgba(255, 255, 255, .42);
+    color: #fff;
+}
+.sb-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 22px;
+}
+.sb-modal-btn-ghost {
+    padding: 10px 20px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    transition: background .2s ease, color .2s ease;
+}
+.sb-modal-btn-ghost:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+@media (max-width: 576px) {
+    .sb-modal-overlay { padding: 14px; }
+    .sb-modal-box { padding: 22px 18px; max-height: 90vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sb-modal-overlay, .sb-modal-box, .sb-modal-close { transition: none !important; }
+}
+
+/* === Hover: stat / score text grows smoothly and darkens a little === */
+.stats .card p,
+.stats .card h2,
+.section-title,
+.dash-grow-text {
+    transform-origin: left center;
+    transition: transform .3s cubic-bezier(.22, 1, .36, 1), color .3s ease, opacity .3s ease;
+    will-change: transform;
+}
+.stats .card:hover p,
+.stats .card:active p,
+.stats .card.touch-grow p,
+.stats .card:hover h2,
+.stats .card:active h2,
+.stats .card.touch-grow h2 {
+    transform: scale(1.22);
+    color: #dbe4f0;
+}
+.section-title:hover,
+.section-title:active,
+.section-title.touch-grow {
+    transform: scale(1.12);
+    color: #0f172a;
+}
+.dash-grow:hover .dash-grow-text,
+.dash-grow:active .dash-grow-text,
+.dash-grow.touch-grow .dash-grow-text {
+    transform: scale(1.16);
+    color: #dbe4f0;
+}
+.dash-grow:hover .dash-grow-text.dash-grow-strong,
+.dash-grow:active .dash-grow-text.dash-grow-strong,
+.dash-grow.touch-grow .dash-grow-text.dash-grow-strong {
+    color: #cbd8ea;
+}
+@media (prefers-reduced-motion: reduce) {
+    .stats .card p,
+    .stats .card h2,
+    .section-title,
+    .dash-grow-text { transition: none !important; }
+}
 </style>
 
 <!-- STATS -->
@@ -254,25 +406,25 @@ document.addEventListener('keydown', function(e) {
 <section style="margin: 30px 0;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 250px;">
+            <div class="dash-grow" style="flex: 1; min-width: 250px;">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
                     <i class="fas fa-fire-alt" style="font-size: 32px; color: #fbbf24;"></i>
-                    <h3 style="margin: 0; font-size: 22px;">Your Learning Score</h3>
+                    <h3 class="dash-grow-text" style="margin: 0; font-size: 22px;">Your Learning Score</h3>
                 </div>
                 <div style="display: flex; align-items: baseline; gap: 15px; margin-bottom: 10px;">
-                    <span style="font-size: 48px; font-weight: 700; line-height: 1;"><?php echo $activityScore; ?></span>
-                    <span style="font-size: 18px; opacity: 0.9;">points</span>
+                    <span class="dash-grow-text dash-grow-strong" style="font-size: 48px; font-weight: 700; line-height: 1;"><?php echo $activityScore; ?></span>
+                    <span class="dash-grow-text" style="font-size: 18px; opacity: 0.9;">points</span>
                 </div>
-                <p style="margin: 0; opacity: 0.9; font-size: 14px;">
+                <p class="dash-grow-text" style="margin: 0; opacity: 0.9; font-size: 14px;">
                     <i class="fas fa-chart-line"></i> Keep learning to increase your score!
                 </p>
             </div>
 
-            <div style="flex: 1; min-width: 250px;">
+            <div class="dash-grow" style="flex: 1; min-width: 250px;">
                 <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span style="font-size: 14px; opacity: 0.9;">Activity Level</span>
-                        <span style="font-size: 20px; font-weight: 700;"><?php echo $activityPercentage; ?>%</span>
+                        <span class="dash-grow-text" style="font-size: 14px; opacity: 0.9;">Activity Level</span>
+                        <span class="dash-grow-text dash-grow-strong" style="font-size: 20px; font-weight: 700;"><?php echo $activityPercentage; ?>%</span>
                     </div>
                     <div style="background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
                         <div style="background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%); height: 100%; width: <?php echo $activityPercentage; ?>%; transition: width 0.5s ease; border-radius: 6px;"></div>
@@ -301,14 +453,11 @@ document.addEventListener('keydown', function(e) {
 </section>
 
 <!-- Invite Friends Modal -->
-<div id="inviteFriendsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative; max-height: 90vh; overflow-y: auto;">
-        <button onclick="document.getElementById('inviteFriendsModal').style.display='none'"
-                style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
-            &times;
-        </button>
+<div id="inviteFriendsModal" class="sb-modal-overlay">
+    <div class="sb-modal-box sb-modal-box--sm">
+        <button onclick="closeModal('inviteFriendsModal')" class="sb-modal-close" aria-label="Close">&times;</button>
 
-        <h2 style="margin-bottom: 20px; color: #1e293b;">
+        <h2 class="sb-modal-title">
             <i class="fas fa-envelope-open-text" style="color: #0ea5e9;"></i> Invite Friends
         </h2>
 
@@ -347,9 +496,8 @@ document.addEventListener('keydown', function(e) {
                 </p>
             </div>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="document.getElementById('inviteFriendsModal').style.display='none'"
-                        style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+            <div class="sb-modal-actions">
+                <button type="button" class="sb-modal-btn-ghost" onclick="closeModal('inviteFriendsModal')">
                     Cancel
                 </button>
                 <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none;">
@@ -361,19 +509,19 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <!-- Bursary Applications Modal -->
-<div id="bursaryApplicationsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
-        <button onclick="document.getElementById('bursaryApplicationsModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+<div id="bursaryApplicationsModal" class="sb-modal-overlay">
+    <div class="sb-modal-box">
+        <button onclick="closeModal('bursaryApplicationsModal')" class="sb-modal-close" aria-label="Close">
             <i class="fas fa-times"></i>
         </button>
-        <h2 style="margin-bottom: 20px; color: #1e293b;">
+        <h2 class="sb-modal-title">
             <i class="fas fa-graduation-cap" style="color: #10b981;"></i> My Bursary Applications
         </h2>
         <div id="bursaryApplicationsList">
             <p style="text-align: center; color: #6b7280;">Loading...</p>
         </div>
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" onclick="document.getElementById('bursaryApplicationsModal').style.display='none'" style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        <div class="sb-modal-actions">
+            <button type="button" class="sb-modal-btn-ghost" onclick="closeModal('bursaryApplicationsModal')">
                 Close
             </button>
         </div>
@@ -381,19 +529,19 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <!-- Institution Applications Modal -->
-<div id="institutionApplicationsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative;">
-        <button onclick="document.getElementById('institutionApplicationsModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b;">
+<div id="institutionApplicationsModal" class="sb-modal-overlay">
+    <div class="sb-modal-box">
+        <button onclick="closeModal('institutionApplicationsModal')" class="sb-modal-close" aria-label="Close">
             <i class="fas fa-times"></i>
         </button>
-        <h2 style="margin-bottom: 20px; color: #1e293b;">
+        <h2 class="sb-modal-title">
             <i class="fas fa-university" style="color: #3b82f6;"></i> My Institution Applications
         </h2>
         <div id="institutionApplicationsList">
             <p style="text-align: center; color: #6b7280;">Loading...</p>
         </div>
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" onclick="document.getElementById('institutionApplicationsModal').style.display='none'" style="padding: 10px 20px; background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        <div class="sb-modal-actions">
+            <button type="button" class="sb-modal-btn-ghost" onclick="closeModal('institutionApplicationsModal')">
                 Close
             </button>
         </div>
@@ -401,29 +549,33 @@ document.addEventListener('keydown', function(e) {
 </div>
 
 <script>
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        var modal = document.getElementById('inviteFriendsModal');
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-        var bursaryModal = document.getElementById('bursaryApplicationsModal');
-        if (event.target == bursaryModal) {
-            bursaryModal.style.display = 'none';
-        }
-        var institutionModal = document.getElementById('institutionApplicationsModal');
-        if (event.target == institutionModal) {
-            institutionModal.style.display = 'none';
-        }
+    // === Shared modal helpers: animate open/close ===
+    function openModal(id) {
+        var modal = document.getElementById(id);
+        if (modal) modal.classList.add('open');
     }
+
+    function closeModal(id) {
+        var modal = document.getElementById(id);
+        if (modal) modal.classList.remove('open');
+    }
+
+    // Close modal when clicking the backdrop (outside the dialog)
+    document.querySelectorAll('.sb-modal-overlay').forEach(function(modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('open');
+            }
+        });
+    });
 
     // Toggle applications modal
     function toggleApplicationsModal(type) {
         if (type === 'bursary') {
-            document.getElementById('bursaryApplicationsModal').style.display = 'flex';
+            openModal('bursaryApplicationsModal');
             loadBursaryApplications();
         } else if (type === 'institution') {
-            document.getElementById('institutionApplicationsModal').style.display = 'flex';
+            openModal('institutionApplicationsModal');
             loadInstitutionApplications();
         }
     }
@@ -686,6 +838,31 @@ document.addEventListener('keydown', function(e) {
 
         window.addEventListener('resize', function () {
             if (!narrow()) closeAll();
+        });
+    })();
+
+    // Touch devices: grow/darken the stat & score text while an item is pressed
+    (function () {
+        var touchOnly = typeof window.matchMedia === 'function' && window.matchMedia('(hover: none)').matches;
+        if (!touchOnly) return;
+
+        var targets = document.querySelectorAll('.stats .card, .section-title, .dash-grow');
+        if (!targets.length) return;
+
+        var timer = null;
+        function clearAll() {
+            Array.prototype.forEach.call(targets, function (el) { el.classList.remove('touch-grow'); });
+        }
+        Array.prototype.forEach.call(targets, function (el) {
+            el.addEventListener('touchstart', function () {
+                if (timer) { clearTimeout(timer); timer = null; }
+                clearAll();
+                el.classList.add('touch-grow');
+            }, { passive: true });
+            el.addEventListener('touchend', function () {
+                timer = setTimeout(clearAll, 450);
+            }, { passive: true });
+            el.addEventListener('touchcancel', clearAll, { passive: true });
         });
     })();
 </script>

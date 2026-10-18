@@ -110,26 +110,31 @@ class TutorController {
 
         $activeStudents = $this->tutorStudentModel->getActiveForTutor($tutorProfile['id']);
         $allAnnouncements = $this->tutorAnnouncementModel->getForTutor($tutorProfile['id']);
+        $problemModel = new TutorStudentProblem();
+        $allProblems = $problemModel->getForTutor($tutorProfile['id']);
 
-        // Group students into grade cards (ordered Grade 8 GåÆ 12, then custom labels, then unspecified)
+        // Group students into grade cards (ordered Grade 8 Gï¿½ï¿½ 12, then custom labels, then unspecified)
         $gradeOrder = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-        $groups = []; // grade label => ['students' => [], 'announcements' => []]
-        foreach ($activeStudents as $stu) {
-            $grade = trim($stu['grade'] ?? '');
-            $normalized = '';
+        $normalizeGrade = function ($grade) use ($gradeOrder) {
+            $grade = trim($grade ?? '');
             foreach ($gradeOrder as $g) {
                 $num = substr($g, 6);
                 if (strcasecmp($grade, $g) === 0 || preg_match('/^(?:grade|gr)?\s*(' . $num . ')\s*$/i', $grade)) {
-                    $normalized = $g;
-                    break;
+                    return $g;
                 }
             }
+            return '';
+        };
+        $groups = []; // grade label => ['students' => [], 'announcements' => [], 'problems' => []]
+        foreach ($activeStudents as $stu) {
+            $grade = trim($stu['grade'] ?? '');
+            $normalized = $normalizeGrade($grade);
             if ($normalized === '') {
                 if ($grade === '') continue; // handled below under "unspecified"
-                if (!isset($groups[$grade])) $groups[$grade] = ['students' => [], 'announcements' => []];
+                if (!isset($groups[$grade])) $groups[$grade] = ['students' => [], 'announcements' => [], 'problems' => []];
                 $groups[$grade]['students'][] = $stu;
             } else {
-                if (!isset($groups[$normalized])) $groups[$normalized] = ['students' => [], 'announcements' => []];
+                if (!isset($groups[$normalized])) $groups[$normalized] = ['students' => [], 'announcements' => [], 'problems' => []];
                 $groups[$normalized]['students'][] = $stu;
             }
         }
@@ -145,16 +150,30 @@ class TutorController {
             if (!isset($gradeCards[$label])) $gradeCards[$label] = $grp;
         }
 
-        // Attach announcements to their grade card ('' = all grades GåÆ show on every card)
+        // Attach announcements to their grade card ('' = all grades Gï¿½ï¿½ show on every card)
         $generalAnnouncements = [];
         foreach ($allAnnouncements as $ann) {
             $grade = trim($ann['grade'] ?? '');
             if ($grade === '') {
                 $generalAnnouncements[] = $ann;
             } else {
-                if (!isset($gradeCards[$grade])) $gradeCards[$grade] = ['students' => [], 'announcements' => []];
+                if (!isset($gradeCards[$grade])) $gradeCards[$grade] = ['students' => [], 'announcements' => [], 'problems' => []];
                 $gradeCards[$grade]['announcements'][] = $ann;
             }
+        }
+
+        // Attach submitted problems to their grade card
+        foreach ($gradeCards as $label => $grp) {
+            if (!isset($gradeCards[$label]['problems'])) $gradeCards[$label]['problems'] = [];
+        }
+        foreach ($allProblems as $prob) {
+            $raw = trim($prob['grade'] ?? '');
+            $label = $normalizeGrade($raw);
+            if ($label === '') $label = $raw;
+            if ($label === '') continue; // no grade to file it under
+            if (!isset($gradeCards[$label])) $gradeCards[$label] = ['students' => [], 'announcements' => [], 'problems' => []];
+            if (!isset($gradeCards[$label]['problems'])) $gradeCards[$label]['problems'] = [];
+            $gradeCards[$label]['problems'][] = $prob;
         }
 
         include __DIR__ . '/../templates/pages/tutor_my_students.php';
@@ -334,7 +353,7 @@ class TutorController {
      * @return bool true if a new picture was saved, false otherwise
      */
     private function processProfileImageUpload($file, $userId) {
-        // No picture chosen GÇö nothing to do (not an error)
+        // No picture chosen Gï¿½ï¿½ nothing to do (not an error)
         if (!$file || !is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
             return true;
         }
@@ -549,7 +568,7 @@ class TutorController {
             $teachingMode = 'contact';
         }
 
-        // Tutoring packages: one per line GÇö "Name | Price | Description"
+        // Tutoring packages: one per line Gï¿½ï¿½ "Name | Price | Description"
         $packages = [];
         foreach (preg_split('/\r\n|\r|\n/', $tutor['packages'] ?? '') as $line) {
             $line = trim($line);
@@ -571,7 +590,7 @@ class TutorController {
             $packages[] = $pkg;
         }
 
-        // Company tutors (who teaches what): one per line GÇö "Name | Qualifications | Subjects | Grades"
+        // Company tutors (who teaches what): one per line Gï¿½ï¿½ "Name | Qualifications | Subjects | Grades"
         // Backwards compatible with the older "Name | Subjects" and "Name | Qualifications | Subjects" formats.
         $teamMembers = [];
         foreach (preg_split('/\r\n|\r|\n/', $tutor['company_team'] ?? '') as $line) {
@@ -767,7 +786,7 @@ class TutorController {
      * Extract the currency symbol/prefix from a rate string.
      */
     private function extractCurrencySymbol($rateString) {
-        if (preg_match('/^\s*([Rr]\$?|\$|Gé¼|-ú)\s*/', $rateString, $m)) {
+        if (preg_match('/^\s*([Rr]\$?|\$|Gï¿½|-ï¿½)\s*/', $rateString, $m)) {
             return $m[1];
         }
         return 'R';

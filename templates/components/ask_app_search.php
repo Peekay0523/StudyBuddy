@@ -77,27 +77,41 @@
     right: 20px;
     width: 56px;
     height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #fff !important;
     cursor: pointer;
     z-index: 10001;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 22px;
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4) !important;
+    transition: transform .3s cubic-bezier(.175, .885, .32, 1.275), box-shadow .3s ease !important;
+}
+
+.ask-app-fab i {
+    line-height: 1;
 }
 
 .ask-app-fab:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
+    transform: scale(1.08) translateY(-2px) !important;
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5) !important;
 }
 
 .ask-app-fab:active {
-    transform: scale(0.95);
+    transform: scale(.95) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45) !important;
+}
+
+.ask-app-fab:focus-visible,
+.ask-app-voice-btn:focus-visible,
+.ask-app-close-btn:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, .35);
+    outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -200,40 +214,58 @@
 .ask-app-voice-btn, .ask-app-close-btn {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    border: none;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    background: #f1f5f9;
+    color: #475569;
+    box-shadow: none !important;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 15px;
-    transition: all 0.2s;
+    line-height: 1;
     flex-shrink: 0;
+    transition: background .2s ease, color .2s ease, transform .2s ease !important;
 }
 
-.ask-app-voice-btn {
-    background: transparent;
-    color: #6366f1;
+.ask-app-voice-btn i, .ask-app-close-btn i {
+    line-height: 1;
 }
 
 .ask-app-voice-btn:hover {
-    background: #ede9fe;
+    background: #e0e7ff;
+    color: #4f46e5;
+    transform: scale(1.06);
+}
+
+.ask-app-voice-btn:active {
+    transform: scale(.92) !important;
 }
 
 .ask-app-voice-btn.listening {
-    background: #fef2f2;
-    color: #ef4444;
+    background: #fee2e2 !important;
+    color: #ef4444 !important;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, .45) !important;
     animation: askPulse 1s infinite;
 }
 
-.ask-app-close-btn {
-    background: transparent;
-    color: #94a3b8;
+.ask-app-close-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
 }
 
-.ask-app-close-btn:hover {
-    background: #f1f5f9;
-    color: #475569;
+.ask-app-close-btn:active {
+    transform: scale(.92) !important;
+}
+
+.ask-app-voice-btn:focus-visible,
+.ask-app-close-btn:focus-visible,
+.ask-app-fab:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, .35);
+    outline-offset: 2px;
 }
 
 .ask-app-voice-status {

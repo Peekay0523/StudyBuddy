@@ -51,7 +51,7 @@ foreach (preg_split('/\r\n|\r|\n/', $tutorProfile['company_team'] ?? '') as $lin
 .sg-page .td-section-icon.alt-amber{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 8px 18px rgba(245,158,11,.30);}
 .sg-page .td-section-icon.alt-green{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 8px 18px rgba(16,185,129,.28);}
 .sg-page .td-section-icon.alt-blue{background:linear-gradient(135deg,#0ea5e9,#2563eb);box-shadow:0 8px 18px rgba(14,165,233,.28);}
-.sg-page .td-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;}
+.sg-page .td-section-text h2{font-size:19px;margin:2px 0 4px;color:var(--sg-ink);letter-spacing:-.01em;border-left:none;padding-left:0;}
 .sg-page .td-section-text p{color:var(--sg-muted);font-size:13.5px;margin:0;}
 .sg-page .td-card{background:#fff;border:1px solid var(--sg-line);border-radius:var(--sg-radius);box-shadow:var(--sg-shadow);transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
 .sg-page .td-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(30,41,59,.08);}

@@ -85,6 +85,92 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     align-items: start;
 }
 
+/* ===== Mobile flip pane: Upload form <-> Browse by grade (tap to flip) ===== */
+.fc-flipbar { display: none; }
+@media (max-width: 768px) {
+    .upload-container {
+        display: block !important;
+        position: relative;
+        perspective: 1600px;
+        min-height: 460px;
+    }
+    .upload-container > .auth-box,
+    .upload-container > .browse-grade-card {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        height: auto;
+        max-width: none !important;
+        margin: 0;
+        box-sizing: border-box;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        will-change: transform;
+        transition: transform .8s cubic-bezier(.22, 1, .36, 1);
+    }
+    .upload-container > .auth-box {
+        transform: rotateY(0deg);
+    }
+    .upload-container > .browse-grade-card {
+        transform: rotateY(180deg);
+        pointer-events: none;
+    }
+    .upload-container.flipped > .auth-box {
+        transform: rotateY(-180deg);
+        pointer-events: none;
+    }
+    .upload-container.flipped > .browse-grade-card {
+        transform: rotateY(0deg);
+        pointer-events: auto;
+    }
+    .fc-flipbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 0 0 15px;
+        padding: 11px 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 12px;
+        font-size: 13.5px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, .35);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .fc-flipbar:active { transform: scale(.98); }
+    .fc-flipbar:focus-visible { outline: 2px solid rgba(255, 255, 255, .7); outline-offset: 2px; }
+    .fc-flipbar-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+    .fc-flipbar-title i { flex-shrink: 0; }
+    .fc-flipbar-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, .18);
+        border: 1px solid rgba(255, 255, 255, .35);
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .fc-flipbar-btn i { transition: transform .8s cubic-bezier(.22, 1, .36, 1); }
+    .upload-container.flipped .fc-flipbar-btn i { transform: rotate(360deg); }
+    .browse-grade-card h3 { border-left: none; padding-left: 0; }
+    @media (prefers-reduced-motion: reduce) {
+        .upload-container > .auth-box,
+        .upload-container > .browse-grade-card { transition: none !important; }
+        .fc-flipbar-btn i { transition: none !important; }
+    }
+}
+
 /* Auth Box */
 .auth-box {
     background: white;
@@ -413,13 +499,60 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     box-shadow: 0px 0px 0px 0px transparent;
 }
 
-/* Scripts Section */
-.scripts-section {
-    margin-top: 40px;
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+/* Scripts Section (collapsible dropdown) */
+.scripts-section { margin-top: 40px; }
+@property --us-ring-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes usRingSpin { to { --us-ring-a: 360deg; } }
+@keyframes usSecIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.scripts-section .tl-sec-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    margin: 0; padding: 16px 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border: 1.5px solid #e8edf5; border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(30, 41, 59, .07);
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, border-radius .2s ease;
+}
+.scripts-section .tl-sec:not(.collapsed) .tl-sec-header { border-radius: 20px 20px 0 0; }
+.scripts-section .tl-sec-header:hover { transform: translateY(-3px); border-color: transparent; box-shadow: 0 16px 38px rgba(102, 126, 234, .18); }
+.scripts-section .tl-sec-header:focus-visible { outline: 2px solid rgba(102, 126, 234, .45); outline-offset: 2px; }
+.scripts-section .tl-section-head { display: flex; gap: 14px; align-items: center; margin: 0; }
+.scripts-section .tl-section-icon { width: 45px; height: 45px; border-radius: 12px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 10px rgba(102, 126, 234, .2); }
+.scripts-section .tl-section-text h2 { font-size: 20px; margin: 0; color: #667eea; letter-spacing: -.01em; font-weight: 700; border-left: none; padding-left: 0; }
+.scripts-section .tl-sec-header::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
+    background: conic-gradient(from var(--us-ring-a), #667eea, #764ba2, #ec4899, #f59e0b, #10b981, #667eea);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+    opacity: 0; transition: opacity .35s ease; pointer-events: none; z-index: 2;
+}
+.scripts-section .tl-sec-header:hover::after, .scripts-section .tl-sec-header:focus-visible::after { opacity: 1; animation: usRingSpin 3.5s linear infinite; }
+.scripts-section .tl-sec-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; position: relative; z-index: 3; }
+.scripts-section .tl-sec-chev { width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; color: #4f46e5; background: rgba(99, 102, 241, .12); transition: background .2s ease, box-shadow .2s ease; }
+.scripts-section .tl-sec-header:hover .tl-sec-chev { background: rgba(99, 102, 241, .20); box-shadow: 0 6px 14px rgba(102, 126, 234, .20); }
+.scripts-section .tl-sec-chev i { display: inline-block; transition: transform .3s cubic-bezier(.34, 1.56, .64, 1); }
+.scripts-section .tl-sec:not(.collapsed) .tl-sec-chev i { transform: rotate(180deg); }
+.scripts-section .tl-sec-body {
+    display: block;
+    background: linear-gradient(180deg, #e1e8f5 0%, #d8e1ef 100%);
+    border: 1.5px solid #d4dded; border-top: none;
+    border-radius: 0 0 20px 20px;
+    padding: 20px; margin-top: -1.5px;
+    box-shadow: inset 0 10px 18px -12px rgba(30, 41, 59, .24), 0 8px 24px rgba(30, 41, 59, .07);
+}
+.scripts-section .tl-sec.collapsed .tl-sec-body { display: none; }
+.scripts-section .tl-sec-body.us-sec-anim { animation: usSecIn .3s ease both; }
+.scripts-section .tl-sec-body .scripts-list { margin-bottom: 0; }
+@media (max-width: 768px) {
+    .scripts-section .tl-sec-header { flex-wrap: nowrap; padding: 14px; gap: 10px; }
+    .scripts-section .tl-sec-actions { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .scripts-section .tl-sec-header::after { animation: none !important; }
+    .scripts-section .tl-sec-header:hover { transform: none !important; }
+    .scripts-section .tl-sec-chev i, .scripts-section .tl-sec-body.us-sec-anim { transition: none !important; animation: none !important; }
 }
 
 .section-title {
@@ -729,8 +862,7 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     }
 
     .auth-box,
-    .browse-grade-card,
-    .scripts-section {
+    .browse-grade-card {
         padding: 20px;
     }
 
@@ -839,8 +971,7 @@ $extraHead = '<script>window.CAN_GENERATE_MEMORANDUM = ' . $canGenerateMemorandu
     }
 
     .auth-box,
-    .browse-grade-card,
-    .scripts-section {
+    .browse-grade-card {
         padding: 15px;
     }
 
@@ -1333,9 +1464,13 @@ include __DIR__ . '/../layouts/header.php';
     <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
     <?php endif; ?>
 
-<div class="upload-container">
+<div class="upload-container" id="usFlipPane">
     <!-- Left Column: Upload Form -->
     <div class="auth-box">
+        <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to browse scripts by grade" onclick="flipScriptPane()" onkeydown="flipScriptPaneKey(event)">
+            <span class="fc-flipbar-title"><i class="fas fa-cloud-upload-alt"></i> Upload Script</span>
+            <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Browse by Grade</span>
+        </div>
         <form method="post" action="/upload-script" enctype="multipart/form-data" id="upload-script-form">
             <!-- Drag & Drop File Input -->
             <div class="form-group">
@@ -1429,6 +1564,10 @@ include __DIR__ . '/../layouts/header.php';
 
     <!-- Right Column: Browse Scripts by Grade Card -->
     <div class="browse-grade-card">
+        <div class="fc-flipbar" role="button" tabindex="0" aria-label="Switch to upload script" onclick="flipScriptPane()" onkeydown="flipScriptPaneKey(event)">
+            <span class="fc-flipbar-title"><i class="fas fa-graduation-cap"></i> Browse Scripts by Grade</span>
+            <span class="fc-flipbar-btn"><i class="fas fa-exchange-alt"></i> Upload Script</span>
+        </div>
         <h3>
             <i class="fas fa-graduation-cap" style="color: #667eea;"></i> Browse Scripts by Grade
         </h3>
@@ -1467,14 +1606,84 @@ include __DIR__ . '/../layouts/header.php';
     </div>
 </div>
 
+<script>
+function tlToggleSection(header) {
+    var sec = header.closest('.tl-sec');
+    if (!sec) return;
+    var collapsed = sec.classList.toggle('collapsed');
+    header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    var body = sec.querySelector('.tl-sec-body');
+    if (body && !collapsed) {
+        body.classList.remove('us-sec-anim');
+        void body.offsetWidth;
+        body.classList.add('us-sec-anim');
+    }
+}
+function tlSectionKey(e, header) {
+    if (e && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        tlToggleSection(header);
+    }
+}
+function flipScriptPane() {
+    var pane = document.getElementById('usFlipPane');
+    if (pane) pane.classList.toggle('flipped');
+}
+function flipScriptPaneKey(e) {
+    if (e && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        flipScriptPane();
+    }
+}
+function sizeScriptPane() {
+    var wrap = document.getElementById('usFlipPane');
+    if (!wrap) return;
+    if (window.innerWidth > 768) {
+        if (wrap.style.height) wrap.style.height = '';
+        return;
+    }
+    var front = wrap.querySelector('.auth-box');
+    var back = wrap.querySelector('.browse-grade-card');
+    if (!front || !back) return;
+    var h = Math.max(front.offsetHeight, back.offsetHeight);
+    if (h > 0 && wrap.style.height !== h + 'px') wrap.style.height = h + 'px';
+}
+document.addEventListener('DOMContentLoaded', function () {
+    sizeScriptPane();
+    window.addEventListener('resize', sizeScriptPane);
+    window.addEventListener('load', sizeScriptPane);
+    setTimeout(sizeScriptPane, 300);
+    var wrap = document.getElementById('usFlipPane');
+    if (wrap && 'MutationObserver' in window) {
+        new MutationObserver(sizeScriptPane).observe(wrap, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    }
+});
+</script>
+
 <!-- Your Uploaded Scripts Section (Full Width Below) -->
 <div class="scripts-section">
-    <h2 class="section-title">
-        <i class="fas fa-file-signature"></i> Your Uploaded Scripts
-    </h2>
-    <div id="scripts-list" class="scripts-list">
-        <p class="loading">Loading scripts...</p>
-    </div>
+    <section class="tl-sec collapsed" id="tlSecScripts">
+        <div class="tl-sec-header" role="button" tabindex="0" aria-expanded="false" aria-controls="tlSecScriptsBody" onclick="tlToggleSection(this)" onkeydown="tlSectionKey(event, this)">
+            <div class="tl-section-head">
+                <span class="tl-section-icon"><i class="fas fa-file-signature"></i></span>
+                <div class="tl-section-text">
+                    <h2>Your Uploaded Scripts</h2>
+                </div>
+            </div>
+            <div class="tl-sec-actions"><span class="tl-sec-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></div>
+        </div><!-- /.tl-sec-header -->
+        <div class="tl-sec-body" id="tlSecScriptsBody">
+            <div id="scripts-list" class="scripts-list">
+                <p class="loading">Loading scripts...</p>
+            </div>
+        </div><!-- /.tl-sec-body -->
+    </section>
 </div>
 </div>
 <?php endif; ?>

@@ -251,20 +251,20 @@ $studentCount += count($unspecified);
 
             <div class='ms-section' style='margin-top:18px;'>
                 <h4 class='ms-section-title'><i class='fas fa-question-circle'></i> Student Problems & Questions</h4>
-                <?php if (!empty(\[\]['problems'])): ?>
-                    <?php foreach ((\[\]['problems'] ?? []) as \): ?>
+                <?php if (!empty($grp['problems'])): ?>
+                    <?php foreach (($grp['problems'] ?? []) as $prob): ?>
                     <div class='ms-ann-item' style='background:#f8fafc;'>
                         <div style='min-width:0;flex:1;'>
-                            <h5><?php echo htmlspecialchars(\['username'] ?? 'Student'); ?><?php echo !empty(\['grade']) ? ' (Grade '.htmlspecialchars(\['grade']).')' : ''; ?></h5>
-                            <?php if (!empty(\['subject'])): ?><p style='margin:4px 0 6px;font-size:12px;color:#334155;'><strong>Subject:</strong> <?php echo htmlspecialchars(\['subject']); ?></p><?php endif; ?>
-                            <p style='margin:0 0 6px;font-size:13px;'><?php echo nl2br(htmlspecialchars(\['problem_text'])); ?></p>
+                            <h5><?php echo htmlspecialchars($prob['student_username'] ?? $prob['username'] ?? 'Student'); ?><?php echo !empty($prob['grade']) ? ' (Grade '.htmlspecialchars($prob['grade']).')' : ''; ?></h5>
+                            <?php if (!empty($prob['subject'])): ?><p style='margin:4px 0 6px;font-size:12px;color:#334155;'><strong>Subject:</strong> <?php echo htmlspecialchars($prob['subject']); ?></p><?php endif; ?>
+                            <p style='margin:0 0 6px;font-size:13px;'><?php echo nl2br(htmlspecialchars($prob['problem_text'])); ?></p>
                             <div class='ms-ann-meta'>
-                                <span class='pill' style='background:rgba(245,158,11,.10);color:#b45309;'><i class='fas fa-circle'></i> <?php echo htmlspecialchars(\['status']); ?></span>
-                                <span class='pill' style='background:rgba(148,163,184,.10);color:#64748b;'><i class='fas fa-clock'></i> <?php echo htmlspecialchars(date('d M Y H:i', strtotime(\['created_at']))); ?></span>
+                                <span class='pill' style='background:rgba(245,158,11,.10);color:#b45309;'><i class='fas fa-circle'></i> <?php echo htmlspecialchars($prob['status']); ?></span>
+                                <span class='pill' style='background:rgba(148,163,184,.10);color:#64748b;'><i class='fas fa-clock'></i> <?php echo htmlspecialchars(date('d M Y H:i', strtotime($prob['created_at']))); ?></span>
                             </div>
                         </div>
-                        <?php if (\['status'] !== 'resolved'): ?>
-                        <form method='POST' action='/tutor/problems/resolve/<?php echo (int)\['id']; ?>' style='margin:0;'>
+                        <?php if (($prob['status'] ?? '') !== 'resolved'): ?>
+                        <form method='POST' action='/tutor/problems/resolve/<?php echo (int)$prob['id']; ?>' style='margin:0;'>
                             <button type='submit' class='ms-ann-del' style='background:rgba(16,185,129,.12);color:#047857;'><i class='fas fa-check'></i> Resolve</button>
                         </form>
                         <?php endif; ?>
@@ -279,6 +279,9 @@ $studentCount += count($unspecified);
         </div>
     </div>
     <?php endforeach; ?>
+
+    <?php if (count($unspecified) > 0): ?>
+    <div class="ms-grade-card">
         <div class="ms-grade-head">
             <span class="ms-grade-icon" style="background:linear-gradient(135deg,#94a3b8,#64748b);"><i class="fas fa-layer-group"></i></span>
             <div>
